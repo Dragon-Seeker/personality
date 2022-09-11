@@ -14,12 +14,18 @@ group = project.maven_group
 repositories {
 	maven { url 'https://maven.wispforest.io' }
 	maven { url "https://maven.terraformersmc.com/releases/" }
-	maven {
-		url "https://api.modrinth.com/maven"
-		content {
-			includeGroup "maven.modrinth"
-		}
+	maven { url "https://api.modrinth.com/maven"
+		content {includeGroup "maven.modrinth"}
 	}
+	maven { url 'https://ladysnake.jfrog.io/artifactory/mods' }
+	maven { url 'https://maven.cafeteria.dev'
+		content {includeGroup 'net.adriantodt.fabricmc'}
+	}
+	maven { url "https://maven.jamieswhiteshirt.com/libs-release"
+		content {includeGroup "com.jamieswhiteshirt"}
+	}
+	maven { url "https://jitpack.io" }
+	maven { url "https://maven.shedaniel.me/" }
 }
 
 dependencies {
@@ -34,9 +40,37 @@ dependencies {
 	modImplementation "io.wispforest:owo-lib:${project.owo_version}"
 	annotationProcessor "io.wispforest:owo-lib:${project.owo_version}"
 
-	modImplementation "maven.modrinth:origins:${project.origin_version}"
+	modImplementation "com.github.apace100:origins-fabric:${project.origin_version}"
+	//modImplementation "maven.modrinth:origins:${project.origin_version}"
 
 	modLocalRuntime modCompileOnly("com.terraformersmc:modmenu:${project.modmenu_version}")
+}
+
+loom {
+	accessWidenerPath = file("src/main/resources/personality.accesswidener")
+
+	runs {
+		clientMixinDebug {
+			client()
+			name "Minecraft Client [Mixin Debug]"
+			vmArg "-Dfabric.dli.config=${file(".gradle/loom-cache/launch.cfg").toString()}"
+			vmArg "-Dfabric.dli.env=client"
+			vmArg "-Dfabric.dli.main=net.fabricmc.loader.impl.launch.knot.KnotClient"
+
+			afterEvaluate {
+				project.configurations.compileClasspath
+					.getAllDependencies()
+					.findAll { Dependency test -> test.getName() == "sponge-mixin" }
+					.iterator().forEachRemaining {vmArg "-javaagent:\"${(project.configurations.compileClasspath.files(it).iterator().next().getPath())}\"" }
+			}
+
+			vmArg "-Dlog4j.configurationFile=${file(".gradle/loom-cache/log4j.xml").toString()}"
+			vmArg "-Dfabric.log.disableAnsi=false"
+			vmArg "-Dmixin.debug.export=true"
+
+			ideConfigGenerated = true
+		}
+	}
 }
 
 processResources {
