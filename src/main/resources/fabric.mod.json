@@ -7,7 +7,7 @@
   "description": "A Mod designed to add more Personal Elements to minecraft with Origin Support.",
   "authors": [
     "Blodhgarm",
-    "Jákob"
+    "Minenash"
   ],
   "contact": {
     "homepage": "",
@@ -29,11 +29,8 @@
 
   "depends": {
     "fabricloader": ">=0.14.9",
-    "fabric-api": "*",
+    "fabric": "*",
     "minecraft": "~1.19",
     "java": ">=17"
-  },
-  "suggests": {
-    "modmenu": "*"
   }
 }

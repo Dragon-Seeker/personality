@@ -34,7 +34,7 @@ dependencies {
 	modImplementation "io.wispforest:owo-lib:${project.owo_version}"
 	annotationProcessor "io.wispforest:owo-lib:${project.owo_version}"
 
-	modImplementation "maven.modrinth:origins:${project.origin_version}"
+//	modImplementation "maven.modrinth:origins:${project.origin_version}"
 
 	modLocalRuntime modCompileOnly("com.terraformersmc:modmenu:${project.modmenu_version}")
 }
