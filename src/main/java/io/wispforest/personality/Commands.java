@@ -46,19 +46,30 @@ public class Commands {
                             .then(argument("heightOffset", floatArg(-0.5F, 0.5F) )
                                 .then(argument("age", integer(17, 60) )
                                     .executes(Commands::create) ))))))
+
             .then(literal("get")
-                .executes(c -> get(c, 0))
-                .then(argument("timeOffset", longArg())
-                    .executes(c -> get(c, getLong(c,"timeOffset")))))
-            .then(setters(argument("player", player()), c -> CharacterManager.getCharacter(c.getSource().getPlayer()) )
-                    .then(setters(argument("player", player()), Commands::getCharacterFromPlayer ))
-                    .then(setters(argument("uuid", greedyString()), c -> CharacterManager.getCharacter(getString(c, "uuid")))))
+                .executes(c -> get(c, getCharacterFromSelf(c)))
+                .then(literal("self")
+                    .executes(c -> get(c, getCharacterFromSelf(c))))
+                .then(literal("player")
+                    .then(argument("player", player())
+                        .executes(c -> get(c, getCharacterFromPlayer(c)))))
+                .then(literal("uuid")
+                    .then(argument("uuid", greedyString())
+                        .executes(c -> get(c, getCharacterFromUUID(c))))))
+
+            .then(literal("set")
+                .then(setters(literal("self"), Commands::getCharacterFromSelf ))
+                .then(literal("player").then(setters(argument("player", player()), Commands::getCharacterFromPlayer )))
+                .then(literal("uuid").then(setters(argument("uuid", string()), Commands::getCharacterFromUUID))))
+
             .then(literal("delete")
                 .executes(Commands::deleteCharacter)
                 .then(argument("players", players())
                     .executes(Commands::deleteCharacterByPlayer))
                 .then(argument("uuid", greedyString())
                     .executes(Commands::deleteCharacterByUUID)))
+
             .then(literal("reveal")
                 .then(literal("near")
                     .executes(c -> revealRange(c, 7) ))
@@ -70,18 +81,19 @@ public class Commands {
                 .then(literal("players")
                     .then(argument("players", players())
                         .executes(Commands::revealPerson))))
+
             .then(literal("characters")
                 .then(literal("list")
                     .executes(Commands::listKnownCharacters))
                 .then(literal("add")
                     .then(argument("players", players())
                         .executes(Commands::addKnownCharacterByPlayer))
-                    .then(argument("uuid", greedyString())
+                    .then(argument("uuid", string())
                         .executes(Commands::addKnownCharacterByUUID)))
                 .then(literal("remove")
                     .then(argument("players", players())
                         .executes(Commands::removeKnownCharacterByPlayer))
-                    .then(argument("uuid", greedyString())
+                    .then(argument("uuid", string())
                         .executes(Commands::removeKnownCharacterByUUID))))
             ;
     }
@@ -91,7 +103,7 @@ public class Commands {
                         .executes(c -> setProperty(c, () -> { character.apply(c).setName(getString(c, "name")); return msg(c, "Name Set"); }))))
                 .then(literal("gender").then(argument("gender", word()).suggests( (c,b) -> suggestions(b, "male", "female", "nonbinary"))
                         .executes(c -> setProperty(c, () -> { character.apply(c).setGender(getString(c, "gender")); return msg(c, "Gender Set"); }))))
-                .then(literal("description").then(argument("description", string())
+                .then(literal("description").then(argument("description", greedyString())
                         .executes(c -> setProperty(c, () -> { character.apply(c).setDescription(getString(c, "description")); return msg(c, "Description Set"); }))))
                 .then(literal("heightOffset").then(argument("heightOffset",  floatArg(-0.5F, 0.5F))
                         .executes(c -> setProperty(c, () -> { character.apply(c).setHeightOffset(getFloat(c, "heightOffset")); return msg(c, "Height Offset Set"); }))))
@@ -99,6 +111,14 @@ public class Commands {
                         .executes(c -> setProperty(c, () -> { character.apply(c).setAge(getInteger(c, "age")); return msg(c, "Age Set"); }))))
                 .then(literal("playtime").then(argument("playtime",  longArg())
                         .executes(c -> setProperty(c, () -> { character.apply(c).setPlaytime(getInteger(c, "playtime")); return msg(c, "Playtime Set"); }))));
+    }
+
+    private static Character getCharacterFromSelf(CommandContext<ServerCommandSource> context) {
+        return CharacterManager.getCharacter(context.getSource().getPlayer());
+    }
+
+    private static Character getCharacterFromUUID(CommandContext<ServerCommandSource> context) {
+        return CharacterManager.getCharacter(getString(context, "uuid"));
     }
 
     private static Character getCharacterFromPlayer(CommandContext<ServerCommandSource> context) {
@@ -162,21 +182,18 @@ public class Commands {
         }
     }
 
-    private static int get(CommandContext<ServerCommandSource> context, long timeOffset) {
+    private static int get(CommandContext<ServerCommandSource> context, Character c) {
         try {
-            ServerPlayerEntity player = context.getSource().getPlayer();
-            Character c = CharacterManager.getCharacter(player);
-
-            player.sendMessage(Text.literal(
+            context.getSource().sendFeedback(Text.literal(
                     "\n§nCharacter: " + c.getName() + "§r\n"
                             + "\n§lUUID§r: " + c.getUUID()
                             + "\n§lGender§r: " + c.getGender().toString()
                             + "\n§lDescription§r: " + c.getDescription()
-                            + "\n§lAge§r: " + c.getAge(timeOffset)
-                            + "\n§lStage§r: " + c.getStage(timeOffset)
+                            + "\n§lAge§r: " + c.getAge(0)
+                            + "\n§lStage§r: " + c.getStage(0)
                             + "\n§lPlaytime§r: " + c.getPlaytime()
                             + "\n§lHeightOffset§r: " + c.getHeightOffset() + "\n"
-            ));
+            ), false);
             return 1;
         }
         catch (Exception e) {
