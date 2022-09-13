@@ -27,14 +27,26 @@ public class CharacterManager {
 
     private static final Path CHARACTER_PATH = FabricLoader.getInstance().getGameDir();
     private static final Path REFERENCE_PATH = CHARACTER_PATH.resolve("reference.json");
+
     public static Map<String, String> playerIDToCharacterID = new HashMap<>();
     public static BiMap<ServerPlayerEntity, Character> playerToCharacter = HashBiMap.create();
+    public static Map<String, Character> characterIDToCharacter = new HashMap<>();
 
-    public static Character readCharacter(ServerPlayerEntity player) {
+    public static Character getCharacter(ServerPlayerEntity player) {
+        return getCharacter(playerIDToCharacterID.get(player.getUuidAsString()));
+    }
+
+    public static Character getCharacter(String uuid) {
         try {
-            String uuid = playerIDToCharacterID.get(player.getUuidAsString());
-            Character c = jankson.fromJson(jankson.load(getPath(uuid).toFile()), Character.class);
-            playerToCharacter.put(player, c);
+            Character c = characterIDToCharacter.get(uuid);
+
+            if (c != null)
+                return c;
+
+            c = jankson.fromJson(jankson.load(getPath(uuid).toFile()), Character.class);
+            characterIDToCharacter.put(uuid, c);
+//            playerToCharacter.put(player, c);
+
             return c;
         } catch (SyntaxError | IOException e) {
             e.printStackTrace();
@@ -44,10 +56,19 @@ public class CharacterManager {
 
     public static void saveCharacter(Character character) {
         try {
-            Files.writeString(getPath(character.uuid), jankson.toJson(character).toJson(true, true));
+            Files.writeString(getPath(character.getUUID()), jankson.toJson(character).toJson(true, true));
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    //TODO: Character Deleting
+    public static void deleteCharacter(String uuid) {
+
+    }
+
+    public static void deleteCharacter(Character character) {
+
     }
 
     private static Path getPath(String uuid) {
