@@ -113,46 +113,6 @@ public class Commands {
                         .executes(c -> setProperty(c, () -> { character.apply(c).setPlaytime(getInteger(c, "playtime")); return msg(c, "Playtime Set"); }))));
     }
 
-    private static Character getCharacterFromSelf(CommandContext<ServerCommandSource> context) {
-        return CharacterManager.getCharacter(context.getSource().getPlayer());
-    }
-
-    private static Character getCharacterFromUUID(CommandContext<ServerCommandSource> context) {
-        return CharacterManager.getCharacter(getString(context, "uuid"));
-    }
-
-    private static Character getCharacterFromPlayer(CommandContext<ServerCommandSource> context) {
-        try {
-            return CharacterManager.getCharacter(getPlayer(context, "player"));
-        } catch (CommandSyntaxException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    private static CompletableFuture<Suggestions> suggestions(SuggestionsBuilder builder, String... suggestions) {
-        for (String suggestion : suggestions)
-            builder.suggest(suggestion);
-        return builder.buildFuture();
-    }
-
-    private static int msg(CommandContext<ServerCommandSource> context, String msg) {
-        context.getSource().sendFeedback(Text.literal("§2WJR: §a" + msg), false);
-        return 1;
-    }
-
-    private static int setProperty(CommandContext<ServerCommandSource> context, Supplier<Integer> code) {
-        try {
-            int out = code.get();
-            CharacterManager.saveCharacter(CharacterManager.getCharacter(context.getSource().getPlayer()));
-            return out;
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            return 0;
-        }
-    }
-
     private static int create(CommandContext<ServerCommandSource> context) {
         try {
             ServerPlayerEntity player = context.getSource().getPlayer();
@@ -189,8 +149,8 @@ public class Commands {
                             + "\n§lUUID§r: " + c.getUUID()
                             + "\n§lGender§r: " + c.getGender().toString()
                             + "\n§lDescription§r: " + c.getDescription()
-                            + "\n§lAge§r: " + c.getAge(0)
-                            + "\n§lStage§r: " + c.getStage(0)
+                            + "\n§lAge§r: " + c.getAge()
+                            + "\n§lStage§r: " + c.getStage()
                             + "\n§lPlaytime§r: " + c.getPlaytime()
                             + "\n§lHeightOffset§r: " + c.getHeightOffset() + "\n"
             ), false);
@@ -202,6 +162,17 @@ public class Commands {
         }
     }
 
+    private static int setProperty(CommandContext<ServerCommandSource> context, Supplier<Integer> code) {
+        try {
+            int out = code.get();
+            CharacterManager.saveCharacter(CharacterManager.getCharacter(context.getSource().getPlayer()));
+            return out;
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
 
     //TODO: Implement Reveal
     private static int revealRange(CommandContext<ServerCommandSource> context, int range) {
@@ -234,8 +205,8 @@ public class Commands {
                         + "\n§lUUID§r: " + c.getUUID()
                         + "\n§lGender§r: " + c.getGender().toString()
                         + "\n§lDescription§r: " + c.getDescription()
-                        + "\n§lAge§r: " + c.getAge(0)
-                        + "\n§lStage§r: " + c.getStage(0)
+                        + "\n§lAge§r: " + c.getAge()
+                        + "\n§lStage§r: " + c.getStage()
                         + "\n§lPlaytime§r: " + c.getPlaytime()
                         + "\n§lHeightOffset§r: " + c.getHeightOffset()
         ))));
@@ -294,6 +265,36 @@ public class Commands {
     private static int deleteCharacterByUUID(CommandContext<ServerCommandSource> context) {
         CharacterManager.deleteCharacter(getString(context, "uuid"));
         return msg(context, "Character Deleted");
+    }
+
+    //Helpers:
+
+    private static CompletableFuture<Suggestions> suggestions(SuggestionsBuilder builder, String... suggestions) {
+        for (String suggestion : suggestions)
+            builder.suggest(suggestion);
+        return builder.buildFuture();
+    }
+
+    private static Character getCharacterFromSelf(CommandContext<ServerCommandSource> context) {
+        return CharacterManager.getCharacter(context.getSource().getPlayer());
+    }
+
+    private static Character getCharacterFromUUID(CommandContext<ServerCommandSource> context) {
+        return CharacterManager.getCharacter(getString(context, "uuid"));
+    }
+
+    private static Character getCharacterFromPlayer(CommandContext<ServerCommandSource> context) {
+        try {
+            return CharacterManager.getCharacter(getPlayer(context, "player"));
+        } catch (CommandSyntaxException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private static int msg(CommandContext<ServerCommandSource> context, String msg) {
+        context.getSource().sendFeedback(Text.literal("§2WJR: §a" + msg), false);
+        return 1;
     }
 
 }

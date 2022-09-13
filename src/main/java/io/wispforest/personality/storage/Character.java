@@ -85,16 +85,16 @@ public class Character {
         this.heightOffset = heightOffset;
     }
 
-    public int getAge(long timeOffset) {
-        return ageOffset + (int)((System.currentTimeMillis()-created+timeOffset)/604_800_000);
+    public int getAge() {
+        return ageOffset + (int)((System.currentTimeMillis()-created)/604_800_000);
     }
 
     public void setAge(int age) {
         ageOffset = age - (int)((System.currentTimeMillis()-created)/604_800_000);
     }
 
-    public Stage getStage(long timeOffset) {
-        int age = getAge(timeOffset);
+    public Stage getStage() {
+        int age = getAge();
         return age < 25 ? Stage.YOUTH : age < 60 ? Stage.PRIME : Stage.OLD;
     }
 
