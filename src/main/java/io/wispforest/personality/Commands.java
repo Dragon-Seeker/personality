@@ -1,5 +1,6 @@
 package io.wispforest.personality;
 
+import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -17,13 +18,14 @@ import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.mojang.brigadier.arguments.FloatArgumentType.*;
 import static com.mojang.brigadier.arguments.IntegerArgumentType.*;
 import static com.mojang.brigadier.arguments.LongArgumentType.*;
 import static com.mojang.brigadier.arguments.StringArgumentType.*;
-import static net.minecraft.command.argument.EntityArgumentType.getPlayers;
-import static net.minecraft.command.argument.EntityArgumentType.players;
+import static net.minecraft.command.argument.EntityArgumentType.*;
 import static net.minecraft.server.command.CommandManager.*;
 
 public class Commands {
@@ -48,26 +50,15 @@ public class Commands {
                 .executes(c -> get(c, 0))
                 .then(argument("timeOffset", longArg())
                     .executes(c -> get(c, getLong(c,"timeOffset")))))
-            .then(literal("set")
-                .then(literal("name").then(argument("name", word())
-                    .executes(c -> { getCharacter(c).setName(getString(c, "name")); return msg(c, "Name Set"); })))
-                .then(literal("gender").then(argument("gender", word()).suggests( (c,b) -> suggestions(b, "male", "female", "nonbinary"))
-                    .executes(c -> { getCharacter(c).setGender(getString(c, "gender")); return msg(c, "Gender Set"); })))
-                .then(literal("description").then(argument("description", string())
-                    .executes(c -> { getCharacter(c).setDescription(getString(c, "description")); return msg(c, "Description Set"); })))
-                .then(literal("heightOffset").then(argument("heightOffset",  floatArg(-0.5F, 0.5F))
-                    .executes(c -> { getCharacter(c).setHeightOffset(getFloat(c, "heightOffset")); return msg(c, "Height Offset Set"); })))
-                .then(literal("age").then(argument("age", integer(17))
-                    .executes(c -> { getCharacter(c).setAge(getInteger(c, "age")); return msg(c, "Age Set"); })))
-                .then(literal("playtime").then(argument("playtime",  longArg())
-                    .executes(c -> { getCharacter(c).setPlaytime(getInteger(c, "playtime")); return msg(c, "Playtime Set"); }))))
+            .then(setters(argument("player", player()), c -> CharacterManager.getCharacter(c.getSource().getPlayer()) )
+                    .then(setters(argument("player", player()), Commands::getCharacterFromPlayer ))
+                    .then(setters(argument("uuid", greedyString()), c -> CharacterManager.getCharacter(getString(c, "uuid")))))
             .then(literal("delete")
                 .executes(Commands::deleteCharacter)
                 .then(argument("players", players())
                     .executes(Commands::deleteCharacterByPlayer))
                 .then(argument("uuid", greedyString())
-                    .executes(Commands::deleteCharacterByUUID))
-            )
+                    .executes(Commands::deleteCharacterByUUID)))
             .then(literal("reveal")
                 .then(literal("near")
                     .executes(c -> revealRange(c, 7) ))
@@ -91,13 +82,32 @@ public class Commands {
                     .then(argument("players", players())
                         .executes(Commands::removeKnownCharacterByPlayer))
                     .then(argument("uuid", greedyString())
-                        .executes(Commands::removeKnownCharacterByUUID)))
-            )
+                        .executes(Commands::removeKnownCharacterByUUID))))
             ;
     }
 
-    private static Character getCharacter(CommandContext<ServerCommandSource> context) {
-        return CharacterManager.playerToCharacter.get(context.getSource().getPlayer());
+    private static ArgumentBuilder<ServerCommandSource,?> setters(ArgumentBuilder<ServerCommandSource,?> builder, Function<CommandContext<ServerCommandSource>, Character> character) {
+        return builder.then(literal("name").then(argument("name", word())
+                        .executes(c -> setProperty(c, () -> { character.apply(c).setName(getString(c, "name")); return msg(c, "Name Set"); }))))
+                .then(literal("gender").then(argument("gender", word()).suggests( (c,b) -> suggestions(b, "male", "female", "nonbinary"))
+                        .executes(c -> setProperty(c, () -> { character.apply(c).setGender(getString(c, "gender")); return msg(c, "Gender Set"); }))))
+                .then(literal("description").then(argument("description", string())
+                        .executes(c -> setProperty(c, () -> { character.apply(c).setDescription(getString(c, "description")); return msg(c, "Description Set"); }))))
+                .then(literal("heightOffset").then(argument("heightOffset",  floatArg(-0.5F, 0.5F))
+                        .executes(c -> setProperty(c, () -> { character.apply(c).setHeightOffset(getFloat(c, "heightOffset")); return msg(c, "Height Offset Set"); }))))
+                .then(literal("age").then(argument("age", integer(17))
+                        .executes(c -> setProperty(c, () -> { character.apply(c).setAge(getInteger(c, "age")); return msg(c, "Age Set"); }))))
+                .then(literal("playtime").then(argument("playtime",  longArg())
+                        .executes(c -> setProperty(c, () -> { character.apply(c).setPlaytime(getInteger(c, "playtime")); return msg(c, "Playtime Set"); }))));
+    }
+
+    private static Character getCharacterFromPlayer(CommandContext<ServerCommandSource> context) {
+        try {
+            return CharacterManager.getCharacter(getPlayer(context, "player"));
+        } catch (CommandSyntaxException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     private static CompletableFuture<Suggestions> suggestions(SuggestionsBuilder builder, String... suggestions) {
@@ -109,6 +119,18 @@ public class Commands {
     private static int msg(CommandContext<ServerCommandSource> context, String msg) {
         context.getSource().sendFeedback(Text.literal("§2WJR: §a" + msg), false);
         return 1;
+    }
+
+    private static int setProperty(CommandContext<ServerCommandSource> context, Supplier<Integer> code) {
+        try {
+            int out = code.get();
+            CharacterManager.saveCharacter(CharacterManager.getCharacter(context.getSource().getPlayer()));
+            return out;
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
     }
 
     private static int create(CommandContext<ServerCommandSource> context) {
@@ -163,63 +185,80 @@ public class Commands {
         }
     }
 
+
+    //TODO: Implement Reveal
     private static int revealRange(CommandContext<ServerCommandSource> context, int range) {
-        return 1; //TODO: Implement Reveal
+        return 1;
     }
 
     private static int revealPerson(CommandContext<ServerCommandSource> context) {
-        return 1; //TODO: Implement Reveal
+        return 1;
     }
 
     private static int listKnownCharacters(CommandContext<ServerCommandSource> context) {
-        ServerPlayerEntity player = context.getSource().getPlayer();
-        MutableText text = Text.literal("\n§nKnown Characters§r:\n");
+        try {
+            ServerPlayerEntity player = context.getSource().getPlayer();
+            MutableText text = Text.literal("\n§nKnown Characters§r:\n\n");
 
-        for (String uuid : CharacterManager.getCharacter(player).knowCharacters)
-            text.append(knownCharacterEntry(CharacterManager.characterIDToCharacter.get(uuid)));
+            for (String uuid : CharacterManager.getCharacter(player).knowCharacters)
+                text.append(knownCharacterEntry(CharacterManager.getCharacter(uuid)));
 
-        player.sendMessage(text);
+            player.sendMessage(text);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
         return 1;
     }
 
     private static Text knownCharacterEntry(Character c) {
-        return Text.literal("\n" + c.getName()).setStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                Text.literal("\n§n" + c.getName() + "§r\n"
+        return Text.literal(c.getName() + "\n").setStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                Text.literal("§n" + c.getName() + "§r\n"
                         + "\n§lUUID§r: " + c.getUUID()
                         + "\n§lGender§r: " + c.getGender().toString()
                         + "\n§lDescription§r: " + c.getDescription()
                         + "\n§lAge§r: " + c.getAge(0)
                         + "\n§lStage§r: " + c.getStage(0)
                         + "\n§lPlaytime§r: " + c.getPlaytime()
-                        + "\n§lHeightOffset§r: " + c.getHeightOffset() + "\n"
+                        + "\n§lHeightOffset§r: " + c.getHeightOffset()
         ))));
     }
 
     private static int addKnownCharacterByPlayer(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
         ServerPlayerEntity player = context.getSource().getPlayer();
+        Character c = CharacterManager.getCharacter(player);
 
         for (ServerPlayerEntity p : getPlayers(context, "players"))
-            CharacterManager.getCharacter(player).knowCharacters.add(p.getUuidAsString());
+            c.knowCharacters.add(CharacterManager.getCharacter(p).getUUID());
 
+        CharacterManager.saveCharacter(c);
         return msg(context, "Character(s) Added");
     }
 
     private static int addKnownCharacterByUUID(CommandContext<ServerCommandSource> context) {
-        CharacterManager.getCharacter( context.getSource().getPlayer() ).knowCharacters.add( getString(context, "uuid") );
+        Character c = CharacterManager.getCharacter(context.getSource().getPlayer());
+        c.knowCharacters.add( getString(context, "uuid") );
+        CharacterManager.saveCharacter(c);
+
         return msg(context, "Character Added");
     }
 
     private static int removeKnownCharacterByPlayer(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
         ServerPlayerEntity player = context.getSource().getPlayer();
+        Character c = CharacterManager.getCharacter(player);
 
         for (ServerPlayerEntity p : getPlayers(context, "players"))
-            CharacterManager.getCharacter(player).knowCharacters.remove(p.getUuidAsString());
+            c.knowCharacters.remove(CharacterManager.getCharacter(p).getUUID());
 
+        CharacterManager.saveCharacter(c);
         return msg(context, "Character(s) Removed");
     }
 
     private static int removeKnownCharacterByUUID(CommandContext<ServerCommandSource> context) {
-        CharacterManager.getCharacter( context.getSource().getPlayer() ).knowCharacters.remove( getString(context, "uuid") );
+        Character c = CharacterManager.getCharacter(context.getSource().getPlayer());
+        c.knowCharacters.remove( getString(context, "uuid") );
+        CharacterManager.saveCharacter(c);
+
         return msg(context, "Character Removed");
     }
 
