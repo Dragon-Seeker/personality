@@ -31,7 +31,7 @@ public abstract class EntityRendererMixin<T extends Entity> {
      * @author Minenash
      */
     @Inject(method = "renderLabelIfPresent", at = @At("HEAD"), cancellable = true)
-    protected void renderLabelIfPresent(T entity, Text text, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo callback) {
+    protected void personality$renderLabelIfPresent(T entity, Text text, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo callback) {
         if (!(entity instanceof PlayerEntity))
             return;
 
