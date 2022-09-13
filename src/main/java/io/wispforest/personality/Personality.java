@@ -7,6 +7,8 @@ public class Personality implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
+		Commands.register();
 		CharacterManager.loadCharacterReference();
 	}
+
 }
