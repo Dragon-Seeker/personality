@@ -8,11 +8,11 @@
     "PlayerEntityMixin"
   ],
   "client": [
-    "EntityRendererMixin",
+    "client.EntityRendererMixin",
     "client.origins.ChooseOriginScreenAccessor",
+    "client.origins.ChooseOriginScreenMixin",
     "client.origins.ModPacketsS2CMixin",
-    "client.origins.OriginDisplayScreenMixin",
-    "client.origins.ChooseOriginScreenMixin"
+    "client.origins.OriginDisplayScreenMixin"
   ],
   "injectors": {
     "defaultRequire": 1

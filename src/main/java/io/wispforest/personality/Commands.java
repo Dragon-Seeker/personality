@@ -127,7 +127,7 @@ public class Commands {
                 .then(literal("age").then(argument("age", integer(17))
                         .executes(c -> setProperty(c, () -> { character.apply(c).setAge(getInteger(c, "age")); return msg(c, "Age Set"); }))))
                 .then(literal("playtime").then(argument("playtime",  longArg())
-                        .executes(c -> setProperty(c, () -> { character.apply(c).setPlaytime(getInteger(c, "playtime")); return msg(c, "Playtime Set"); }))));
+                        .executes(c -> setProperty(c, () -> { boolean success = character.apply(c).setPlaytime(getInteger(c, "playtime")); return msg(c, success ? "Playtime Set" : "Couldn't set Playtime, player not online"); }))));
     }
 
     private static int create(CommandContext<ServerCommandSource> context) {
@@ -135,15 +135,11 @@ public class Commands {
             ServerPlayerEntity player = context.getSource().getPlayer();
 
             String name = getString(context, "name");
+            String gender = getString(context, "gender");
             String description = getString(context, "description");
             float heightOffset = getFloat(context, "heightOffset");
             int age = getInteger(context, "age");
             int activityOffset = player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME));
-
-            String g = getString(context, "gender");
-            Character.Gender gender = g.equalsIgnoreCase("male") ? Character.Gender.MALE
-                    : g.equalsIgnoreCase("female") ? Character.Gender.FEMALE
-                    : Character.Gender.NONBINARY;
 
             Character c = new Character(name, gender, description, heightOffset, age, activityOffset);
 
@@ -161,16 +157,7 @@ public class Commands {
 
     private static int get(CommandContext<ServerCommandSource> context, Character c) {
         try {
-            context.getSource().sendFeedback(Text.literal(
-                    "\n§nCharacter: " + c.getName() + "§r\n"
-                            + "\n§lUUID§r: " + c.getUUID()
-                            + "\n§lGender§r: " + c.getGender().toString()
-                            + "\n§lDescription§r: " + c.getDescription()
-                            + "\n§lAge§r: " + c.getAge()
-                            + "\n§lStage§r: " + c.getStage()
-                            + "\n§lPlaytime§r: " + c.getPlaytime()
-                            + "\n§lHeightOffset§r: " + c.getHeightOffset() + "\n"
-            ), false);
+            context.getSource().sendFeedback(Text.literal("\n§nCharacter: " + c.getInfo() + "\n"), false);
             return 1;
         } catch(Exception e){
             e.printStackTrace();
@@ -212,7 +199,8 @@ public class Commands {
                 Character pCharacter = CharacterManager.getCharacter(uuid);
 
                 if(pCharacter != null) {
-                    text.append(knownCharacterEntry(pCharacter));
+                    text.append(Text.literal(c.getName() + "\n").setStyle(Style.EMPTY.withHoverEvent(
+                            new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("§n" + c.getInfo())))));
                 } else {
                     LOGGER.error("A known Character of [{}] wasn't found by the character manager: [UUID: {}]", player, uuid);
                 }
@@ -224,19 +212,6 @@ public class Commands {
             e.printStackTrace();
         }
         return 1;
-    }
-
-    private static Text knownCharacterEntry(Character c) {
-        return Text.literal(c.getName() + "\n").setStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                Text.literal("§n" + c.getName() + "§r\n"
-                        + "\n§lUUID§r: " + c.getUUID()
-                        + "\n§lGender§r: " + c.getGender().toString()
-                        + "\n§lDescription§r: " + c.getDescription()
-                        + "\n§lAge§r: " + c.getAge()
-                        + "\n§lStage§r: " + c.getStage()
-                        + "\n§lPlaytime§r: " + c.getPlaytime()
-                        + "\n§lHeightOffset§r: " + c.getHeightOffset()
-        ))));
     }
 
     private static int addKnownCharacterByPlayer(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {

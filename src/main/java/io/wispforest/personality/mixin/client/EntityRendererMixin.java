@@ -1,4 +1,4 @@
-package io.wispforest.personality.mixin;
+package io.wispforest.personality.mixin.client;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;

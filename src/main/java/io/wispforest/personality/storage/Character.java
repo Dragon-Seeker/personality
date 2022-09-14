@@ -1,5 +1,7 @@
 package io.wispforest.personality.storage;
 
+import io.wispforest.personality.config.Config;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.stat.Stats;
 
 import java.util.ArrayList;
@@ -8,14 +10,14 @@ import java.util.UUID;
 
 public class Character {
 
-    public enum Gender {MALE, FEMALE, NONBINARY}
     public enum Stage {YOUTH, PRIME, OLD}
-
+    public static final int WEEK_IN_MILLISECONDS = 604_800_000;
+    public static final int HOUR_IN_MILLISECONDS =   3_600_000;
     public final int format = 1;
 
     private String uuid;
     private String name;
-    private Gender gender;
+    private String gender;
     private String description;
 
     private float heightOffset;
@@ -29,7 +31,7 @@ public class Character {
 
     public Character() {}
 
-    public Character(String name, Gender gender, String description, float heightOffset, int ageOffset, int activityOffset) {
+    public Character(String name, String gender, String description, float heightOffset, int ageOffset, int activityOffset) {
         this.uuid = UUID.randomUUID().toString();
         this.name = name;
         this.gender = gender;
@@ -53,21 +55,14 @@ public class Character {
         this.name = name;
     }
 
-    public Gender getGender() {
+    public String getGender() {
         return gender;
     }
 
-    public void setGender(Gender gender) {
+    public void setGender(String gender) {
         this.gender = gender;
     }
 
-    public void setGender(String gender) {
-        this.gender = switch (gender.toLowerCase()) {
-            case  "male" -> Gender.MALE;
-            case  "female" -> Gender.FEMALE;
-            default -> Gender.NONBINARY;
-        };
-    }
 
     public String getDescription() {
         return description;
@@ -86,11 +81,11 @@ public class Character {
     }
 
     public int getAge() {
-        return ageOffset + (int)((System.currentTimeMillis()-created)/604_800_000);
+        return ageOffset + (int)((System.currentTimeMillis()-created)/WEEK_IN_MILLISECONDS);
     }
 
     public void setAge(int age) {
-        ageOffset = age - (int)((System.currentTimeMillis()-created)/604_800_000);
+        ageOffset = age - (int)((System.currentTimeMillis()-created)/WEEK_IN_MILLISECONDS);
     }
 
     public Stage getStage() {
@@ -103,12 +98,32 @@ public class Character {
     }
 
     public int getPlaytime() {
-        return 0;
-//        return CharacterManager.playerToCharacter.inverse().get(this).getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME)) - playtimeOffset;
+        ServerPlayerEntity player = CharacterManager.getPlayer(uuid);
+        if (player == null)
+            return 0;
+        return player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME)) - playtimeOffset;
     }
 
-    public void setPlaytime(int playtime) {
-//        playtimeOffset = playtime - CharacterManager.playerToCharacter.inverse().get(this).getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME));
+    public boolean setPlaytime(int playtime) {
+        ServerPlayerEntity player = CharacterManager.getPlayer(uuid);
+        if (player == null)
+            return false;
+        playtimeOffset = playtime - player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME));
+        return true;
+    }
+
+    public int getMaxAge() {
+        return Config.BASE_MAXIMUM_AGE + Math.min(Config.MAX_EXTRA_YEARS_OF_LIFE, getPlaytime() / HOUR_IN_MILLISECONDS / Config.HOURS_PER_EXTRA_YEAR_OF_LIFE);
+    }
+
+    public String getInfo() {
+        return name + "§r\n"
+                + "\n§lUUID§r: " + uuid
+                + "\n§lGender§r: " + gender
+                + "\n§lDescription§r: " + description
+                + "\n§lAge§r: " + getAge() + " / " + getMaxAge() + " (" + getStage() + ")"
+                + "\n§lPlaytime§r: " + (getPlaytime()/HOUR_IN_MILLISECONDS)
+                + "\n§lHeight§r: " + (2 - heightOffset);
     }
 
     @Override
@@ -116,7 +131,7 @@ public class Character {
         return "Character{" +
                 "\nuuid=" + uuid +
                 ",\n name=" + name +
-                ",\n gender=" + gender.toString() +
+                ",\n gender=" + gender +
                 ",\n description=" + description +
                 ",\n heightOffset=" + heightOffset +
                 ",\n ageOffset=" + ageOffset +

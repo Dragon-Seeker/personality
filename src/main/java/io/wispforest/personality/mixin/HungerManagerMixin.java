@@ -1,6 +1,5 @@
 package io.wispforest.personality.mixin;
 
-import io.wispforest.personality.Personality;
 import io.wispforest.personality.config.Config;
 import io.wispforest.personality.storage.Character;
 import io.wispforest.personality.storage.CharacterManager;
@@ -14,8 +13,6 @@ import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-import java.util.Optional;
-
 @Mixin(HungerManager.class)
 public abstract class HungerManagerMixin {
 
@@ -25,7 +22,8 @@ public abstract class HungerManagerMixin {
 
     @Redirect(method = "update", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/HungerManager;addExhaustion(F)V"))
     public void personality$addExtraExhaustionForYouth(HungerManager instance, float exhaustion, PlayerEntity player) {
-        if (!(player instanceof ServerPlayerEntity)) return;
+        if (!(player instanceof ServerPlayerEntity))
+            return;
 
         Character character = CharacterManager.getCharacter((ServerPlayerEntity)player);
 
