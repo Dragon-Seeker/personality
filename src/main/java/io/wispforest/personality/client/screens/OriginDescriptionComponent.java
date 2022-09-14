@@ -1,10 +1,9 @@
-package io.wispforest.personality.screens;
+package io.wispforest.personality.client.screens;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.apace100.apoli.power.PowerType;
 import io.github.apace100.origins.badge.Badge;
 import io.github.apace100.origins.badge.BadgeManager;
-import io.github.apace100.origins.mixin.ScreenAccessor;
 import io.github.apace100.origins.origin.Origin;
 import io.wispforest.owo.ui.component.LabelComponent;
 import io.wispforest.owo.ui.core.*;
@@ -19,7 +18,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class OriginDescriptionComponent extends LabelComponent {
 

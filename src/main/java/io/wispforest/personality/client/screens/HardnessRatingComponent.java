@@ -1,4 +1,4 @@
-package io.wispforest.personality.screens;
+package io.wispforest.personality.client.screens;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.apace100.origins.Origins;
