@@ -1,4 +1,4 @@
-package io.wispforest.personality.config;
+package io.wispforest.personality.server.config;
 
 public class Config {
 

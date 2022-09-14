@@ -1,8 +1,8 @@
 package io.wispforest.personality.mixin;
 
-import io.wispforest.personality.config.Config;
-import io.wispforest.personality.storage.Character;
-import io.wispforest.personality.storage.CharacterManager;
+import io.wispforest.personality.server.config.Config;
+import io.wispforest.personality.Character;
+import io.wispforest.personality.server.ServerCharacters;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
@@ -17,7 +17,7 @@ public class PlayerEntityMixin {
         if (!((PlayerEntity)(Object)this instanceof ServerPlayerEntity))
             return original;
 
-        Character character = CharacterManager.getCharacter((ServerPlayerEntity)(Object)this);
+        Character character = ServerCharacters.getCharacter((ServerPlayerEntity)(Object)this);
 
         if (character != null && character.getStage() == Character.Stage.YOUTH)
             return original * Config.YOUTH_EXHAUSTION_MULTIPLIER;

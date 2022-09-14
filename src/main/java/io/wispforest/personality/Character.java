@@ -1,6 +1,7 @@
-package io.wispforest.personality.storage;
+package io.wispforest.personality;
 
-import io.wispforest.personality.config.Config;
+import io.wispforest.personality.server.ServerCharacters;
+import io.wispforest.personality.server.config.Config;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.stat.Stats;
 
@@ -98,14 +99,14 @@ public class Character {
     }
 
     public int getPlaytime() {
-        ServerPlayerEntity player = CharacterManager.getPlayer(uuid);
+        ServerPlayerEntity player = ServerCharacters.getPlayer(uuid);
         if (player == null)
             return 0;
         return player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME)) - playtimeOffset;
     }
 
     public boolean setPlaytime(int playtime) {
-        ServerPlayerEntity player = CharacterManager.getPlayer(uuid);
+        ServerPlayerEntity player = ServerCharacters.getPlayer(uuid);
         if (player == null)
             return false;
         playtimeOffset = playtime - player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME));

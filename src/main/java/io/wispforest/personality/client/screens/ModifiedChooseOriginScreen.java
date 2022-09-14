@@ -1,4 +1,4 @@
-package io.wispforest.personality.screens;
+package io.wispforest.personality.client.screens;
 
 import io.github.apace100.origins.Origins;
 import io.github.apace100.origins.networking.ModPackets;

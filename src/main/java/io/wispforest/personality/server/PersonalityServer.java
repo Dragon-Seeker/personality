@@ -1,15 +1,13 @@
-package io.wispforest.personality.initializers;
+package io.wispforest.personality.server;
 
 import io.github.apace100.calio.mixin.DamageSourceAccessor;
-import io.wispforest.personality.Commands;
 import io.wispforest.personality.PersonalityMod;
 import io.wispforest.personality.PersonalityNetworking;
-import io.wispforest.personality.config.Config;
-import io.wispforest.personality.storage.Character;
-import io.wispforest.personality.storage.CharacterManager;
+import io.wispforest.personality.server.config.Config;
+import io.wispforest.personality.Character;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
@@ -18,7 +16,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 
-public class ServerSideInitializer implements ModInitializer {
+public class PersonalityServer implements ModInitializer {
 
 	public static final DamageSource DEATH_BY_OLD_AGE = DamageSourceAccessor.createDamageSource("oldAge");
 
@@ -27,25 +25,26 @@ public class ServerSideInitializer implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		Commands.register();
-		CharacterManager.loadCharacterReference();
 		PersonalityNetworking.registerNetworking();
 
-		ServerLifecycleEvents.SERVER_STARTED.register(PersonalityMod.id("on_startup"), ServerSideInitializer::onStart);
-		ServerTickEvents.END_WORLD_TICK.register(PersonalityMod.id("tick"), ServerSideInitializer::onTick);
+		ServerTickEvents.END_WORLD_TICK.register(PersonalityMod.id("tick"), PersonalityServer::onTick);
+		ServerWorldEvents.LOAD.register(PersonalityMod.id("on_world_load"), PersonalityServer::onWorldLoad);
 	}
 
-	public static void onStart(MinecraftServer server) {
-		ServerSideInitializer.server = server;
+
+	public static void onWorldLoad(MinecraftServer server, ServerWorld world) {
+		PersonalityServer.server = server;
+		ServerCharacters.loadCharacterReference();
 	}
 
 	public static void onTick(ServerWorld world) {
 		for (ServerPlayerEntity player : world.getPlayers()) {
-			Character c = CharacterManager.getCharacter(player);
+			Character c = ServerCharacters.getCharacter(player);
 			if (c == null)
 				return;
 
 			if (c.getAge() >= c.getMaxAge()) {
-				CharacterManager.deleteCharacter(c.getUUID());
+				ServerCharacters.deleteCharacter(c.getUUID());
 				player.damage(DEATH_BY_OLD_AGE, Float.MAX_VALUE);
 				continue;
 			}

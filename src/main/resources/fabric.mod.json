@@ -19,7 +19,9 @@
 
   "environment": "*",
   "entrypoints": {
-    "main": [ "io.wispforest.personality.initializers.ServerSideInitializer" ],
+    "main": [
+      "io.wispforest.personality.server.PersonalityServer"
+    ],
     "client": [ "io.wispforest.personality.client.PersonalityClient" ]
   },
   "mixins": [ "personality.mixins.json" ],

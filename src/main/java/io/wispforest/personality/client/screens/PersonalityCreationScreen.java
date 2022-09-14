@@ -1,20 +1,16 @@
-package io.wispforest.personality.screens;
+package io.wispforest.personality.client.screens;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.wispforest.owo.Owo;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.component.Components;
-import io.wispforest.owo.ui.component.EntityComponent;
 import io.wispforest.owo.ui.component.TextureComponent;
 import io.wispforest.owo.ui.container.*;
 import io.wispforest.owo.ui.core.*;
-import io.wispforest.owo.ui.event.WindowResizeCallback;
 import io.wispforest.owo.ui.util.Drawer;
 import io.wispforest.owo.ui.util.UIErrorToast;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;

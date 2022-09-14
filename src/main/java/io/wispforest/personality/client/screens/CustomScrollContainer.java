@@ -1,4 +1,4 @@
-package io.wispforest.personality.screens;
+package io.wispforest.personality.client.screens;
 
 import io.wispforest.owo.ui.container.ScrollContainer;
 import io.wispforest.owo.ui.core.Component;

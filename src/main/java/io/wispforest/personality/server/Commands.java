@@ -1,4 +1,4 @@
-package io.wispforest.personality;
+package io.wispforest.personality.server;
 
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -7,8 +7,8 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.logging.LogUtils;
-import io.wispforest.personality.storage.Character;
-import io.wispforest.personality.storage.CharacterManager;
+import io.wispforest.personality.Character;
+import io.wispforest.personality.PersonalityNetworking;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -20,7 +20,6 @@ import net.minecraft.text.Text;
 import org.slf4j.Logger;
 
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -143,9 +142,9 @@ public class Commands {
 
             Character c = new Character(name, gender, description, heightOffset, age, activityOffset);
 
-            CharacterManager.playerIDToCharacterID.put(player.getUuidAsString(), c.getUUID());
-            CharacterManager.saveCharacter(c);
-            CharacterManager.saveCharacterReference();
+            ServerCharacters.playerIDToCharacterID.put(player.getUuidAsString(), c.getUUID());
+            ServerCharacters.saveCharacter(c);
+            ServerCharacters.saveCharacterReference();
 
             return msg(context, "Character Created");
         }
@@ -168,7 +167,7 @@ public class Commands {
     private static int setProperty(CommandContext<ServerCommandSource> context, Supplier<Integer> code) {
         try {
             int out = code.get();
-            CharacterManager.saveCharacter(CharacterManager.getCharacter(context.getSource().getPlayer()));
+            ServerCharacters.saveCharacter(ServerCharacters.getCharacter(context.getSource().getPlayer()));
             return out;
         }
         catch (Exception e) {
@@ -191,12 +190,12 @@ public class Commands {
             ServerPlayerEntity player = context.getSource().getPlayer();
             MutableText text = Text.literal("\n§nKnown Characters§r:\n\n");
 
-            Character c = CharacterManager.getCharacter(player);
+            Character c = ServerCharacters.getCharacter(player);
 
             if(c == null) return errorNoCharacterMsg(context, context.getSource().getPlayer());
 
             for (String uuid : c.knowCharacters) {
-                Character pCharacter = CharacterManager.getCharacter(uuid);
+                Character pCharacter = ServerCharacters.getCharacter(uuid);
 
                 if(pCharacter != null) {
                     text.append(Text.literal(c.getName() + "\n").setStyle(Style.EMPTY.withHoverEvent(
@@ -216,12 +215,12 @@ public class Commands {
 
     private static int addKnownCharacterByPlayer(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
         ServerPlayerEntity player = context.getSource().getPlayer();
-        Character c = CharacterManager.getCharacter(player);
+        Character c = ServerCharacters.getCharacter(player);
 
         if(c == null) return errorNoCharacterMsg(context, context.getSource().getPlayer());
 
         for (ServerPlayerEntity p : getPlayers(context, "players")) {
-            Character pCharacter = CharacterManager.getCharacter(p);
+            Character pCharacter = ServerCharacters.getCharacter(p);
 
             if(pCharacter != null) {
                 c.knowCharacters.add(pCharacter.getUUID());
@@ -230,29 +229,29 @@ public class Commands {
             }
         }
 
-        CharacterManager.saveCharacter(c);
+        ServerCharacters.saveCharacter(c);
         return msg(context, "Character(s) Added");
     }
 
     private static int addKnownCharacterByUUID(CommandContext<ServerCommandSource> context) {
-        Character c = CharacterManager.getCharacter(context.getSource().getPlayer());
+        Character c = ServerCharacters.getCharacter(context.getSource().getPlayer());
 
         if(c == null) return errorNoCharacterMsg(context, context.getSource().getPlayer());
 
         c.knowCharacters.add(getString(context, "uuid"));
-        CharacterManager.saveCharacter(c);
+        ServerCharacters.saveCharacter(c);
 
         return msg(context, "Character Added");
     }
 
     private static int removeKnownCharacterByPlayer(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
         ServerPlayerEntity player = context.getSource().getPlayer();
-        Character c = CharacterManager.getCharacter(player);
+        Character c = ServerCharacters.getCharacter(player);
 
         if(c == null) return errorNoCharacterMsg(context, context.getSource().getPlayer());
 
         for (ServerPlayerEntity p : getPlayers(context, "players")) {
-            Character pCharacter = CharacterManager.getCharacter(p);
+            Character pCharacter = ServerCharacters.getCharacter(p);
 
             if(pCharacter != null) {
                 c.knowCharacters.remove(pCharacter.getUUID());
@@ -261,37 +260,37 @@ public class Commands {
             }
         }
 
-        CharacterManager.saveCharacter(c);
+        ServerCharacters.saveCharacter(c);
         return msg(context, "Character(s) Removed");
     }
 
     private static int removeKnownCharacterByUUID(CommandContext<ServerCommandSource> context) {
-        Character c = CharacterManager.getCharacter(context.getSource().getPlayer());
+        Character c = ServerCharacters.getCharacter(context.getSource().getPlayer());
 
         if(c == null) return errorNoCharacterMsg(context, context.getSource().getPlayer());
 
         c.knowCharacters.remove( getString(context, "uuid") );
-        CharacterManager.saveCharacter(c);
+        ServerCharacters.saveCharacter(c);
 
         return msg(context, "Character Removed");
     }
 
     private static int deleteCharacter(CommandContext<ServerCommandSource> context) {
-        Character c = CharacterManager.getCharacter(context.getSource().getPlayer());
+        Character c = ServerCharacters.getCharacter(context.getSource().getPlayer());
 
         if(c == null) return errorNoCharacterMsg(context, context.getSource().getPlayer());
 
-        CharacterManager.deleteCharacter(c);
+        ServerCharacters.deleteCharacter(c);
 
         return msg(context, "Character(s) Deleted");
     }
 
     private static int deleteCharacterByPlayer(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
         for (ServerPlayerEntity p : getPlayers(context, "players")) {
-           Character pCharacter = CharacterManager.getCharacter(p);
+           Character pCharacter = ServerCharacters.getCharacter(p);
 
             if(pCharacter != null) {
-                CharacterManager.deleteCharacter(pCharacter);
+                ServerCharacters.deleteCharacter(pCharacter);
             } else {
                 LOGGER.error("There was a attempt to delete a players character but the CharacterManager could not find anything: [Player: {}]", p);
             }
@@ -301,7 +300,7 @@ public class Commands {
     }
 
     private static int deleteCharacterByUUID(CommandContext<ServerCommandSource> context) {
-        CharacterManager.deleteCharacter(getString(context, "uuid"));
+        ServerCharacters.deleteCharacter(getString(context, "uuid"));
         return msg(context, "Character Deleted");
     }
 
@@ -314,16 +313,16 @@ public class Commands {
     }
 
     private static Character getCharacterFromSelf(CommandContext<ServerCommandSource> context) {
-        return CharacterManager.getCharacter(context.getSource().getPlayer());
+        return ServerCharacters.getCharacter(context.getSource().getPlayer());
     }
 
     private static Character getCharacterFromUUID(CommandContext<ServerCommandSource> context) {
-        return CharacterManager.getCharacter(getString(context, "uuid"));
+        return ServerCharacters.getCharacter(getString(context, "uuid"));
     }
 
     private static Character getCharacterFromPlayer(CommandContext<ServerCommandSource> context) {
         try {
-            return CharacterManager.getCharacter(getPlayer(context, "player"));
+            return ServerCharacters.getCharacter(getPlayer(context, "player"));
         } catch (CommandSyntaxException | NoSuchElementException e) {
             e.printStackTrace();
             return null;

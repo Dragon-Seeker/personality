@@ -1,4 +1,4 @@
-package io.wispforest.personality.storage;
+package io.wispforest.personality.server;
 
 import blue.endless.jankson.Jankson;
 import blue.endless.jankson.api.SyntaxError;
@@ -8,9 +8,10 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import io.wispforest.personality.initializers.ServerSideInitializer;
+import io.wispforest.personality.Character;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.WorldSavePath;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -22,14 +23,14 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CharacterManager {
+public class ServerCharacters {
 
     private static final Jankson jankson = Jankson.builder().build();
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private static final Type REF_MAP_TYPE = new TypeToken<Map<String, String>>() {}.getType();
 
-    private static final Path CHARACTER_PATH = FabricLoader.getInstance().getGameDir();
-    private static final Path REFERENCE_PATH = CHARACTER_PATH.resolve("reference.json");
+    private static Path CHARACTER_PATH = FabricLoader.getInstance().getGameDir();
+    private static Path REFERENCE_PATH = CHARACTER_PATH.resolve("reference.json");
 
     public static BiMap<String, String> playerIDToCharacterID = HashBiMap.create();
     public static Map<String, Character> characterIDToCharacter = new HashMap<>();
@@ -41,12 +42,11 @@ public class CharacterManager {
 
     @Nullable
     public static Character getCharacter(String uuid) {
+        Character c = characterIDToCharacter.get(uuid);
+        if (c != null)
+            return c;
+
         try {
-            Character c = characterIDToCharacter.get(uuid);
-
-            if (c != null)
-                return c;
-
             File file = getPath(uuid).toFile();
             if (!file.exists())
                 return null;
@@ -68,7 +68,7 @@ public class CharacterManager {
 
     @Nullable
     public static ServerPlayerEntity getPlayer(String uuid) {
-        return ServerSideInitializer.server.getPlayerManager().getPlayer(uuid);
+        return PersonalityServer.server.getPlayerManager().getPlayer(uuid);
     }
 
     @Nullable
@@ -108,6 +108,9 @@ public class CharacterManager {
     }
 
     public static void loadCharacterReference() {
+        REFERENCE_PATH = PersonalityServer.server.getSavePath(WorldSavePath.ROOT).resolve("mod_data/personality");
+        CHARACTER_PATH = REFERENCE_PATH.resolve("characters");
+
         try {
             JsonObject o = gson.fromJson(Files.readString(REFERENCE_PATH), JsonObject.class);
             playerIDToCharacterID = HashBiMap.create(gson.fromJson(o.getAsJsonObject("player_to_character"), REF_MAP_TYPE));

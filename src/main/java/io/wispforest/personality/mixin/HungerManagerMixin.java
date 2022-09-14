@@ -1,8 +1,8 @@
 package io.wispforest.personality.mixin;
 
-import io.wispforest.personality.config.Config;
-import io.wispforest.personality.storage.Character;
-import io.wispforest.personality.storage.CharacterManager;
+import io.wispforest.personality.server.ServerCharacters;
+import io.wispforest.personality.server.config.Config;
+import io.wispforest.personality.Character;
 import net.minecraft.entity.player.HungerManager;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -25,7 +25,7 @@ public abstract class HungerManagerMixin {
         if (!(player instanceof ServerPlayerEntity))
             return;
 
-        Character character = CharacterManager.getCharacter((ServerPlayerEntity)player);
+        Character character = ServerCharacters.getCharacter((ServerPlayerEntity)player);
 
         if (character != null && character.getStage() == Character.Stage.YOUTH)
             addExhaustion(exhaustion * Config.YOUTH_EXHAUSTION_MULTIPLIER);
