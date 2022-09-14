@@ -1,6 +1,8 @@
 package io.wispforest.personality.screens;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import io.github.apace100.origins.origin.Origin;
+import io.github.apace100.origins.origin.OriginRegistry;
 import io.wispforest.owo.Owo;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.component.Components;
@@ -18,6 +20,8 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
+
+import java.util.List;
 
 public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> {
 
@@ -107,10 +111,11 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> {
                 .surface(Surface.DARK_PANEL));
 
         // END
+        mainFlowLayout.positioning(Positioning.relative(50, 50));
 
-        mainFlowLayout.positioning(Positioning.relative(50, -200));
-
-        mainFlowLayout.positioning().animate(2000, Easing.CUBIC, Positioning.relative(50, 50)).forwards();
+//        mainFlowLayout.positioning(Positioning.relative(50, -200));
+//
+//        mainFlowLayout.positioning().animate(2000, Easing.CUBIC, Positioning.relative(50, 50)).forwards();
 
         //Origins Panel
 
@@ -129,44 +134,5 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> {
         });
     }
 
-    public static class CustomTextureComponent extends TextureComponent {
 
-//        private int width, height;
-
-        protected CustomTextureComponent(Identifier texture, int width, int height, int u, int v, int regionWidth, int regionHeight, int textureWidth, int textureHeight) {
-            super(texture, u, v, regionWidth, regionHeight, textureWidth, textureHeight);
-
-            this.width = width;
-            this.height = height;
-        }
-
-        @Override
-        public void draw(MatrixStack matrices, int mouseX, int mouseY, float partialTicks, float delta) {
-            RenderSystem.setShaderTexture(0, this.texture);
-            RenderSystem.enableDepthTest();
-
-            matrices.push();
-            matrices.translate(x, y, 0);
-            matrices.scale(this.width / (float) this.regionWidth, this.height / (float) this.regionHeight, 0);
-
-            var visibleArea = this.visibleArea.get();
-
-            int bottomEdge = Math.min(visibleArea.y() + visibleArea.height(), regionHeight);
-            int rightEdge = Math.min(visibleArea.x() + visibleArea.width(), regionWidth);
-
-            Drawer.drawTexture(matrices,
-                    visibleArea.x(),
-                    visibleArea.y(),
-                    width,
-                    height,
-                    this.u + visibleArea.x(),
-                    this.v + visibleArea.y(),
-                    rightEdge - visibleArea.x(),
-                    bottomEdge - visibleArea.y(),
-                    this.textureWidth, this.textureHeight
-            );
-
-            matrices.pop();
-        }
-    }
 }

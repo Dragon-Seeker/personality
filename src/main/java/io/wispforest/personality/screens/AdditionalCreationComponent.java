@@ -4,34 +4,26 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.apace100.apoli.power.PowerType;
 import io.github.apace100.origins.Origins;
 import io.github.apace100.origins.badge.Badge;
-import io.github.apace100.origins.networking.ModPackets;
 import io.github.apace100.origins.origin.Impact;
 import io.github.apace100.origins.origin.Origin;
 import io.github.apace100.origins.origin.OriginLayer;
 import io.github.apace100.origins.origin.OriginRegistry;
 import io.github.apace100.origins.registry.ModItems;
-import io.github.apace100.origins.screen.OriginDisplayScreen;
-import io.netty.buffer.Unpooled;
-import io.wispforest.owo.ui.base.BaseComponent;
 import io.wispforest.owo.ui.component.Components;
+import io.wispforest.owo.ui.component.ItemComponent;
+import io.wispforest.owo.ui.component.LabelComponent;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.container.ScrollContainer;
-import io.wispforest.owo.ui.container.VerticalFlowLayout;
-import io.wispforest.owo.ui.core.Insets;
-import io.wispforest.owo.ui.core.Positioning;
-import io.wispforest.owo.ui.core.Sizing;
-import io.wispforest.owo.ui.core.Surface;
+import io.wispforest.owo.ui.core.*;
 import io.wispforest.owo.ui.util.Drawer;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import io.wispforest.personality.mixin.client.ScrollContainerAccessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.tooltip.TooltipComponent;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -56,7 +48,7 @@ public class AdditionalCreationComponent {
     protected static final int windowHeight = 182;
     protected int scrollPos = 0;
     private int currentMaxScroll = 0;
-    private float time = 0;
+    private static float time = 0;
 
     protected int guiTop, guiLeft;
 
@@ -113,7 +105,7 @@ public class AdditionalCreationComponent {
 
     //----------------------------
 
-    public void showOrigin(Origin origin,OriginLayer layer, boolean isRandom) {
+    public void showOrigin(Origin origin, OriginLayer layer, boolean isRandom) {
         this.origin = origin;
         this.layer = layer;
         this.isOriginRandom = isRandom;
@@ -125,11 +117,11 @@ public class AdditionalCreationComponent {
         this.randomOriginText = text;
     }
 
-    public class RenderedBadge {
-        private final PowerType<?> powerType;
-        private final Badge badge;
-        private final int x;
-        private final int y;
+    public static class RenderedBadge {
+        public final PowerType<?> powerType;
+        public final Badge badge;
+        public final int x;
+        public final int y;
 
         public RenderedBadge(PowerType<?> powerType, Badge badge, int x, int y) {
             this.powerType = powerType;
@@ -143,7 +135,7 @@ public class AdditionalCreationComponent {
         }
 
         public List<TooltipComponent> getTooltipComponents(TextRenderer textRenderer, int widthLimit) {
-            return badge.getTooltipComponents(powerType, widthLimit, AdditionalCreationComponent.this.time, textRenderer);
+            return badge.getTooltipComponents(powerType, widthLimit, AdditionalCreationComponent.time, textRenderer);
         }
 
     }
@@ -194,52 +186,80 @@ public class AdditionalCreationComponent {
             .child(Containers.verticalFlow(Sizing.fixed(176), Sizing.fixed(182))
                 .child(
                     Containers.verticalFlow(Sizing.fixed(162), Sizing.fixed(168))
-                        .child(Containers.verticalScroll(Sizing.fixed(149), Sizing.fixed(142), Components.label(Text.of(loremIpsum)).maxWidth(149))
-                            .positioning(Positioning.absolute(6, 20)))
+                        .child(Containers.verticalScroll(Sizing.fixed(149), Sizing.fixed(142), new OriginDescriptionComponent(getCurrentOrigin(), randomOriginText, isOriginRandom).maxWidth(149))
+                            .positioning(Positioning.absolute(6, 20))
+                            .id("origin_desc"))
                         .surface(INVERSE_PANEL)
                         .positioning(Positioning.absolute(7, 7))
+                        .zIndex(-1)
                 )
                 //Bar Length
                 .child(Components.texture(ORIGINS_GUI_TEXTURE, 29,0, 7, 16,48, 48)
-                    .sizing(Sizing.fixed(123), Sizing.fixed(16))
-                    .positioning(Positioning.absolute(34,14)))
+                    .sizing(Sizing.fixed(122), Sizing.fixed(16))
+                    .positioning(Positioning.absolute(35,15)))
                 //Bar end
                 .child(Components.texture(ORIGINS_GUI_TEXTURE, 36,0, 3, 16,48, 48)
-                    .positioning(Positioning.absolute(34 + 123,14)))
+                    .positioning(Positioning.absolute(35 + 122,15)))
                 //Origin Label
                 .child(Components.label(getCurrentOrigin().getName())
                     .shadow(true)
-                    .positioning(Positioning.absolute(37, 18))
+                    .positioning(Positioning.absolute(39, 19))
                     .id("origin_name"))
+                .child(new HardnessRatingComponent(getCurrentOrigin().getImpact())
+                    .positioning(Positioning.absolute(128, 19))
+                    .id("origin_impact"))
                 //Square Symbol
                 .child(Components.texture(ORIGINS_GUI_TEXTURE, 0,0, 26, 26, 48, 48)
-                    .positioning(Positioning.absolute(9,9)))
-                .surface(Surface.PANEL)
-            ).child(Components.button(Text.of("<"), 20, 20, button -> {
-                    currentOrigin = (currentOrigin - 1 + maxSelection) % maxSelection;
-                    Origin newOrigin = getCurrentOriginInternal();
-                    showOrigin(newOrigin, layerList.get(currentLayerIndex), newOrigin == randomOrigin);
-                }).positioning(Positioning.absolute(182 - 20, 176 + 5))
-            ).child(Components.button(Text.of("<"), 20, 20, button -> {
-                    currentOrigin = (currentOrigin - 1 + maxSelection) % maxSelection;
-                    Origin newOrigin = getCurrentOriginInternal();
-                    showOrigin(newOrigin, layerList.get(currentLayerIndex), newOrigin == randomOrigin);
-                }).positioning(Positioning.absolute(0, 176 + 5))
-            ).child(Components.button(Text.translatable(Origins.MODID + ".gui.select"), 100, 20, button -> {
-//                    PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
-//                    if(currentOrigin == originSelection.size()) {
-//                        buf.writeString(layerList.get(currentLayerIndex).getIdentifier().toString());
-//                        ClientPlayNetworking.send(ModPackets.CHOOSE_RANDOM_ORIGIN, buf);
-//                    } else {
-//                        buf.writeString(getCurrentOrigin().getIdentifier().toString());
-//                        buf.writeString(layerList.get(currentLayerIndex).getIdentifier().toString());
-//                        ClientPlayNetworking.send(ModPackets.CHOOSE_ORIGIN, buf);
-//                    }
-//                    openNextLayerScreen();
-                }).positioning(Positioning.absolute(50, 176 + 5))
-            )
+                    .positioning(Positioning.absolute(10,10)))
+                .child(Components.item(getCurrentOrigin().getDisplayItem())
+                    .positioning(Positioning.absolute(15, 15))
+                    .id("origin_icon"))
+                .surface(Surface.PANEL))
+            .child(Containers.horizontalFlow(Sizing.content(), Sizing.content())
+                .child(Components.button(Text.of("<"), 20, 20, button -> {
+                        currentOrigin = (currentOrigin - 1 + maxSelection) % maxSelection;
+                        Origin newOrigin = getCurrentOriginInternal();
+                        showOrigin(newOrigin, layerList.get(currentLayerIndex), newOrigin == randomOrigin);
+                        updateOriginData(rootComponent);
+                    }))
+                .child(Components.button(Text.translatable(Origins.MODID + ".gui.select"), 100, 20, button -> {
+                    //                    PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
+                    //                    if(currentOrigin == originSelection.size()) {
+                    //                        buf.writeString(layerList.get(currentLayerIndex).getIdentifier().toString());
+                    //                        ClientPlayNetworking.send(ModPackets.CHOOSE_RANDOM_ORIGIN, buf);
+                    //                    } else {
+                    //                        buf.writeString(getCurrentOrigin().getIdentifier().toString());
+                    //                        buf.writeString(layerList.get(currentLayerIndex).getIdentifier().toString());
+                    //                        ClientPlayNetworking.send(ModPackets.CHOOSE_ORIGIN, buf);
+                    //                    }
+                    //                    openNextLayerScreen();
+                    })
+                    .margins(Insets.horizontal(10)))
+                .child(Components.button(Text.of(">"), 20, 20, button -> {
+                        currentOrigin = (currentOrigin + 1) % maxSelection;
+                        Origin newOrigin = getCurrentOriginInternal();
+                        showOrigin(newOrigin, layerList.get(currentLayerIndex), newOrigin == randomOrigin);
+                        updateOriginData(rootComponent);
+                    }))
+                .margins(Insets.top(5))
+            ).horizontalAlignment(HorizontalAlignment.CENTER)
             .margins(Insets.left(20))
         );
+    }
+
+    public void updateOriginData(FlowLayout rootComponent){
+        rootComponent.childById(LabelComponent.class, "origin_name").text(getCurrentOrigin().getName());
+        rootComponent.childById(HardnessRatingComponent.class, "origin_impact").setImpact(getCurrentOrigin().getImpact());
+        rootComponent.childById(ItemComponent.class, "origin_icon").stack(getCurrentOrigin().getDisplayItem());
+
+        ScrollContainer<?> container = rootComponent.childById(ScrollContainer.class, "origin_desc");
+
+        OriginDescriptionComponent child = ((OriginDescriptionComponent)container.child()).origin(getCurrentOrigin(), randomOriginText, isOriginRandom);
+
+        container.onChildMutated(child);
+
+        ((ScrollContainerAccessor)container).personality$setCurrentScrollPosition(0);
+        ((ScrollContainerAccessor)container).personality$setLastScrollPosition(-1);
     }
 
     //----------------------------
@@ -289,7 +309,6 @@ public class AdditionalCreationComponent {
             "Sed sed risus pretium quam vulputate. Mauris pellentesque pulvinar pellentesque habitant morbi tristique senectus et netus. Tristique senectus et netus et malesuada. Eget aliquet nibh praesent tristique magna sit amet. Quis auctor elit sed vulputate. Odio aenean sed adipiscing diam donec adipiscing tristique risus nec. Feugiat pretium nibh ipsum consequat nisl vel pretium. Egestas erat imperdiet sed euismod nisi porta lorem mollis aliquam. A arcu cursus vitae congue mauris. Diam in arcu cursus euismod quis viverra nibh cras pulvinar.\n" +
             "\n" +
             "Tincidunt vitae semper quis lectus nulla at. Proin fermentum leo vel orci porta non pulvinar neque laoreet. Pretium fusce id velit ut tortor pretium. Porttitor lacus luctus accumsan tortor posuere ac. Morbi non arcu risus quis varius. Euismod elementum nisi quis eleifend quam adipiscing. Et netus et malesuada fames ac turpis egestas sed. Dui id ornare arcu odio ut. Sit amet massa vitae tortor condimentum lacinia. Amet volutpat consequat mauris nunc congue nisi vitae suscipit tellus.";
-
 
 
 }
