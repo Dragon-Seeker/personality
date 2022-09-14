@@ -48,7 +48,7 @@ public class AdditionalCreationComponent {
     protected static final int windowHeight = 182;
     protected int scrollPos = 0;
     private int currentMaxScroll = 0;
-    private static float time = 0;
+    public static float time = 0;
 
     protected int guiTop, guiLeft;
 
@@ -120,14 +120,11 @@ public class AdditionalCreationComponent {
     public static class RenderedBadge {
         public final PowerType<?> powerType;
         public final Badge badge;
-        public final int x;
-        public final int y;
 
-        public RenderedBadge(PowerType<?> powerType, Badge badge, int x, int y) {
+
+        public RenderedBadge(PowerType<?> powerType, Badge badge) {
             this.powerType = powerType;
             this.badge = badge;
-            this.x = x;
-            this.y = y;
         }
 
         public boolean hasTooltip() {
@@ -186,9 +183,13 @@ public class AdditionalCreationComponent {
             .child(Containers.verticalFlow(Sizing.fixed(176), Sizing.fixed(182))
                 .child(
                     Containers.verticalFlow(Sizing.fixed(162), Sizing.fixed(168))
-                        .child(Containers.verticalScroll(Sizing.fixed(149), Sizing.fixed(142), new OriginDescriptionComponent(getCurrentOrigin(), randomOriginText, isOriginRandom).maxWidth(149))
-                            .positioning(Positioning.absolute(6, 20))
-                            .id("origin_desc"))
+                        .child(Containers.verticalScroll(Sizing.fixed(149), Sizing.fixed(142),
+                                new OriginInfoContainer(Sizing.fixed(137), Sizing.content(), getCurrentOrigin(), randomOriginText, isOriginRandom) //143
+                                        .margins(Insets.left(6)
+                                ))
+                                .scrollbarThiccness(6)
+                                .positioning(Positioning.absolute(6, 20))
+                                .id("origin_info"))
                         .surface(INVERSE_PANEL)
                         .positioning(Positioning.absolute(7, 7))
                         .zIndex(-1)
@@ -248,18 +249,18 @@ public class AdditionalCreationComponent {
     }
 
     public void updateOriginData(FlowLayout rootComponent){
+        ScrollContainer<?> container = rootComponent.childById(ScrollContainer.class, "origin_info");
+
+        OriginInfoContainer child = ((OriginInfoContainer)container.child());
+
+        //container.onChildMutated(child);
+        container.scrollTo(child);
+
+        child.origin(getCurrentOrigin(), randomOriginText, isOriginRandom);
+
         rootComponent.childById(LabelComponent.class, "origin_name").text(getCurrentOrigin().getName());
         rootComponent.childById(HardnessRatingComponent.class, "origin_impact").setImpact(getCurrentOrigin().getImpact());
         rootComponent.childById(ItemComponent.class, "origin_icon").stack(getCurrentOrigin().getDisplayItem());
-
-        ScrollContainer<?> container = rootComponent.childById(ScrollContainer.class, "origin_desc");
-
-        OriginDescriptionComponent child = ((OriginDescriptionComponent)container.child()).origin(getCurrentOrigin(), randomOriginText, isOriginRandom);
-
-        container.onChildMutated(child);
-
-        ((ScrollContainerAccessor)container).personality$setCurrentScrollPosition(0);
-        ((ScrollContainerAccessor)container).personality$setLastScrollPosition(-1);
     }
 
     //----------------------------
