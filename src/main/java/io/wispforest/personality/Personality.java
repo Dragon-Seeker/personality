@@ -11,6 +11,7 @@ public class Personality implements ModInitializer {
 	public void onInitialize() {
 		Commands.register();
 		CharacterManager.loadCharacterReference();
+		PersonalityNetworking.registerNetworking();
 	}
 
 }

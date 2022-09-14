@@ -11,6 +11,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
+import java.util.Optional;
+
 @Mixin(HungerManager.class)
 public abstract class HungerManagerMixin {
 
@@ -18,10 +20,11 @@ public abstract class HungerManagerMixin {
 
     @Redirect(method = "update", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/HungerManager;addExhaustion(F)V"))
     public void personality$addExtraExhaustionForYouth(HungerManager instance, float exhaustion, PlayerEntity player) {
-        if (!(player instanceof ServerPlayerEntity))
-            return;
+        if (!(player instanceof ServerPlayerEntity)) return;
 
-        if (CharacterManager.getCharacter((ServerPlayerEntity) player).getStage() == Character.Stage.YOUTH)
+        Character character = CharacterManager.getCharacter((ServerPlayerEntity)(Object)this);
+
+        if (character != null && character.getStage() == Character.Stage.YOUTH)
             addExhaustion(exhaustion * Personality.YOUTH_EXHAUSTION_MULTIPLIER);
         else
             addExhaustion(exhaustion);

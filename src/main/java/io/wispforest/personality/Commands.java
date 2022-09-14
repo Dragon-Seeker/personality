@@ -6,6 +6,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.mojang.logging.LogUtils;
 import io.wispforest.personality.storage.Character;
 import io.wispforest.personality.storage.CharacterManager;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -16,7 +17,10 @@ import net.minecraft.text.HoverEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
+import org.slf4j.Logger;
 
+import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -29,6 +33,8 @@ import static net.minecraft.command.argument.EntityArgumentType.*;
 import static net.minecraft.server.command.CommandManager.*;
 
 public class Commands {
+
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     public static void register() {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
@@ -95,6 +101,17 @@ public class Commands {
                         .executes(Commands::removeKnownCharacterByPlayer))
                     .then(argument("uuid", string())
                         .executes(Commands::removeKnownCharacterByUUID))))
+
+            .then(literal("screen")
+                .executes(context -> {
+                    if(context.getSource().getPlayer() != null) {
+                        PersonalityNetworking.CHANNEL.serverHandle(context.getSource().getPlayer()).send(new PersonalityNetworking.OpenPersonalityCreationScreen());
+
+                        return msg(context, "Opening Screen");
+                    }
+
+                    return msg(context, "");
+                }))
             ;
     }
 
@@ -155,10 +172,9 @@ public class Commands {
                             + "\n§lHeightOffset§r: " + c.getHeightOffset() + "\n"
             ), false);
             return 1;
-        }
-        catch (Exception e) {
+        } catch(Exception e){
             e.printStackTrace();
-            return 0;
+            return errorMsg(context);
         }
     }
 
@@ -188,8 +204,19 @@ public class Commands {
             ServerPlayerEntity player = context.getSource().getPlayer();
             MutableText text = Text.literal("\n§nKnown Characters§r:\n\n");
 
-            for (String uuid : CharacterManager.getCharacter(player).knowCharacters)
-                text.append(knownCharacterEntry(CharacterManager.getCharacter(uuid)));
+            Character c = CharacterManager.getCharacter(player);
+
+            if(c == null) return errorNoCharacterMsg(context, context.getSource().getPlayer());
+
+            for (String uuid : c.knowCharacters) {
+                Character pCharacter = CharacterManager.getCharacter(uuid);
+
+                if(pCharacter != null) {
+                    text.append(knownCharacterEntry(pCharacter));
+                } else {
+                    LOGGER.error("A known Character of [{}] wasn't found by the character manager: [UUID: {}]", player, uuid);
+                }
+            }
 
             player.sendMessage(text);
         }
@@ -216,8 +243,17 @@ public class Commands {
         ServerPlayerEntity player = context.getSource().getPlayer();
         Character c = CharacterManager.getCharacter(player);
 
-        for (ServerPlayerEntity p : getPlayers(context, "players"))
-            c.knowCharacters.add(CharacterManager.getCharacter(p).getUUID());
+        if(c == null) return errorNoCharacterMsg(context, context.getSource().getPlayer());
+
+        for (ServerPlayerEntity p : getPlayers(context, "players")) {
+            Character pCharacter = CharacterManager.getCharacter(p);
+
+            if(pCharacter != null) {
+                c.knowCharacters.add(pCharacter.getUUID());
+            } else {
+                LOGGER.error("Could not add a known Character to [{}] as it wasn't found by the character manager: [Player: {}]", player, p);
+            }
+        }
 
         CharacterManager.saveCharacter(c);
         return msg(context, "Character(s) Added");
@@ -225,7 +261,10 @@ public class Commands {
 
     private static int addKnownCharacterByUUID(CommandContext<ServerCommandSource> context) {
         Character c = CharacterManager.getCharacter(context.getSource().getPlayer());
-        c.knowCharacters.add( getString(context, "uuid") );
+
+        if(c == null) return errorNoCharacterMsg(context, context.getSource().getPlayer());
+
+        c.knowCharacters.add(getString(context, "uuid"));
         CharacterManager.saveCharacter(c);
 
         return msg(context, "Character Added");
@@ -235,8 +274,17 @@ public class Commands {
         ServerPlayerEntity player = context.getSource().getPlayer();
         Character c = CharacterManager.getCharacter(player);
 
-        for (ServerPlayerEntity p : getPlayers(context, "players"))
-            c.knowCharacters.remove(CharacterManager.getCharacter(p).getUUID());
+        if(c == null) return errorNoCharacterMsg(context, context.getSource().getPlayer());
+
+        for (ServerPlayerEntity p : getPlayers(context, "players")) {
+            Character pCharacter = CharacterManager.getCharacter(p);
+
+            if(pCharacter != null) {
+                c.knowCharacters.remove(pCharacter.getUUID());
+            } else {
+                LOGGER.error("Could not remove a known Character of [{}] as it wasn't found by the character manager: [Player: {}]", player, p);
+            }
+        }
 
         CharacterManager.saveCharacter(c);
         return msg(context, "Character(s) Removed");
@@ -244,6 +292,9 @@ public class Commands {
 
     private static int removeKnownCharacterByUUID(CommandContext<ServerCommandSource> context) {
         Character c = CharacterManager.getCharacter(context.getSource().getPlayer());
+
+        if(c == null) return errorNoCharacterMsg(context, context.getSource().getPlayer());
+
         c.knowCharacters.remove( getString(context, "uuid") );
         CharacterManager.saveCharacter(c);
 
@@ -251,13 +302,25 @@ public class Commands {
     }
 
     private static int deleteCharacter(CommandContext<ServerCommandSource> context) {
-        CharacterManager.deleteCharacter(CharacterManager.getCharacter( context.getSource().getPlayer() ));
+        Character c = CharacterManager.getCharacter(context.getSource().getPlayer());
+
+        if(c == null) return errorNoCharacterMsg(context, context.getSource().getPlayer());
+
+        CharacterManager.deleteCharacter(c);
+
         return msg(context, "Character(s) Deleted");
     }
 
     private static int deleteCharacterByPlayer(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
-       for (ServerPlayerEntity p : getPlayers(context, "players"))
-            CharacterManager.deleteCharacter(CharacterManager.getCharacter(p));
+        for (ServerPlayerEntity p : getPlayers(context, "players")) {
+           Character pCharacter = CharacterManager.getCharacter(p);
+
+            if(pCharacter != null) {
+                CharacterManager.deleteCharacter(pCharacter);
+            } else {
+                LOGGER.error("There was a attempt to delete a players character but the CharacterManager could not find anything: [Player: {}]", p);
+            }
+        }
 
         return msg(context, "Character(s) Deleted");
     }
@@ -286,7 +349,7 @@ public class Commands {
     private static Character getCharacterFromPlayer(CommandContext<ServerCommandSource> context) {
         try {
             return CharacterManager.getCharacter(getPlayer(context, "player"));
-        } catch (CommandSyntaxException e) {
+        } catch (CommandSyntaxException | NoSuchElementException e) {
             e.printStackTrace();
             return null;
         }
@@ -297,4 +360,11 @@ public class Commands {
         return 1;
     }
 
+    private static int errorMsg(CommandContext<ServerCommandSource> context){
+        return msg(context, "Something went Wrong.");
+    }
+
+    private static int errorNoCharacterMsg(CommandContext<ServerCommandSource> context, ServerPlayerEntity player){
+        return msg(context, "The current Player could not be found within the CharacterManager: [Player: " + context.getSource().getPlayer().toString()  + "] ");
+    }
 }

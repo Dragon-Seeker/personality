@@ -126,6 +126,4 @@ public class Character {
                 "\n}";
     }
 
-
-
 }

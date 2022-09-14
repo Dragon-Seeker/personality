@@ -21,6 +21,9 @@
   "entrypoints": {
     "main": [
       "io.wispforest.personality.Personality"
+    ],
+    "client": [
+      "io.wispforest.personality.client.PersonalityClient"
     ]
   },
   "mixins": [

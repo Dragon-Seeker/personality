@@ -10,6 +10,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.network.ServerPlayerEntity;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -18,6 +19,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class CharacterManager {
 
@@ -32,10 +34,12 @@ public class CharacterManager {
     public static BiMap<ServerPlayerEntity, Character> playerToCharacter = HashBiMap.create();
     public static Map<String, Character> characterIDToCharacter = new HashMap<>();
 
+    @Nullable
     public static Character getCharacter(ServerPlayerEntity player) {
         return getCharacter(playerIDToCharacterID.get(player.getUuidAsString()));
     }
 
+    @Nullable
     public static Character getCharacter(String uuid) {
         try {
             Character c = characterIDToCharacter.get(uuid);
