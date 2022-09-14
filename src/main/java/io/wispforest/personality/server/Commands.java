@@ -8,8 +8,10 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.logging.LogUtils;
 import io.wispforest.personality.Character;
-import io.wispforest.personality.PersonalityNetworking;
+import io.wispforest.personality.Networking;
+import io.wispforest.personality.packets.OpenCharacterCreationScreenPacket;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.stat.Stats;
@@ -102,15 +104,8 @@ public class Commands {
                         .executes(Commands::removeKnownCharacterByUUID))))
 
             .then(literal("screen")
-                .executes(context -> {
-                    if(context.getSource().getPlayer() != null) {
-                        PersonalityNetworking.CHANNEL.serverHandle(context.getSource().getPlayer()).send(new PersonalityNetworking.OpenPersonalityCreationScreen());
-
-                        return msg(context, "Opening Screen");
-                    }
-
-                    return msg(context, "");
-                }))
+                .then(literal("creation")
+                    .executes(Commands::openCreationScreen)))
             ;
     }
 
@@ -304,6 +299,17 @@ public class Commands {
         return msg(context, "Character Deleted");
     }
 
+    private static int openCreationScreen(CommandContext<ServerCommandSource> context) {
+        PlayerEntity player = context.getSource().getPlayer();
+        if (player != null) {
+            Networking.CHANNEL.serverHandle(player).send(new OpenCharacterCreationScreenPacket());
+
+            return msg(context, "Opening Screen");
+        }
+
+        return msg(context, "");
+    }
+
     //Helpers:
 
     private static CompletableFuture<Suggestions> suggestions(SuggestionsBuilder builder, String... suggestions) {
@@ -335,10 +341,12 @@ public class Commands {
     }
 
     private static int errorMsg(CommandContext<ServerCommandSource> context){
-        return msg(context, "Something went Wrong.");
+        return msg(context, "§cSomething went Wrong.");
     }
 
     private static int errorNoCharacterMsg(CommandContext<ServerCommandSource> context, ServerPlayerEntity player){
-        return msg(context, "The current Player could not be found within the CharacterManager: [Player: " + context.getSource().getPlayer().toString()  + "] ");
+        return msg(context, "§cThe current Player could not be found within the CharacterManager: [Player: " + context.getSource().getPlayer().toString()  + "] ");
     }
+
+
 }

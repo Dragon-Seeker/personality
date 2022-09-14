@@ -2,7 +2,7 @@ package io.wispforest.personality.server;
 
 import io.github.apace100.calio.mixin.DamageSourceAccessor;
 import io.wispforest.personality.PersonalityMod;
-import io.wispforest.personality.PersonalityNetworking;
+import io.wispforest.personality.Networking;
 import io.wispforest.personality.server.config.Config;
 import io.wispforest.personality.Character;
 import net.fabricmc.api.ModInitializer;
@@ -25,7 +25,7 @@ public class PersonalityServer implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		Commands.register();
-		PersonalityNetworking.registerNetworking();
+		Networking.registerNetworking();
 
 		ServerTickEvents.END_WORLD_TICK.register(PersonalityMod.id("tick"), PersonalityServer::onTick);
 		ServerWorldEvents.LOAD.register(PersonalityMod.id("on_world_load"), PersonalityServer::onWorldLoad);

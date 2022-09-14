@@ -111,6 +111,9 @@ public class ServerCharacters {
         REFERENCE_PATH = PersonalityServer.server.getSavePath(WorldSavePath.ROOT).resolve("mod_data/personality");
         CHARACTER_PATH = REFERENCE_PATH.resolve("characters");
 
+        playerIDToCharacterID.clear();
+        characterIDToCharacter.clear();
+
         try {
             JsonObject o = gson.fromJson(Files.readString(REFERENCE_PATH), JsonObject.class);
             playerIDToCharacterID = HashBiMap.create(gson.fromJson(o.getAsJsonObject("player_to_character"), REF_MAP_TYPE));
