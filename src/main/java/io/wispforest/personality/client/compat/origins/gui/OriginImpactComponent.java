@@ -1,4 +1,4 @@
-package io.wispforest.personality.client.screens;
+package io.wispforest.personality.client.compat.origins.gui;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.apace100.origins.Origins;
@@ -8,19 +8,18 @@ import io.wispforest.owo.ui.core.Sizing;
 import io.wispforest.owo.ui.util.Drawer;
 import net.minecraft.client.gui.tooltip.TooltipComponent;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 
 import java.util.List;
 
-public class HardnessRatingComponent extends BaseComponent {
+public class OriginImpactComponent extends BaseComponent {
 
     protected Impact impact;
 
     protected final int regionWidth, regionHeight;
     protected final int textureWidth, textureHeight;
 
-    protected HardnessRatingComponent(Impact impact) {
+    protected OriginImpactComponent(Impact impact) {
         this.regionWidth = 8;
         this.regionHeight = 8;
         this.textureWidth = 48;
@@ -40,7 +39,7 @@ public class HardnessRatingComponent extends BaseComponent {
 
     @Override
     public void draw(MatrixStack matrices, int mouseX, int mouseY, float partialTicks, float delta) {
-        RenderSystem.setShaderTexture(0, AdditionalCreationComponent.ORIGINS_GUI_TEXTURE);
+        RenderSystem.setShaderTexture(0, OriginSelectionComponent.ORIGINS_GUI_TEXTURE);
         RenderSystem.enableDepthTest();
 
         matrices.push();

@@ -1,30 +1,26 @@
 package io.wispforest.personality.client.screens;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import io.github.apace100.origins.origin.Origin;
-import io.github.apace100.origins.origin.OriginRegistry;
 import io.wispforest.owo.Owo;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.component.Components;
-import io.wispforest.owo.ui.component.TextureComponent;
 import io.wispforest.owo.ui.container.*;
 import io.wispforest.owo.ui.core.*;
-import io.wispforest.owo.ui.util.Drawer;
 import io.wispforest.owo.ui.util.UIErrorToast;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> {
 
-    AdditionalCreationComponent component;
+    List<PersonalityScreenAddon> screenAddons = new ArrayList<>();
 
-    public PersonalityCreationScreen(AdditionalCreationComponent additionalCreationComponent) {
-        component = additionalCreationComponent;
+    public PersonalityCreationScreen() {}
+
+    public void addAddon(PersonalityScreenAddon addon){
+        screenAddons.add(addon);
     }
 
     @Override
@@ -51,34 +47,6 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> {
         return false;
     }
 
-    public static void generateAdapterAndChildren(VerticalFlowLayout rootFlowLayout, int xOffset, int yOffset) {
-        HorizontalFlowLayout mainFlowLayout = Containers.horizontalFlow(Sizing.content(), Sizing.content());
-
-        //Panel 1
-
-        mainFlowLayout.child(Containers.verticalFlow(Sizing.content(), Sizing.fixed(182))
-                .child(
-                        Components.entity(Sizing.fixed(100), MinecraftClient.getInstance().player)
-                                .scaleToFit(true)
-                                .allowMouseRotation(true)
-                ).margins(Insets.right(20))
-                .surface(Surface.DARK_PANEL));
-
-        // END
-
-
-        //Panel 2
-
-        mainFlowLayout.child(Containers.verticalFlow(Sizing.fixed(180), Sizing.fixed(182))
-                .surface(Surface.DARK_PANEL));
-
-        // END
-
-        mainFlowLayout.positioning(Positioning.relative(20, 50));
-
-        rootFlowLayout.child(mainFlowLayout);
-    }
-
     @Override
     protected @NotNull OwoUIAdapter<FlowLayout> createAdapter() {
         return OwoUIAdapter.create(this, Containers::verticalFlow);
@@ -91,10 +59,9 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> {
         //Panel 1
 
         mainFlowLayout.child(Containers.verticalFlow(Sizing.content(), Sizing.fixed(182))
-                .child(
-                        Components.entity(Sizing.fixed(100), MinecraftClient.getInstance().player)
-                                .scaleToFit(true)
-                                .allowMouseRotation(true)
+                .child(Components.entity(Sizing.fixed(100), MinecraftClient.getInstance().player)
+                        .scaleToFit(true)
+                        .allowMouseRotation(true)
                 ).margins(Insets.right(20))
                 .surface(Surface.DARK_PANEL));
 
@@ -115,7 +82,7 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> {
 
         //Origins Panel
 
-        component.build(mainFlowLayout);
+        screenAddons.forEach(addon -> addon.build(mainFlowLayout));
 
         rootComponent.child(mainFlowLayout);
 
