@@ -192,7 +192,8 @@ public class Commands {
 
     //TODO: Implement Reveal
     private static int revealRange(CommandContext<ServerCommandSource> context, int range) {
-        return 1;
+        ServerCharacters.revealToPlayersInRange(context.getSource().getPlayer(), range);
+        return msg(context, "Identity Revealed");
     }
 
     private static int revealPerson(CommandContext<ServerCommandSource> context) {
