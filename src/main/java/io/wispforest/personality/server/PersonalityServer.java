@@ -60,7 +60,7 @@ public class PersonalityServer implements ModInitializer {
 
 			if (Config.OLD_PERSON_SLOWNESS_WITHOUT_STICK > 0) {
 				if (c.getStage() == Character.Stage.OLD)
-					if (player.getOffHandStack().getItem() != Items.STICK && player.getMainHandStack().getItem() != Items.STICK)
+					if (!player.getOffHandStack().isIn(PersonalityMod.WALKING_STICKS) && !player.getMainHandStack().isIn(PersonalityMod.WALKING_STICKS))
 						player.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, 5, Config.OLD_PERSON_SLOWNESS_WITHOUT_STICK -1, true, false, true));
 			}
 

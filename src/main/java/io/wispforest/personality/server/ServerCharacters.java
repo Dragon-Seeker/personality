@@ -27,8 +27,9 @@ public class ServerCharacters {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Type REF_MAP_TYPE = new TypeToken<Map<String, String>>() {}.getType();
 
-    private static Path CHARACTER_PATH = FabricLoader.getInstance().getGameDir();
-    private static Path REFERENCE_PATH = CHARACTER_PATH.resolve("reference.json");
+    private static Path BASE_PATH;
+    private static Path CHARACTER_PATH;
+    private static Path REFERENCE_PATH;
 
     public static BiMap<String, String> playerIDToCharacterID = HashBiMap.create();
     public static Map<String, Character> characterIDToCharacter = new HashMap<>();
@@ -107,12 +108,13 @@ public class ServerCharacters {
     }
 
     private static Path getPath(String uuid) {
-        return CHARACTER_PATH.resolve(uuid + ".json5");
+        return CHARACTER_PATH.resolve(uuid + ".json");
     }
 
     public static void loadCharacterReference() {
-        REFERENCE_PATH = PersonalityServer.server.getSavePath(WorldSavePath.ROOT).resolve("mod_data/personality");
-        CHARACTER_PATH = REFERENCE_PATH.resolve("characters");
+        BASE_PATH = PersonalityServer.server.getSavePath(WorldSavePath.ROOT).resolve("mod_data/personality");
+        CHARACTER_PATH = BASE_PATH.resolve("characters");
+        REFERENCE_PATH = BASE_PATH.resolve("reference.json");
 
         playerIDToCharacterID.clear();
         characterIDToCharacter.clear();
@@ -134,6 +136,7 @@ public class ServerCharacters {
             json.addProperty("format", 1);
             json.add("player_to_character", GSON.toJsonTree(playerIDToCharacterID, REF_MAP_TYPE));
 
+            Files.createDirectories(BASE_PATH);
             Files.writeString(REFERENCE_PATH, GSON.toJson(json));
         } catch (IOException e) {
             e.printStackTrace();

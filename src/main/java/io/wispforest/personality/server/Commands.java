@@ -10,6 +10,7 @@ import com.mojang.logging.LogUtils;
 import io.wispforest.personality.Character;
 import io.wispforest.personality.Networking;
 import io.wispforest.personality.packets.OpenCharacterCreationScreenS2CPacket;
+import io.wispforest.personality.packets.SyncS2CPackets;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.command.ServerCommandSource;
@@ -70,11 +71,17 @@ public class Commands {
                 .then(literal("player").then(setters(argument("player", player()), Commands::getCharacterFromPlayer )))
                 .then(literal("uuid").then(setters(argument("uuid", string()), Commands::getCharacterFromUUID))))
 
+            .then(literal("associate")
+                .then(argument("uuid", string())
+                    .executes(c -> associate(c, null))
+                    .then(argument("player", player())
+                        .executes(c -> associate(c, getPlayer(c,"player"))))))
+
             .then(literal("delete")
                 .executes(Commands::deleteCharacter)
                 .then(argument("players", players())
                     .executes(Commands::deleteCharacterByPlayer))
-                .then(argument("uuid", greedyString())
+                .then(argument("uuid", string())
                     .executes(Commands::deleteCharacterByUUID)))
 
             .then(literal("reveal")
@@ -150,6 +157,8 @@ public class Commands {
     }
 
     private static int get(CommandContext<ServerCommandSource> context, Character c) {
+        if (c == null)
+            return msg(context, "§cYou don't have a Character");
         try {
             context.getSource().sendFeedback(Text.literal("\n§nCharacter: " + c.getInfo() + "\n"), false);
             return 1;
@@ -169,6 +178,16 @@ public class Commands {
             e.printStackTrace();
             return 0;
         }
+    }
+
+
+    private static int associate(CommandContext<ServerCommandSource> context, PlayerEntity player) {
+        String uuid = getString(context, "uuid");
+        ServerCharacters.playerIDToCharacterID.inverse().remove(uuid);
+        ServerCharacters.playerIDToCharacterID.put(player.getUuidAsString(), uuid);
+        ServerCharacters.saveCharacterReference();
+        Networking.sendToAll(new SyncS2CPackets.Association(uuid, player.getUuidAsString()));
+        return msg(context, "Character associated");
     }
 
     //TODO: Implement Reveal
@@ -323,7 +342,13 @@ public class Commands {
     }
 
     private static Character getCharacterFromUUID(CommandContext<ServerCommandSource> context) {
-        return ServerCharacters.getCharacter(getString(context, "uuid"));
+        try {
+            return ServerCharacters.getCharacter(getString(context, "uuid"));
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     private static Character getCharacterFromPlayer(CommandContext<ServerCommandSource> context) {

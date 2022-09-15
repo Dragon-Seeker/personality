@@ -22,17 +22,17 @@ public class SyncS2CPackets {
         }
     }
 
-    public record SyncCharacter(String character) {
+    public record SyncCharacter(String characterJson) {
         @Environment(EnvType.CLIENT)
-        public static void addCharacter(SyncCharacter message, ClientAccess access) {
-            Character c = GSON.fromJson(message.character, Character.class);
+        public static void syncCharacter(SyncCharacter message, ClientAccess access) {
+            Character c = GSON.fromJson(message.characterJson, Character.class);
             ClientCharacters.characterIDToCharacter.put(c.getUUID(), c);
         }
     }
 
     public record RemoveCharacter(String characterUUID) {
         @Environment(EnvType.CLIENT)
-        public static void syncCharacter(RemoveCharacter message, ClientAccess access) {
+        public static void removeCharacter(RemoveCharacter message, ClientAccess access) {
             ClientCharacters.playerIDToCharacterID.inverse().remove(message.characterUUID);
             ClientCharacters.characterIDToCharacter.remove(message.characterUUID);
         }
