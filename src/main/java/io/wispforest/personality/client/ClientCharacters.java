@@ -2,6 +2,8 @@ package io.wispforest.personality.client;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.wispforest.personality.server.PersonalityServer;
 import io.wispforest.personality.Character;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -9,6 +11,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ClientCharacters {
@@ -50,6 +53,17 @@ public class ClientCharacters {
     @Nullable
     public static String getPlayerUUID(String uuid) {
         return playerIDToCharacterID.inverse().get(uuid);
+    }
+
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    public static void init(List<String> characters, Map<String,String> associations) {
+        playerIDToCharacterID = HashBiMap.create(associations);
+        characterIDToCharacter.clear();
+        for (String characterJson : characters) {
+            Character c = GSON.fromJson(characterJson, Character.class);
+            characterIDToCharacter.put(c.getUUID(), c);
+        }
+
     }
 
 }

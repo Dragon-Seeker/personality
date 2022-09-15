@@ -8,7 +8,7 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 
-public record OpenCharacterCreationScreenPacket() {
+public record OpenCharacterCreationScreenS2CPacket() {
 
     @Environment(EnvType.CLIENT)
     public static void openScreen(OpenCharacterCreationScreenPacket message, ClientAccess access){

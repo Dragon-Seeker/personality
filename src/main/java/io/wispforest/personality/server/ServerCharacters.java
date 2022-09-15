@@ -1,7 +1,5 @@
 package io.wispforest.personality.server;
 
-import blue.endless.jankson.Jankson;
-import blue.endless.jankson.api.SyntaxError;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.reflect.TypeToken;
@@ -9,12 +7,13 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import io.wispforest.personality.Character;
+import io.wispforest.personality.Networking;
+import io.wispforest.personality.packets.SyncS2CPackets;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.WorldSavePath;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
@@ -25,8 +24,7 @@ import java.util.Map;
 
 public class ServerCharacters {
 
-    private static final Jankson jankson = Jankson.builder().build();
-    private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Type REF_MAP_TYPE = new TypeToken<Map<String, String>>() {}.getType();
 
     private static Path CHARACTER_PATH = FabricLoader.getInstance().getGameDir();
@@ -47,15 +45,17 @@ public class ServerCharacters {
             return c;
 
         try {
-            File file = getPath(uuid).toFile();
-            if (!file.exists())
+            Path path = getPath(uuid);
+            if (!Files.exists(path))
                 return null;
 
-            c = jankson.fromJson(jankson.load(file), Character.class);
+            String characterJson = Files.readString(path);
+            c = GSON.fromJson(characterJson, Character.class);
             characterIDToCharacter.put(uuid, c);
+            Networking.sendToAll(new SyncS2CPackets.SyncCharacter(characterJson));
 
             return c;
-        } catch (SyntaxError | IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             return null;
         }
@@ -82,8 +82,10 @@ public class ServerCharacters {
     }
 
     public static void saveCharacter(Character character) {
+        String characterJson = GSON.toJson(character);
+        Networking.sendToAll(new SyncS2CPackets.SyncCharacter(characterJson));
         try {
-            Files.writeString(getPath(character.getUUID()), jankson.toJson(character).toJson(true, true));
+            Files.writeString(getPath(character.getUUID()), characterJson);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -96,6 +98,7 @@ public class ServerCharacters {
     public static void deleteCharacter(String uuid) {
         playerIDToCharacterID.inverse().remove(uuid);
         characterIDToCharacter.remove(uuid);
+        Networking.sendToAll(new SyncS2CPackets.RemoveCharacter(uuid));
         try {
             Files.delete(getPath(uuid));
         } catch (IOException e) {
@@ -115,8 +118,8 @@ public class ServerCharacters {
         characterIDToCharacter.clear();
 
         try {
-            JsonObject o = gson.fromJson(Files.readString(REFERENCE_PATH), JsonObject.class);
-            playerIDToCharacterID = HashBiMap.create(gson.fromJson(o.getAsJsonObject("player_to_character"), REF_MAP_TYPE));
+            JsonObject o = GSON.fromJson(Files.readString(REFERENCE_PATH), JsonObject.class);
+            playerIDToCharacterID = HashBiMap.create(GSON.fromJson(o.getAsJsonObject("player_to_character"), REF_MAP_TYPE));
         } catch (IOException e) {
             if (e instanceof NoSuchFileException)
                 saveCharacterReference();
@@ -129,9 +132,9 @@ public class ServerCharacters {
         try {
             JsonObject json = new JsonObject();
             json.addProperty("format", 1);
-            json.add("player_to_character", gson.toJsonTree(playerIDToCharacterID, REF_MAP_TYPE));
+            json.add("player_to_character", GSON.toJsonTree(playerIDToCharacterID, REF_MAP_TYPE));
 
-            Files.writeString(REFERENCE_PATH, gson.toJson(json));
+            Files.writeString(REFERENCE_PATH, GSON.toJson(json));
         } catch (IOException e) {
             e.printStackTrace();
         }
