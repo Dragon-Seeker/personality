@@ -1,5 +1,6 @@
 package io.wispforest.personality;
 
+import io.wispforest.personality.server.config.PersonalityConfig;
 import net.minecraft.item.Item;
 import net.minecraft.tag.TagKey;
 import net.minecraft.util.Identifier;
