@@ -9,7 +9,7 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.logging.LogUtils;
 import io.wispforest.personality.Character;
 import io.wispforest.personality.Networking;
-import io.wispforest.personality.packets.OpenCharacterCreationScreenPacket;
+import io.wispforest.personality.packets.OpenCharacterCreationScreenS2CPacket;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.command.ServerCommandSource;
@@ -302,7 +302,7 @@ public class Commands {
     private static int openCreationScreen(CommandContext<ServerCommandSource> context) {
         PlayerEntity player = context.getSource().getPlayer();
         if (player != null) {
-            Networking.CHANNEL.serverHandle(player).send(new OpenCharacterCreationScreenPacket());
+            Networking.CHANNEL.serverHandle(player).send(new OpenCharacterCreationScreenS2CPacket());
 
             return msg(context, "Opening Screen");
         }

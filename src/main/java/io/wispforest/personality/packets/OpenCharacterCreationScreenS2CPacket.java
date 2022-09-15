@@ -21,10 +21,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 
-public record OpenCharacterCreationScreenPacket() {
+public record OpenCharacterCreationScreenS2CPacket() {
 
     @Environment(EnvType.CLIENT)
-    public static void openScreen(OpenCharacterCreationScreenPacket message, ClientAccess access){
+    public static void openScreen(OpenCharacterCreationScreenS2CPacket message, ClientAccess access){
         ArrayList<OriginLayer> layers = new ArrayList<>();
         OriginComponent component = ModComponents.ORIGIN.get(access.player());
         OriginLayers.getLayers().forEach(layer -> {
