@@ -10,6 +10,7 @@ import io.wispforest.personality.Character;
 import io.wispforest.personality.Networking;
 import io.wispforest.personality.packets.SyncS2CPackets;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.WorldSavePath;
 import org.jetbrains.annotations.Nullable;
@@ -105,6 +106,22 @@ public class ServerCharacters {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void revealToPlayersInRange(ServerPlayerEntity player, int range) {
+        for (ServerPlayerEntity otherPlayer : player.getWorld().getPlayers())
+            if (player.getPos().distanceTo(otherPlayer.getPos()) <= range)
+                revealToPlayer(player.getUuidAsString(), otherPlayer);
+    }
+
+    public static void revealToPlayer(String revealedPlayerUUID, ServerPlayerEntity revealedTo) {
+        String revealedCharacterUUID = playerIDToCharacterID.get(revealedPlayerUUID);
+        Character revealedPlayer = getCharacter(revealedTo);
+
+        if (revealedPlayer == null || revealedCharacterUUID == null)
+            return;
+
+        revealedPlayer.knowCharacters.add(revealedCharacterUUID);
     }
 
     private static Path getPath(String uuid) {
