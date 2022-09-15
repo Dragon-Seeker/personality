@@ -1,6 +1,6 @@
 package io.wispforest.personality.mixin;
 
-import io.wispforest.personality.server.config.Config;
+import io.wispforest.personality.PersonalityMod;
 import io.wispforest.personality.Character;
 import io.wispforest.personality.server.ServerCharacters;
 import net.minecraft.entity.player.PlayerEntity;
@@ -20,7 +20,7 @@ public class PlayerEntityMixin {
         Character character = ServerCharacters.getCharacter((ServerPlayerEntity)(Object)this);
 
         if (character != null && character.getStage() == Character.Stage.YOUTH)
-            return original * Config.YOUTH_EXHAUSTION_MULTIPLIER;
+            return original * PersonalityMod.CONFIG.YOUTH_EXHAUSTION_MULTIPLIER();
         else
             return original;
     }

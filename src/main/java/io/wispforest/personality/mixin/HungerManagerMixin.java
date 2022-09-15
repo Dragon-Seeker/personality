@@ -1,7 +1,7 @@
 package io.wispforest.personality.mixin;
 
+import io.wispforest.personality.PersonalityMod;
 import io.wispforest.personality.server.ServerCharacters;
-import io.wispforest.personality.server.config.Config;
 import io.wispforest.personality.Character;
 import net.minecraft.entity.player.HungerManager;
 import net.minecraft.entity.player.PlayerEntity;
@@ -28,7 +28,7 @@ public abstract class HungerManagerMixin {
         Character character = ServerCharacters.getCharacter((ServerPlayerEntity)player);
 
         if (character != null && character.getStage() == Character.Stage.YOUTH)
-            addExhaustion(exhaustion * Config.YOUTH_EXHAUSTION_MULTIPLIER);
+            addExhaustion(exhaustion * PersonalityMod.CONFIG.YOUTH_EXHAUSTION_MULTIPLIER());
         else
             addExhaustion(exhaustion);
 
@@ -36,12 +36,12 @@ public abstract class HungerManagerMixin {
 
     @ModifyConstant(method = "update", constant = @Constant(intValue = 80, ordinal = 0))
     public int personality$healFasterForYouth(int original) {
-        return (int) (original / Config.YOUTH_HEAL_RATE_MULTIPLIER);
+        return (int) (original / PersonalityMod.CONFIG.YOUTH_HEAL_RATE_MULTIPLIER());
     }
 
     @ModifyConstant(method = "update", constant = @Constant(intValue = 18))
     public int personality$modifyMinimumHungerForHealForYouth(int original) {
-        return Config.YOUTH_HEAL_HUNGER_MINIMUM;
+        return PersonalityMod.CONFIG.YOUTH_HEAL_HUNGER_MINIMUM();
     }
 
 }

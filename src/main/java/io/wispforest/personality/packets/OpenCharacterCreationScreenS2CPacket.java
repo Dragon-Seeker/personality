@@ -11,7 +11,7 @@ import net.minecraft.client.MinecraftClient;
 public record OpenCharacterCreationScreenS2CPacket() {
 
     @Environment(EnvType.CLIENT)
-    public static void openScreen(OpenCharacterCreationScreenPacket message, ClientAccess access){
+    public static void openScreen(OpenCharacterCreationScreenS2CPacket message, ClientAccess access){
         PersonalityCreationScreen screen = new PersonalityCreationScreen();
 
         if(FabricLoader.getInstance().isModLoaded("origins")){

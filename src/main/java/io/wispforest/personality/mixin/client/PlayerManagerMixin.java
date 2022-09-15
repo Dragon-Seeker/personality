@@ -1,7 +1,7 @@
 package io.wispforest.personality.mixin.client;
 
 import io.wispforest.personality.Networking;
-import io.wispforest.personality.packets.OpenCharacterCreationScreenPacket;
+import io.wispforest.personality.packets.OpenCharacterCreationScreenS2CPacket;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.server.PlayerManager;
@@ -20,7 +20,7 @@ public class PlayerManagerMixin {
     @Inject(method = "onPlayerConnect", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerPlayerEntity;onSpawn()V", shift = At.Shift.AFTER))
     private void sendOpenScreenPacket(ClientConnection connection, ServerPlayerEntity player, CallbackInfo ci){
         if(!FabricLoader.getInstance().isModLoaded("origins")) {
-            Networking.CHANNEL.serverHandle(player).send(new OpenCharacterCreationScreenPacket());
+            Networking.CHANNEL.serverHandle(player).send(new OpenCharacterCreationScreenS2CPacket());
         }
     }
 }
