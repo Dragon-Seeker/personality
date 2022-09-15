@@ -6,7 +6,6 @@ import io.github.apace100.calio.mixin.DamageSourceAccessor;
 import io.wispforest.personality.PersonalityMod;
 import io.wispforest.personality.Networking;
 import io.wispforest.personality.packets.SyncS2CPackets;
-import io.wispforest.personality.server.config.Config;
 import io.wispforest.personality.Character;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -16,7 +15,6 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.item.Items;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -58,7 +56,7 @@ public class PersonalityServer implements ModInitializer {
 				continue;
 			}
 
-			if (Config.OLD_PERSON_SLOWNESS_WITHOUT_STICK > 0) {
+			if (PersonalityMod.CONFIG.OLD_PERSON_SLOWNESS_WITHOUT_STICK() > 0) {
 				if (c.getStage() == Character.Stage.OLD)
 					if (!player.getOffHandStack().isIn(PersonalityMod.WALKING_STICKS) && !player.getMainHandStack().isIn(PersonalityMod.WALKING_STICKS))
 						player.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, 5, Config.OLD_PERSON_SLOWNESS_WITHOUT_STICK -1, true, false, true));

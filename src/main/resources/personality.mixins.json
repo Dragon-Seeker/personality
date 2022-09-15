@@ -10,10 +10,7 @@
   ],
   "client": [
     "client.EntityRendererMixin",
-    "client.origins.ChooseOriginScreenAccessor",
-    "client.origins.ChooseOriginScreenMixin",
-    "client.origins.ModPacketsS2CMixin",
-    "client.origins.OriginDisplayScreenMixin"
+    "client.origins.ModPacketsS2CMixin"
   ],
   "injectors": {
     "defaultRequire": 1

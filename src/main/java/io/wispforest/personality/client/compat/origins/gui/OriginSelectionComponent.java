@@ -1,4 +1,4 @@
-package io.wispforest.personality.client.screens;
+package io.wispforest.personality.client.compat.origins.gui;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.apace100.apoli.power.PowerType;
@@ -17,7 +17,7 @@ import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.container.ScrollContainer;
 import io.wispforest.owo.ui.core.*;
 import io.wispforest.owo.ui.util.Drawer;
-import io.wispforest.personality.mixin.client.ScrollContainerAccessor;
+import io.wispforest.personality.client.screens.PersonalityScreenAddon;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.tooltip.TooltipComponent;
@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-public class AdditionalCreationComponent {
+public class OriginSelectionComponent implements PersonalityScreenAddon {
 
     public static Identifier ORIGINS_GUI_TEXTURE = new Identifier("personality", "textures/gui/origins_gui.png");
     public static Identifier INVERSE_PANEL_TEXTURE = new Identifier("personality", "textures/gui/inverse_panel.png");
@@ -69,7 +69,7 @@ public class AdditionalCreationComponent {
 
     //----------------------------
 
-    public AdditionalCreationComponent(ArrayList<OriginLayer> layerList, int currentLayerIndex) {
+    public OriginSelectionComponent(ArrayList<OriginLayer> layerList, int currentLayerIndex) {
         this.layerList = layerList;
         this.currentLayerIndex = currentLayerIndex;
         this.originSelection = new ArrayList<>(10);
@@ -132,7 +132,7 @@ public class AdditionalCreationComponent {
         }
 
         public List<TooltipComponent> getTooltipComponents(TextRenderer textRenderer, int widthLimit) {
-            return badge.getTooltipComponents(powerType, widthLimit, AdditionalCreationComponent.time, textRenderer);
+            return badge.getTooltipComponents(powerType, widthLimit, OriginSelectionComponent.time, textRenderer);
         }
 
     }
@@ -206,7 +206,7 @@ public class AdditionalCreationComponent {
                     .shadow(true)
                     .positioning(Positioning.absolute(39, 19))
                     .id("origin_name"))
-                .child(new HardnessRatingComponent(getCurrentOrigin().getImpact())
+                .child(new OriginImpactComponent(getCurrentOrigin().getImpact())
                     .positioning(Positioning.absolute(128, 19))
                     .id("origin_impact"))
                 //Square Symbol
@@ -259,7 +259,7 @@ public class AdditionalCreationComponent {
         child.origin(getCurrentOrigin(), randomOriginText, isOriginRandom);
 
         rootComponent.childById(LabelComponent.class, "origin_name").text(getCurrentOrigin().getName());
-        rootComponent.childById(HardnessRatingComponent.class, "origin_impact").setImpact(getCurrentOrigin().getImpact());
+        rootComponent.childById(OriginImpactComponent.class, "origin_impact").setImpact(getCurrentOrigin().getImpact());
         rootComponent.childById(ItemComponent.class, "origin_icon").stack(getCurrentOrigin().getDisplayItem());
     }
 

@@ -1,7 +1,6 @@
 package io.wispforest.personality;
 
 import io.wispforest.personality.server.ServerCharacters;
-import io.wispforest.personality.server.config.Config;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.stat.Stats;
 
@@ -114,7 +113,7 @@ public class Character {
     }
 
     public int getMaxAge() {
-        return Config.BASE_MAXIMUM_AGE + Math.min(Config.MAX_EXTRA_YEARS_OF_LIFE, getPlaytime() / HOUR_IN_MILLISECONDS / Config.HOURS_PER_EXTRA_YEAR_OF_LIFE);
+        return PersonalityMod.CONFIG.BASE_MAXIMUM_AGE() + Math.min(PersonalityMod.CONFIG.MAX_EXTRA_YEARS_OF_LIFE(), getPlaytime() / HOUR_IN_MILLISECONDS / PersonalityMod.CONFIG.HOURS_PER_EXTRA_YEAR_OF_LIFE());
     }
 
     public String getInfo() {
