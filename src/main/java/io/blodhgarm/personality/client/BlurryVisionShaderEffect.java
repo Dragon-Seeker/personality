@@ -9,7 +9,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.util.Identifier;
 
-public class OldPersonShaderEffect implements ShaderEffectRenderCallback {
+public class BlurryVisionShaderEffect implements ShaderEffectRenderCallback {
 
     private static final MinecraftClient client = MinecraftClient.getInstance();
 
