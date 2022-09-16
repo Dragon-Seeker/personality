@@ -8,7 +8,11 @@
     "PlayerEntityMixin"
   ],
   "client": [
+    "client.accessor.EditBoxAccessor",
+    "client.accessor.EditBoxWidgetAccessor",
+    "client.accessor.TextFieldWidgetAccessor",
     "client.EntityRendererMixin",
+    "client.TextFieldWidgetMixin",
     "client.origins.ModPacketsS2CMixin"
   ],
   "injectors": {

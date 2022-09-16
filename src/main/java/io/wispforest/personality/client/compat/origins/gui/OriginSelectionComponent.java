@@ -17,6 +17,7 @@ import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.container.ScrollContainer;
 import io.wispforest.owo.ui.core.*;
 import io.wispforest.owo.ui.util.Drawer;
+import io.wispforest.personality.PersonalityMod;
 import io.wispforest.personality.client.screens.PersonalityScreenAddon;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
@@ -178,7 +179,9 @@ public class OriginSelectionComponent implements PersonalityScreenAddon {
 
     //----------------------------
 
-    public void build(FlowLayout rootComponent){
+    public void build(FlowLayout rootComponent, boolean isDarkMode){
+        Surface panel = isDarkMode ? Surface.DARK_PANEL : Surface.PANEL;
+
         rootComponent.child(Containers.verticalFlow(Sizing.content(), Sizing.content())
             .child(Containers.verticalFlow(Sizing.fixed(176), Sizing.fixed(182))
                 .child(
@@ -215,7 +218,7 @@ public class OriginSelectionComponent implements PersonalityScreenAddon {
                 .child(Components.item(getCurrentOrigin().getDisplayItem())
                     .positioning(Positioning.absolute(15, 15))
                     .id("origin_icon"))
-                .surface(Surface.PANEL))
+                .surface(panel))
             .child(Containers.horizontalFlow(Sizing.content(), Sizing.content())
                 .child(Components.button(Text.of("<"), 20, 20, button -> {
                         currentOrigin = (currentOrigin - 1 + maxSelection) % maxSelection;

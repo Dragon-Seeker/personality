@@ -53,7 +53,7 @@ dependencies {
 	modImplementation "io.github.ladysnake:satin:${satin_version}"
 	include "io.github.ladysnake:satin:${satin_version}"
 
-
+	implementation 'com.github.Dansoftowner:jSystemThemeDetector:3.8'
 }
 
 loom {

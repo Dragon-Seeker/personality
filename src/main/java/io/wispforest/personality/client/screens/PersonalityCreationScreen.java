@@ -6,7 +6,12 @@ import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.container.*;
 import io.wispforest.owo.ui.core.*;
 import io.wispforest.owo.ui.util.UIErrorToast;
+import io.wispforest.personality.PersonalityMod;
+import io.wispforest.personality.client.compat.BetterEditBoxWidget;
+import io.wispforest.personality.client.compat.BetterTextFieldWidget;
+import io.wispforest.personality.client.compat.CustomEntityComponent;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 
@@ -56,22 +61,52 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> {
     protected void build(FlowLayout rootComponent) {
         HorizontalFlowLayout mainFlowLayout = Containers.horizontalFlow(Sizing.content(), Sizing.content());
 
+        Surface panel = PersonalityMod.isDarkMode() ? Surface.DARK_PANEL : Surface.PANEL;
+
         //Panel 1
 
         mainFlowLayout.child(Containers.verticalFlow(Sizing.content(), Sizing.fixed(182))
-                .child(Components.entity(Sizing.fixed(100), MinecraftClient.getInstance().player)
-                        .scaleToFit(true)
+                .child(new CustomEntityComponent<>(Sizing.fixed(110), MinecraftClient.getInstance().player)
+                        .scale(0.6F)
+                        //.scaleToFit(true)
                         .allowMouseRotation(true)
+                        .margins(Insets.of(40, 20, 0, 0))
                 ).margins(Insets.right(20))
-                .surface(Surface.DARK_PANEL));
+                .surface(panel));
 
         // END
 
 
         //Panel 2
 
-        mainFlowLayout.child(Containers.verticalFlow(Sizing.fixed(180), Sizing.fixed(182))
-                .surface(Surface.DARK_PANEL));
+        mainFlowLayout.child(Containers.verticalFlow(Sizing.fixed(182), Sizing.fixed(182))
+                .child(Containers.verticalFlow(Sizing.content(), Sizing.content())
+                        .child(Containers.horizontalFlow(Sizing.fill(100), Sizing.content())
+                                .child(Components.label(Text.of("Name: "))
+                                        //.margins(Insets.of(6, 5, 0, 0))
+                                )
+                                .child(BetterTextFieldWidget.textBox(Sizing.fill(75), "")
+                                        .bqColor(Color.ofArgb(0xFF555555)))
+                                .horizontalAlignment(HorizontalAlignment.CENTER)
+                                .verticalAlignment(VerticalAlignment.CENTER)
+                                .margins(Insets.bottom(6))
+                        )
+                        .child(Containers.verticalFlow(Sizing.content(), Sizing.content())
+                                .child(Components.createWithSizing(() ->
+                                        BetterEditBoxWidget.ofEmpty(Text.of(""), Text.of(""))
+                                            .textWidth(164)
+                                            .bqColor(Color.ofArgb(0xFF555555)),
+                                    Sizing.fixed(164),
+                                    Sizing.fixed(60)
+                                    )
+                                )
+                                .verticalAlignment(VerticalAlignment.CENTER)
+                                .horizontalAlignment(HorizontalAlignment.CENTER)
+                        )
+                )
+                .padding(Insets.of(6))
+                .surface(panel)
+        );
 
         // END
         mainFlowLayout.positioning(Positioning.relative(50, 50));
@@ -82,7 +117,7 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> {
 
         //Origins Panel
 
-        screenAddons.forEach(addon -> addon.build(mainFlowLayout));
+        screenAddons.forEach(addon -> addon.build(mainFlowLayout, PersonalityMod.isDarkMode()));
 
         rootComponent.child(mainFlowLayout);
 
