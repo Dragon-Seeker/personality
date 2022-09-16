@@ -20,9 +20,11 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "io.wispforest.personality.server.PersonalityServer"
+      "io.blodhgarm.personality.server.PersonalityServer"
     ],
-    "client": [ "io.wispforest.personality.client.PersonalityClient" ]
+    "client": [
+      "io.blodhgarm.personality.client.PersonalityClient"
+    ]
   },
   "mixins": [ "personality.mixins.json" ],
 
