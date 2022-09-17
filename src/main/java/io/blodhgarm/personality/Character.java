@@ -1,6 +1,7 @@
 package io.blodhgarm.personality;
 
 import io.blodhgarm.personality.server.ServerCharacters;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.stat.Stats;
 
@@ -116,6 +117,17 @@ public class Character {
         return PersonalityMod.CONFIG.BASE_MAXIMUM_AGE() + Math.min(PersonalityMod.CONFIG.MAX_EXTRA_YEARS_OF_LIFE(), getPlaytime() / HOUR_IN_MILLISECONDS / PersonalityMod.CONFIG.HOURS_PER_EXTRA_YEAR_OF_LIFE());
     }
 
+    public boolean isObscured() {
+        ServerPlayerEntity player = ServerCharacters.getPlayer(uuid);
+        if (player == null)
+            return false;
+
+        for (ItemStack stack : player.getItemsEquipped())
+            if (stack.isIn(PersonalityMod.OBSCURES_IDENTITY))
+                return true;
+        return false;
+    }
+
     public String getInfo() {
         return name + "§r\n"
                 + "\n§lUUID§r: " + uuid
@@ -123,7 +135,7 @@ public class Character {
                 + "\n§lDescription§r: " + description
                 + "\n§lAge§r: " + getAge() + " / " + getMaxAge() + " (" + getStage() + ")"
                 + "\n§lPlaytime§r: " + (getPlaytime()/HOUR_IN_MILLISECONDS)
-                + "\n§lHeight§r: " + (2 - heightOffset);
+                + "\n§lHeight§r: " + (1.8 - heightOffset);
     }
 
     @Override

@@ -8,6 +8,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import io.blodhgarm.personality.Character;
 import io.blodhgarm.personality.Networking;
+import io.blodhgarm.personality.packets.IntroductionPacket;
 import io.blodhgarm.personality.packets.SyncS2CPackets;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.WorldSavePath;
@@ -63,12 +64,12 @@ public class ServerCharacters {
 
     @Nullable
     public static ServerPlayerEntity getPlayer(Character c) {
-        return getPlayer(c.getInfo());
+        return getPlayer(c.getUUID());
     }
 
     @Nullable
-    public static ServerPlayerEntity getPlayer(String uuid) {
-        return PersonalityServer.server.getPlayerManager().getPlayer(uuid);
+    public static ServerPlayerEntity getPlayer(String characterUUID) {
+        return PersonalityServer.getPlayer(playerIDToCharacterID.inverse().get(characterUUID));
     }
 
     @Nullable
@@ -77,8 +78,8 @@ public class ServerCharacters {
     }
 
     @Nullable
-    public static String getPlayerUUID(String uuid) {
-        return playerIDToCharacterID.inverse().get(uuid);
+    public static String getPlayerUUID(String characterUUID) {
+        return playerIDToCharacterID.inverse().get(characterUUID);
     }
 
     public static void saveCharacter(Character character) {
@@ -120,6 +121,7 @@ public class ServerCharacters {
             return;
 
         revealedPlayer.knowCharacters.add(revealedCharacterUUID);
+        Networking.sendS2C(revealedTo, new IntroductionPacket(revealedCharacterUUID));
     }
 
     private static Path getPath(String uuid) {
@@ -135,6 +137,8 @@ public class ServerCharacters {
         characterIDToCharacter.clear();
 
         try {
+            Files.createDirectories(CHARACTER_PATH);
+
             JsonObject o = GSON.fromJson(Files.readString(REFERENCE_PATH), JsonObject.class);
             playerIDToCharacterID = HashBiMap.create(GSON.fromJson(o.getAsJsonObject("player_to_character"), REF_MAP_TYPE));
         } catch (IOException e) {
@@ -151,7 +155,6 @@ public class ServerCharacters {
             json.addProperty("format", 1);
             json.add("player_to_character", GSON.toJsonTree(playerIDToCharacterID, REF_MAP_TYPE));
 
-            Files.createDirectories(BASE_PATH);
             Files.writeString(REFERENCE_PATH, GSON.toJson(json));
         } catch (IOException e) {
             e.printStackTrace();

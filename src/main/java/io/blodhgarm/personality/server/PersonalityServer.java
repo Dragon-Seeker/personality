@@ -20,6 +20,8 @@ import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,6 +39,10 @@ public class PersonalityServer implements ModInitializer {
 		ServerTickEvents.END_WORLD_TICK.register(PersonalityMod.id("tick"), PersonalityServer::onTick);
 		ServerWorldEvents.LOAD.register(PersonalityMod.id("on_world_load"), PersonalityServer::onWorldLoad);
 		ServerPlayConnectionEvents.JOIN.register(PersonalityMod.id("on_player_join"), PersonalityServer::onPlayerJoin);
+	}
+
+	public static ServerPlayerEntity getPlayer(String uuid) {
+		return server.getPlayerManager().getPlayer(uuid);
 	}
 
 	public static void onWorldLoad(MinecraftServer server, ServerWorld world) {

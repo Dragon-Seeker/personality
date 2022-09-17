@@ -42,7 +42,7 @@ public class ClientCharacters {
 
     @Nullable
     public static ServerPlayerEntity getPlayer(String uuid) {
-        return PersonalityServer.server.getPlayerManager().getPlayer(uuid);
+        return PersonalityServer.getPlayer(uuid);
     }
 
     @Nullable

@@ -1,7 +1,7 @@
 package io.blodhgarm.personality;
 
 import com.jthemedetecor.OsThemeDetector;
-import io.wispforest.personality.server.config.PersonalityConfig;
+import io.blodhgarm.personality.server.config.PersonalityConfig;
 import io.blodhgarm.personality.server.config.PersonalityConfigModel;
 import net.minecraft.item.Item;
 import net.minecraft.tag.TagKey;
@@ -21,6 +21,7 @@ public class PersonalityMod {
 
     public static final TagKey<Item> VISION_GLASSES = TagKey.of(Registry.ITEM_KEY, id("vision_glasses"));
     public static final TagKey<Item> WALKING_STICKS = TagKey.of(Registry.ITEM_KEY, id("walking_sticks"));
+    public static final TagKey<Item> OBSCURES_IDENTITY = TagKey.of(Registry.ITEM_KEY, id("obscures_identity"));
 
     public static boolean isDarkMode(){
         if(CONFIG.THEME_MODE() == PersonalityConfigModel.ThemeMode.SYSTEM){
