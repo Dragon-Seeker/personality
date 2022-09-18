@@ -215,11 +215,11 @@ public class Commands {
             if(c == null) return errorNoCharacterMsg(context, context.getSource().getPlayer());
 
             for (String uuid : c.knowCharacters) {
-                Character pCharacter = ServerCharacters.getCharacter(uuid);
+                Character pc = ServerCharacters.getCharacter(uuid);
 
-                if(pCharacter != null) {
-                    text.append(Text.literal(c.getName() + "\n").setStyle(Style.EMPTY.withHoverEvent(
-                            new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("§n" + c.getInfo())))));
+                if(pc != null) {
+                    text.append(Text.literal(pc.getName() + "\n").setStyle(Style.EMPTY.withHoverEvent(
+                            new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("§n" + pc.getInfo())))));
                 } else {
                     LOGGER.error("A known Character of [{}] wasn't found by the character manager: [UUID: {}]", player, uuid);
                 }

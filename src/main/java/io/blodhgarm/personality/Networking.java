@@ -1,10 +1,8 @@
 package io.blodhgarm.personality;
 
+import io.blodhgarm.personality.packets.*;
 import io.blodhgarm.personality.server.PersonalityServer;
 import io.wispforest.owo.network.OwoNetChannel;
-import io.blodhgarm.personality.packets.OpenCharacterCreationScreenS2CPacket;
-import io.blodhgarm.personality.packets.SyncC2SPackets;
-import io.blodhgarm.personality.packets.SyncS2CPackets;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Identifier;
 
@@ -19,10 +17,14 @@ public class Networking {
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.SyncCharacter.class);
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.RemoveCharacter.class);
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.Association.class);
+        CHANNEL.registerClientboundDeferred(IntroductionPacket.class);
 
         //C2S - Client to Server
         CHANNEL.registerServerbound(SyncC2SPackets.ModifyCharacter.class, SyncC2SPackets.ModifyCharacter::modifyCharacter);
         CHANNEL.registerServerbound(SyncC2SPackets.NewCharacter.class, SyncC2SPackets.NewCharacter::newCharacter);
+        CHANNEL.registerServerbound(RevealCharacterC2SPacket.ToPlayer.class, RevealCharacterC2SPacket.ToPlayer::revealToPlayer);
+        CHANNEL.registerServerbound(RevealCharacterC2SPacket.InRange.class, RevealCharacterC2SPacket.InRange::revealToPlayersInRange);
+
 
     }
 
@@ -33,6 +35,7 @@ public class Networking {
         CHANNEL.registerClientbound(SyncS2CPackets.SyncCharacter.class, SyncS2CPackets.SyncCharacter::syncCharacter);
         CHANNEL.registerClientbound(SyncS2CPackets.RemoveCharacter.class, SyncS2CPackets.RemoveCharacter::removeCharacter);
         CHANNEL.registerClientbound(SyncS2CPackets.Association.class, SyncS2CPackets.Association::syncAssociation);
+        CHANNEL.registerClientbound(IntroductionPacket.class, IntroductionPacket::beenIntroduced);
     }
 
     public static <R extends Record> void sendC2S(R packet) {

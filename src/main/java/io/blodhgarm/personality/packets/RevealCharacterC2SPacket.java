@@ -15,7 +15,7 @@ public class RevealCharacterC2SPacket {
 
     public record ToPlayer(String uuid) {
         public static void revealToPlayer(ToPlayer message, ServerAccess access) {
-            ServerCharacters.revealToPlayer(access.player().getUuidAsString(), access.runtime().getPlayerManager().getPlayer(UUID.fromString(message.uuid)));
+            ServerCharacters.revealToPlayer(access.player(), access.runtime().getPlayerManager().getPlayer(UUID.fromString(message.uuid)));
         }
     }
 

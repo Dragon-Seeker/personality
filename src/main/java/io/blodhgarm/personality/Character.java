@@ -5,8 +5,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.stat.Stats;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.UUID;
 
 public class Character {
@@ -28,7 +28,7 @@ public class Character {
 
     private int playtimeOffset;
 
-    public List<String> knowCharacters;
+    public Set<String> knowCharacters;
 
     public Character() {}
 
@@ -41,7 +41,7 @@ public class Character {
         this.ageOffset = ageOffset;
         this.created = System.currentTimeMillis();
         this.playtimeOffset = activityOffset;
-        this.knowCharacters = new ArrayList<>();
+        this.knowCharacters = new LinkedHashSet<>();
     }
 
     public String getUUID() {

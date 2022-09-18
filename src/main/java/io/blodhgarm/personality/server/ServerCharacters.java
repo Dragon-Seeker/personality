@@ -110,18 +110,21 @@ public class ServerCharacters {
     public static void revealToPlayersInRange(ServerPlayerEntity player, int range) {
         for (ServerPlayerEntity otherPlayer : player.getWorld().getPlayers())
             if (player.getPos().distanceTo(otherPlayer.getPos()) <= range)
-                revealToPlayer(player.getUuidAsString(), otherPlayer);
+                revealToPlayer(player, otherPlayer);
     }
 
-    public static void revealToPlayer(String revealedPlayerUUID, ServerPlayerEntity revealedTo) {
-        String revealedCharacterUUID = playerIDToCharacterID.get(revealedPlayerUUID);
-        Character revealedPlayer = getCharacter(revealedTo);
+    public static void revealToPlayer(ServerPlayerEntity revealed, ServerPlayerEntity revealedTo) {
+        String revealedCharacterUUID = playerIDToCharacterID.get(revealed.getUuidAsString());
+        Character revealedToCharacter = getCharacter(revealedTo);
 
-        if (revealedPlayer == null || revealedCharacterUUID == null)
+        if (revealedToCharacter == null || revealedCharacterUUID == null)
             return;
 
-        revealedPlayer.knowCharacters.add(revealedCharacterUUID);
-        Networking.sendS2C(revealedTo, new IntroductionPacket(revealedCharacterUUID));
+        if (!revealedToCharacter.knowCharacters.contains(revealedCharacterUUID)) {
+            revealedToCharacter.knowCharacters.add(revealedCharacterUUID);
+            saveCharacter(revealedToCharacter);
+            Networking.sendS2C(revealedTo, new IntroductionPacket(revealedCharacterUUID));
+        }
     }
 
     private static Path getPath(String uuid) {
