@@ -69,7 +69,7 @@ public class PersonalityServer implements ModInitializer {
 				return;
 
 			if (c.getAge() >= c.getMaxAge()) {
-				ServerCharacters.deleteCharacter(c.getUUID());
+				ServerCharacters.killCharacter(c);
 				player.damage(DEATH_BY_OLD_AGE, Float.MAX_VALUE);
 				continue;
 			}

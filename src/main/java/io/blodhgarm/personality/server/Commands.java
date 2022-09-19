@@ -78,12 +78,19 @@ public class Commands {
                     .then(argument("player", player())
                         .executes(c -> associate(c, getPlayer(c,"player"))))))
 
+            .then(literal("kill")
+                .executes(c -> deleteCharacter(c, true))
+                    .then(argument("players", players())
+                        .executes(c -> deleteCharacterByPlayer(c, true)))
+                    .then(argument("uuid", string())
+                        .executes(c -> deleteCharacterByUUID(c, true))))
+
             .then(literal("delete")
-                .executes(Commands::deleteCharacter)
+                .executes(c -> deleteCharacter(c, false))
                 .then(argument("players", players())
-                    .executes(Commands::deleteCharacterByPlayer))
+                    .executes(c -> deleteCharacterByPlayer(c, false)))
                 .then(argument("uuid", string())
-                    .executes(Commands::deleteCharacterByUUID)))
+                    .executes(c -> deleteCharacterByUUID(c, false))))
 
             .then(literal("reveal")
                 .then(literal("near")
@@ -290,7 +297,8 @@ public class Commands {
     private static int removeKnownCharacterByUUID(CommandContext<ServerCommandSource> context) {
         Character c = ServerCharacters.getCharacter(context.getSource().getPlayer());
 
-        if(c == null) return errorNoCharacterMsg(context, context.getSource().getPlayer());
+        if(c == null)
+            return errorNoCharacterMsg(context, context.getSource().getPlayer());
 
         c.knowCharacters.remove( getString(context, "uuid") );
         ServerCharacters.saveCharacter(c);
@@ -298,22 +306,28 @@ public class Commands {
         return msg(context, "Character Removed");
     }
 
-    private static int deleteCharacter(CommandContext<ServerCommandSource> context) {
+    private static int deleteCharacter(CommandContext<ServerCommandSource> context, boolean onlyKill) {
         Character c = ServerCharacters.getCharacter(context.getSource().getPlayer());
+        if(c == null)
+            return errorNoCharacterMsg(context, context.getSource().getPlayer());
 
-        if(c == null) return errorNoCharacterMsg(context, context.getSource().getPlayer());
-
-        ServerCharacters.deleteCharacter(c);
+        if (onlyKill)
+            ServerCharacters.killCharacter(c);
+        else
+            ServerCharacters.deleteCharacter(c);
 
         return msg(context, "Character(s) Deleted");
     }
 
-    private static int deleteCharacterByPlayer(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+    private static int deleteCharacterByPlayer(CommandContext<ServerCommandSource> context, boolean onlyKill) throws CommandSyntaxException {
         for (ServerPlayerEntity p : getPlayers(context, "players")) {
            Character pCharacter = ServerCharacters.getCharacter(p);
 
             if(pCharacter != null) {
-                ServerCharacters.deleteCharacter(pCharacter);
+                if (onlyKill)
+                    ServerCharacters.killCharacter(pCharacter);
+                else
+                    ServerCharacters.deleteCharacter(pCharacter);
             } else {
                 LOGGER.error("There was a attempt to delete a players character but the CharacterManager could not find anything: [Player: {}]", p);
             }
@@ -322,8 +336,11 @@ public class Commands {
         return msg(context, "Character(s) Deleted");
     }
 
-    private static int deleteCharacterByUUID(CommandContext<ServerCommandSource> context) {
-        ServerCharacters.deleteCharacter(getString(context, "uuid"));
+    private static int deleteCharacterByUUID(CommandContext<ServerCommandSource> context, boolean onlyKill) {
+        if (onlyKill)
+            ServerCharacters.killCharacter(getString(context, "uuid"));
+        else
+            ServerCharacters.deleteCharacter(getString(context, "uuid"));
         return msg(context, "Character Deleted");
     }
 

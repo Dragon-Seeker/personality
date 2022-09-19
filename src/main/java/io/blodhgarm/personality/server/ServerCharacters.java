@@ -92,6 +92,19 @@ public class ServerCharacters {
         }
     }
 
+    public static void killCharacter(Character c) {
+        c.setIsDead(true);
+        playerIDToCharacterID.inverse().remove(c.getUUID());
+        characterIDToCharacter.remove(c.getUUID());
+        Networking.sendToAll(new SyncS2CPackets.RemoveCharacter(c.getUUID()));
+        saveCharacter(c);
+        saveCharacterReference();
+    }
+
+    public static void killCharacter(String uuid) {
+        killCharacter(characterIDToCharacter.get(uuid));
+    }
+
     public static void deleteCharacter(Character character) {
         deleteCharacter(character.getUUID());
     }
@@ -100,6 +113,7 @@ public class ServerCharacters {
         playerIDToCharacterID.inverse().remove(uuid);
         characterIDToCharacter.remove(uuid);
         Networking.sendToAll(new SyncS2CPackets.RemoveCharacter(uuid));
+        saveCharacterReference();
         try {
             Files.delete(getPath(uuid));
         } catch (IOException e) {

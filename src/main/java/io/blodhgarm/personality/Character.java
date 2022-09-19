@@ -17,6 +17,8 @@ public class Character {
     public static final int HOUR_IN_MILLISECONDS =   3_600_000;
     public final int format = 1;
 
+    public boolean isDead;
+
     private String uuid;
     private String name;
     private String gender;
@@ -45,6 +47,15 @@ public class Character {
         this.created = System.currentTimeMillis();
         this.playtimeOffset = activityOffset;
         this.knowCharacters = new LinkedHashSet<>();
+        this.isDead = false;
+    }
+
+    public boolean isDead() {
+        return isDead;
+    }
+
+    public void setIsDead(boolean isDead) {
+        this.isDead = isDead;
     }
 
     public String getUUID() {
