@@ -8,40 +8,45 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Constant;
-import org.spongepowered.asm.mixin.injection.ModifyConstant;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.*;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import static io.blodhgarm.personality.PersonalityMod.CONFIG;
 
 @Mixin(HungerManager.class)
 public abstract class HungerManagerMixin {
 
     @Shadow public abstract void addExhaustion(float exhaustion);
-    @Shadow private int foodLevel;
-    @Shadow private int foodTickTimer;
+    @Unique private Character character;
 
-    @Redirect(method = "update", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/HungerManager;addExhaustion(F)V"))
-    public void personality$addExtraExhaustionForYouth(HungerManager instance, float exhaustion, PlayerEntity player) {
-        if (!(player instanceof ServerPlayerEntity))
-            return;
-
-        Character character = ServerCharacters.getCharacter((ServerPlayerEntity)player);
-
-        if (character != null && character.getStage() == Character.Stage.YOUTH)
-            addExhaustion(exhaustion * PersonalityMod.CONFIG.YOUTH_EXHAUSTION_MULTIPLIER());
-        else
-            addExhaustion(exhaustion);
-
+    @Inject(method = "update", at = @At("HEAD"))
+    public void personality$getPlayerForAgeModifiers(PlayerEntity player, CallbackInfo info) {
+        this.character = ServerCharacters.getCharacter((ServerPlayerEntity)player);
     }
 
     @ModifyConstant(method = "update", constant = @Constant(intValue = 80, ordinal = 0))
     public int personality$healFasterForYouth(int original) {
-        return (int) (original / PersonalityMod.CONFIG.YOUTH_HEAL_RATE_MULTIPLIER());
+        if (character != null && PersonalityMod.shouldGradualValue(CONFIG.FASTER_HEAL, character))
+            return (int) (original / PersonalityMod.getGradualValue(CONFIG.FASTER_HEAL, character));
+        return original;
     }
 
     @ModifyConstant(method = "update", constant = @Constant(intValue = 18))
     public int personality$modifyMinimumHungerForHealForYouth(int original) {
-        return PersonalityMod.CONFIG.YOUTH_HEAL_HUNGER_MINIMUM();
+        if (character != null && PersonalityMod.shouldGradualValue(CONFIG.LOWER_HUNGER_MINIMUM, character))
+            return (int) PersonalityMod.getGradualValue(CONFIG.LOWER_HUNGER_MINIMUM, character);
+        return original;
+    }
+
+
+    @Redirect(method = "update", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/HungerManager;addExhaustion(F)V"))
+    public void personality$addExtraExhaustionForYouth(HungerManager instance, float exhaustion, PlayerEntity player) {
+        if (character != null && PersonalityMod.shouldGradualValue(CONFIG.FASTER_EXHAUSTION, character))
+            addExhaustion(exhaustion * PersonalityMod.getGradualValue(CONFIG.FASTER_EXHAUSTION, character));
+        else
+            addExhaustion(exhaustion);
+
     }
 
 }

@@ -9,6 +9,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
+import static io.blodhgarm.personality.PersonalityMod.CONFIG;
+
 @Mixin(PlayerEntity.class)
 public class PlayerEntityMixin {
 
@@ -19,8 +21,8 @@ public class PlayerEntityMixin {
 
         Character character = ServerCharacters.getCharacter((ServerPlayerEntity)(Object)this);
 
-        if (character != null && character.getStage() == Character.Stage.YOUTH)
-            return original * PersonalityMod.CONFIG.YOUTH_EXHAUSTION_MULTIPLIER();
+        if (character != null && PersonalityMod.shouldGradualValue(CONFIG.FASTER_EXHAUSTION, character))
+            return original * PersonalityMod.getGradualValue(CONFIG.FASTER_EXHAUSTION, character);
         else
             return original;
     }

@@ -190,7 +190,6 @@ public class Commands {
         return msg(context, "Character associated");
     }
 
-    //TODO: Implement Reveal
     private static int revealRange(CommandContext<ServerCommandSource> context, int range) {
         try {
             ServerCharacters.revealToPlayersInRange(context.getSource().getPlayer(), range);

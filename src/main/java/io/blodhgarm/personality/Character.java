@@ -1,6 +1,7 @@
 package io.blodhgarm.personality;
 
 import io.blodhgarm.personality.server.ServerCharacters;
+import io.blodhgarm.personality.server.config.PersonalityConfig;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.stat.Stats;
@@ -85,6 +86,10 @@ public class Character {
         return ageOffset + (int)((System.currentTimeMillis()-created)/WEEK_IN_MILLISECONDS);
     }
 
+    public float getPreciseAge() {
+        return ageOffset + ((float)(System.currentTimeMillis()-created)/WEEK_IN_MILLISECONDS);
+    }
+
     public void setAge(int age) {
         ageOffset = age - (int)((System.currentTimeMillis()-created)/WEEK_IN_MILLISECONDS);
     }
@@ -114,7 +119,31 @@ public class Character {
     }
 
     public int getMaxAge() {
-        return PersonalityMod.CONFIG.BASE_MAXIMUM_AGE() + Math.min(PersonalityMod.CONFIG.MAX_EXTRA_YEARS_OF_LIFE(), getPlaytime() / HOUR_IN_MILLISECONDS / PersonalityMod.CONFIG.HOURS_PER_EXTRA_YEAR_OF_LIFE());
+        return PersonalityMod.CONFIG.BASE_MAXIMUM_AGE() + Math.min(PersonalityMod.CONFIG.MAX_EXTRA_YEARS_OF_LIFE(), getExtraAge());
+    }
+
+    public int getExtraAge() {
+        PersonalityConfig.ExtraLife config = PersonalityMod.CONFIG.EXTRA_LIFE;
+        double hoursPlayed = (float) getPlaytime() / HOUR_IN_MILLISECONDS;
+        int extraYears = 0;
+
+        if (hoursPlayed < config.START_HOURS_PER_EXTRA_LIFE() || getAge() < config.START_AT_AGE())
+            return 0;
+
+        for (int i = 1 ;; i++) {
+            double hoursNeeded = config.START_HOURS_PER_EXTRA_LIFE() + switch (config.CURVE()) {
+                case NONE -> 0;
+                case LINEAR -> i - 1;
+                case QUADRATIC -> Math.pow(i, 2) - 1;
+                case EXPONENTIAL -> Math.pow(Math.E, i - 1) - 1;
+                case LOGARITHMIC -> Math.log(i);
+            };
+            if (hoursPlayed < hoursNeeded)
+                break;
+            hoursPlayed -= hoursNeeded;
+        }
+
+        return extraYears;
     }
 
     public boolean isObscured() {

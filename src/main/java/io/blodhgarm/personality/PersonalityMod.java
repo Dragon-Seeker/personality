@@ -31,4 +31,16 @@ public class PersonalityMod {
         return CONFIG.THEME_MODE() == PersonalityConfigModel.ThemeMode.DARK_MODE;
     }
 
+    public static float getGradualValue(PersonalityConfig.GradualValue config, Character character) {
+        float percentageInAgeRange = (character.getPreciseAge() - config.MIN_AGE()) / (config.MAX_AGE() - config.MIN_AGE());
+        float valueRange = config.END_VALUE() - config.START_VALUE();
+
+        return config.START_VALUE() + percentageInAgeRange*valueRange;
+    }
+
+    public static boolean shouldGradualValue(PersonalityConfig.GradualValue config, Character character) {
+        int age = character.getAge();
+        return age >= config.MIN_AGE() && age <= config.MAX_AGE();
+    }
+
 }
