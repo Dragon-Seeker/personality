@@ -16,7 +16,6 @@ public class BetterTextFieldWidget extends TextFieldWidget {
     private Color backgroundColor = Color.BLACK;//Color.ofArgb(0xFF555555);
     private Color outlineColor = Color.ofArgb(0xFFa0a0a0);
 
-
     public BetterTextFieldWidget(TextRenderer textRenderer, int x, int y, int width, int height, Text text) {
         this(textRenderer, x, y, width, height, null, text);
     }
@@ -52,6 +51,12 @@ public class BetterTextFieldWidget extends TextFieldWidget {
 
     public BetterTextFieldWidget outlineColor(Color color){
         this.outlineColor = color;
+
+        return this;
+    }
+
+    public BetterTextFieldWidget setEditAbility(boolean editable) {
+        super.setEditable(editable);
 
         return this;
     }
