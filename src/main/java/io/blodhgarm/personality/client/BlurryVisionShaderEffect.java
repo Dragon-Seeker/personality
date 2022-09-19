@@ -2,6 +2,7 @@ package io.blodhgarm.personality.client;
 
 import io.blodhgarm.personality.Character;
 import io.blodhgarm.personality.PersonalityMod;
+import io.blodhgarm.personality.server.config.ConfigHelper;
 import ladysnake.satin.api.event.ShaderEffectRenderCallback;
 import ladysnake.satin.api.managed.ManagedShaderEffect;
 import ladysnake.satin.api.managed.ShaderEffectManager;
@@ -25,14 +26,11 @@ public class BlurryVisionShaderEffect implements ShaderEffectRenderCallback {
         if (client.player != null) {
             Character c = ClientCharacters.getCharacter(client.player);
 
-            if (c != null && PersonalityMod.shouldGradualValue(CONFIG.NO_GLASSES_BLURRINESS, c)
-                    && !client.player.getEquippedStack(EquipmentSlot.HEAD).isIn(PersonalityMod.VISION_GLASSES) && progress < getStrength(c))
+            if (ConfigHelper.shouldApply(CONFIG.NO_GLASSES_BLURRINESS, c) && progress < getStrength(c)
+                    && !client.player.getEquippedStack(EquipmentSlot.HEAD).isIn(PersonalityMod.VISION_GLASSES))
                 progress += 0.05;
             else if (progress > 0)
                 progress -= 0.05;
-
-            if (progress > 0)
-                getStrength(c);
         }
 
         if (progress > 0) {
@@ -42,8 +40,6 @@ public class BlurryVisionShaderEffect implements ShaderEffectRenderCallback {
     }
 
     private float getStrength(Character c) {
-        if (c != null && PersonalityMod.shouldGradualValue(CONFIG.NO_GLASSES_BLURRINESS, c))
-            return PersonalityMod.getGradualValue(CONFIG.NO_GLASSES_BLURRINESS, c) / CONFIG.NO_GLASSES_BLURRINESS.END_VALUE();
-        return 1;
+        return ConfigHelper.apply(CONFIG.NO_GLASSES_BLURRINESS, c) / CONFIG.NO_GLASSES_BLURRINESS.END_VALUE();
     }
 }

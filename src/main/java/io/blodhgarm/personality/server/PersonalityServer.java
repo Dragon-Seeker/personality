@@ -2,6 +2,7 @@ package io.blodhgarm.personality.server;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.blodhgarm.personality.server.config.ConfigHelper;
 import io.blodhgarm.personality.server.config.PersonalityConfig;
 import io.github.apace100.calio.mixin.DamageSourceAccessor;
 import io.blodhgarm.personality.PersonalityMod;
@@ -76,9 +77,9 @@ public class PersonalityServer implements ModInitializer {
 
 			PersonalityConfig.GradualValue config = PersonalityMod.CONFIG.NO_STICK_SLOWNESS;
 			EntityAttributeInstance instance = player.getAttributeInstance(EntityAttributes.GENERIC_MOVEMENT_SPEED);
-			if (PersonalityMod.shouldGradualValue(config, c) && !player.getOffHandStack().isIn(PersonalityMod.WALKING_STICKS) && !player.getMainHandStack().isIn(PersonalityMod.WALKING_STICKS)) {
+			if (ConfigHelper.shouldApply(config, c) && !player.getOffHandStack().isIn(PersonalityMod.WALKING_STICKS) && !player.getMainHandStack().isIn(PersonalityMod.WALKING_STICKS)) {
 				if (instance.getModifier(NO_STICK_SLOWNESS) == null)
-					instance.addTemporaryModifier(new EntityAttributeModifier(NO_STICK_SLOWNESS, "Old Person with No Stick", PersonalityMod.getGradualValue(config, c), EntityAttributeModifier.Operation.MULTIPLY_BASE));
+					instance.addTemporaryModifier(new EntityAttributeModifier(NO_STICK_SLOWNESS, "Old Person with No Stick", ConfigHelper.apply(config, c), EntityAttributeModifier.Operation.MULTIPLY_BASE));
 			}
 			else {
 				instance.tryRemoveModifier(NO_STICK_SLOWNESS);

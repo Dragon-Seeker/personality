@@ -37,23 +37,21 @@ public class PersonalityConfigModel {
     }
 
 
-
-
-    public enum Curve { NONE, LINEAR, QUADRATIC, EXPONENTIAL, LOGARITHMIC }
+    public enum Curve { NONE, LINEAR, QUADRATIC, SQRT, EXPONENTIAL, LOGARITHMIC, EXPONENTIAL_EXTREME, LOGARITHMIC_EXTREME }
 
     public static class GradualValue {
         public int MIN_AGE;
         public int MAX_AGE;
         public float START_VALUE;
         public float END_VALUE;
-//        public Curve CURVE;
+        public Curve CURVE;
 
         public GradualValue(int minAge, int maxAge, float startValue, float endValue, Curve curve) {
             MIN_AGE = minAge;
             MAX_AGE = maxAge;
             START_VALUE = startValue;
             END_VALUE = endValue;
-//            CURVE = curve;
+            CURVE = curve;
         }
     }
 
