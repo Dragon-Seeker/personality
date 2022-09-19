@@ -1,0 +1,6 @@
+{
+  "personality.gender.male": "Male",
+  "personality.gender.female": "Female",
+  "personality.gender.non_binary": "Non Binary",
+  "personality.gender.other": "Other"
+}

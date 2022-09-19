@@ -76,8 +76,6 @@ public class BetterEditBoxWidget extends EditBoxWidget implements ComponentStub 
         fill(matrices, this.x + 1, this.y + 1, this.x + this.width - 1, this.y + this.height - 1, backgroundColor.argb());
     }
 
-
-
     @Override
     public void drawFocusHighlight(MatrixStack matrices, int mouseX, int mouseY, float partialTicks, float delta) {
         // noop, since TextFieldWidget already does this

@@ -48,27 +48,29 @@ public class RevealIdentityScreen extends BaseOwoScreen<FlowLayout> {
 
     private Component entry(String text, int range) {
 
-        Component p = Components.button(Text.literal(text), 92,20, button -> {
-            client.setScreen(null);
-            Networking.sendC2S(new RevealCharacterC2SPacket.InRange(range));
-        });
-
-//        ParentComponent c = Containers.horizontalFlow(Sizing.fixed(100-8), Sizing.fixed(24))
-//                .child( Components.label(Text.literal(text)).color(new Color(0.1F,0.1F,0.1F))
-//                        .margins(Insets.left(19)))
-//                .margins(Insets.bottom(1))
-//                .alignment(HorizontalAlignment.LEFT, VerticalAlignment.CENTER)
-//                .surface(Surface.PANEL);
-//
-//        c.mouseUp().subscribe((mouseX, mouseY, button) -> {
-//            if (button == 1) {
-//                Networking.sendC2S(new RevealCharacterC2SPacket.InRange(range));
-//                return true;
-//            }
-//            return false;
+//        Component p = Components.button(Text.literal(text), 92,20, button -> {
+//            client.setScreen(null);
+//            Networking.sendC2S(new RevealCharacterC2SPacket.InRange(range));
 //        });
 
-        return p;
+        ParentComponent c = Containers.horizontalFlow(Sizing.fixed(100-8), Sizing.fixed(24))
+                .child(Components.label(Text.literal(text)).color(new Color(0.1F,0.1F,0.1F))
+                        .margins(Insets.left(19)))
+                .margins(Insets.bottom(1))
+                .alignment(HorizontalAlignment.LEFT, VerticalAlignment.CENTER)
+                .surface(Surface.PANEL);
+
+        c.mouseDown().subscribe((mouseX, mouseY, button) -> {
+            System.out.println(button);
+
+            if (button == 1) {
+                Networking.sendC2S(new RevealCharacterC2SPacket.InRange(range));
+                return true;
+            }
+            return false;
+        });
+
+        return c;
     }
 
     private List<Component> getPlayerComponents() {
