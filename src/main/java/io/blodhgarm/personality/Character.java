@@ -21,6 +21,7 @@ public class Character {
     private String name;
     private String gender;
     private String description;
+    private String biography;
 
     private float heightOffset;
 
@@ -33,11 +34,12 @@ public class Character {
 
     public Character() {}
 
-    public Character(String name, String gender, String description, float heightOffset, int ageOffset, int activityOffset) {
+    public Character(String name, String gender, String description, String biography, float heightOffset, int ageOffset, int activityOffset) {
         this.uuid = UUID.randomUUID().toString();
         this.name = name;
         this.gender = gender;
         this.description = description;
+        this.biography = biography;
         this.heightOffset = heightOffset;
         this.ageOffset = ageOffset;
         this.created = System.currentTimeMillis();
@@ -65,13 +67,20 @@ public class Character {
         this.gender = gender;
     }
 
-
     public String getDescription() {
         return description;
     }
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getBiography() {
+        return biography;
+    }
+
+    public void setBiography(String biography) {
+        this.biography = biography;
     }
 
     public float getHeightOffset() {
@@ -162,6 +171,7 @@ public class Character {
                 + "\n§lUUID§r: " + uuid
                 + "\n§lGender§r: " + gender
                 + "\n§lDescription§r: " + description
+                + "\n§lBio§r: " + biography
                 + "\n§lAge§r: " + getAge() + " / " + getMaxAge() + " (" + getStage() + ")"
                 + "\n§lPlaytime§r: " + (getPlaytime()/HOUR_IN_MILLISECONDS)
                 + "\n§lHeight§r: " + (1.8 - heightOffset);
@@ -174,6 +184,7 @@ public class Character {
                 ",\n name=" + name +
                 ",\n gender=" + gender +
                 ",\n description=" + description +
+                ",\n biography=" + biography +
                 ",\n heightOffset=" + heightOffset +
                 ",\n ageOffset=" + ageOffset +
                 ",\n created=" + created +

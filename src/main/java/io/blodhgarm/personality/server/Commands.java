@@ -51,9 +51,10 @@ public class Commands {
                 .then(argument("name", word() )
                     .then(argument("gender", word() ).suggests( (c,b) -> suggestions(b, "male", "female", "nonbinary"))
                         .then(argument("description", string() )
-                            .then(argument("heightOffset", floatArg(-0.5F, 0.5F) )
-                                .then(argument("age", integer(17, 60) )
-                                    .executes(Commands::create) ))))))
+                            .then(argument("biography", string() )
+                                .then(argument("heightOffset", floatArg(-0.5F, 0.5F) )
+                                    .then(argument("age", integer(17, 60) )
+                                        .executes(Commands::create) )))))))
 
             .then(literal("get")
                 .executes(c -> get(c, getCharacterFromSelf(c)))
@@ -123,6 +124,8 @@ public class Commands {
                         .executes(c -> setProperty(c, () -> { character.apply(c).setGender(getString(c, "gender")); return msg(c, "Gender Set"); }))))
                 .then(literal("description").then(argument("description", greedyString())
                         .executes(c -> setProperty(c, () -> { character.apply(c).setDescription(getString(c, "description")); return msg(c, "Description Set"); }))))
+                .then(literal("biography").then(argument("biography", greedyString())
+                        .executes(c -> setProperty(c, () -> { character.apply(c).setBiography(getString(c, "biography")); return msg(c, "Biography Set"); }))))
                 .then(literal("heightOffset").then(argument("heightOffset",  floatArg(-0.5F, 0.5F))
                         .executes(c -> setProperty(c, () -> { character.apply(c).setHeightOffset(getFloat(c, "heightOffset")); return msg(c, "Height Offset Set"); }))))
                 .then(literal("age").then(argument("age", integer(17))
@@ -138,11 +141,12 @@ public class Commands {
             String name = getString(context, "name");
             String gender = getString(context, "gender");
             String description = getString(context, "description");
+            String biography = getString(context, "biography");
             float heightOffset = getFloat(context, "heightOffset");
             int age = getInteger(context, "age");
             int activityOffset = player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME));
 
-            Character c = new Character(name, gender, description, heightOffset, age, activityOffset);
+            Character c = new Character(name, gender, description, biography, heightOffset, age, activityOffset);
 
             ServerCharacters.playerIDToCharacterID.put(player.getUuidAsString(), c.getUUID());
             ServerCharacters.saveCharacter(c);
