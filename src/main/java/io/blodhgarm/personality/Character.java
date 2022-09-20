@@ -10,6 +10,8 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import static java.lang.Math.*;
+
 public class Character {
 
     public enum Stage {YOUTH, PRIME, OLD}
@@ -147,16 +149,17 @@ public class Character {
         double hoursPlayed = (float) getPlaytime() / HOUR_IN_MILLISECONDS;
         int extraYears = 0;
 
-        if (hoursPlayed < config.START_HOURS_PER_EXTRA_LIFE() || getAge() < config.START_AT_AGE())
+        if (hoursPlayed < config.START_HOURS_PER_EXTRA_LIFE() || getAge() < config.MIN_AGE())
             return 0;
 
         for (int i = 1 ;; i++) {
-            double hoursNeeded = config.START_HOURS_PER_EXTRA_LIFE() + switch (config.CURVE()) {
+            double hoursNeeded = config.START_HOURS_PER_EXTRA_LIFE() + config.CURVE_MULTIPLIER() * switch (config.CURVE()) {
                 case NONE -> 0;
-                case LINEAR -> i - 1;
-                case QUADRATIC -> Math.pow(i, 2) - 1;
-                case EXPONENTIAL -> Math.pow(Math.E, i - 1) - 1;
-                case LOGARITHMIC -> Math.log(i);
+                case LINEAR -> i-1;
+                case QUADRATIC -> pow(i, 2) - 1;
+                case SQRT -> sqrt(i) - 1;
+                case EXPONENTIAL, EXPONENTIAL_EXTREME -> pow(E, i - 1) - 1;
+                case LOGARITHMIC, LOGARITHMIC_EXTREME -> log(i);
             };
             if (hoursPlayed < hoursNeeded)
                 break;

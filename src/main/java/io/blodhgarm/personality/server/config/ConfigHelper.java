@@ -27,7 +27,7 @@ public class ConfigHelper {
             case SQRT -> a*sqrt(x);
             case EXPONENTIAL -> pow(E, a*x - 1);
             case LOGARITHMIC -> a*log(x) + 1;
-            case EXPONENTIAL_EXTREME -> a*pow(E,x);
+            case EXPONENTIAL_EXTREME -> (pow(E,x) - 1)/a;
             case LOGARITHMIC_EXTREME -> log(a*x+1);
         } + m;
 
@@ -58,7 +58,7 @@ public class ConfigHelper {
             case SQRT -> valueRange / sqrt(ageRange);
             case EXPONENTIAL -> log( valueRange + 1 ) / ageRange;
             case LOGARITHMIC -> valueRange / log(ageRange + 1);
-            case EXPONENTIAL_EXTREME -> valueRange / pow(E, ageRange);
+            case EXPONENTIAL_EXTREME -> (pow(E, ageRange) - 1)/ valueRange;
             case LOGARITHMIC_EXTREME -> (pow(E, valueRange) - 1) / ageRange;
         };
 

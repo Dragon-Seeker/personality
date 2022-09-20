@@ -23,7 +23,7 @@ public class PersonalityConfigModel {
     public int BASE_MAXIMUM_AGE = 80;
 
     @Sync(value = Option.SyncMode.OVERRIDE_CLIENT)
-    @Nest public ExtraLife EXTRA_LIFE = new ExtraLife(17, 1, Curve.NONE);
+    @Nest public ExtraLife EXTRA_LIFE = new ExtraLife(17, 110, 1, 1, Curve.NONE);
 
     @Sync(value = Option.SyncMode.OVERRIDE_CLIENT)
     public int MAX_EXTRA_YEARS_OF_LIFE = 30;
@@ -56,13 +56,17 @@ public class PersonalityConfigModel {
     }
 
     public static class ExtraLife {
-        public int START_AT_AGE;
+        public int MIN_AGE;
+        public int MAX_AGE;
         public float START_HOURS_PER_EXTRA_LIFE;
+        public float CURVE_MULTIPLIER;
         public Curve CURVE;
 
-        public ExtraLife(int startAtAge, int startHoursPerExtraLife, Curve curve) {
-            START_AT_AGE = startAtAge;
+        public ExtraLife(int minAge, int maxAge, float startHoursPerExtraLife, float curveMultiplier, Curve curve) {
+            MIN_AGE = minAge;
+            MAX_AGE = maxAge;
             START_HOURS_PER_EXTRA_LIFE = startHoursPerExtraLife;
+            CURVE_MULTIPLIER = curveMultiplier;
             CURVE = curve;
         }
 
