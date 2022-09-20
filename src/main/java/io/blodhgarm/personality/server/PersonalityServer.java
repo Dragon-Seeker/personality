@@ -18,14 +18,14 @@ import net.minecraft.entity.attribute.EntityAttributeInstance;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import virtuoel.pehkui.api.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class PersonalityServer implements ModInitializer {
 
@@ -51,6 +51,7 @@ public class PersonalityServer implements ModInitializer {
 	public static void onWorldLoad(MinecraftServer server, ServerWorld world) {
 		PersonalityServer.server = server;
 		ServerCharacters.loadCharacterReference();
+		ScaleTypes.BASE.getDefaultBaseValueModifiers().add(testModifier);
 	}
 
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -69,12 +70,14 @@ public class PersonalityServer implements ModInitializer {
 			if (c == null)
 				return;
 
+			// Kill Too Old Characters
 			if (c.getAge() >= c.getMaxAge()) {
 				ServerCharacters.killCharacter(c);
 				player.damage(DEATH_BY_OLD_AGE, Float.MAX_VALUE);
 				continue;
 			}
 
+			// Apply Slowness to Old Characters without a stick
 			PersonalityConfig.GradualValue config = PersonalityMod.CONFIG.NO_STICK_SLOWNESS;
 			EntityAttributeInstance instance = player.getAttributeInstance(EntityAttributes.GENERIC_MOVEMENT_SPEED);
 			if (ConfigHelper.shouldApply(config, c) && !player.getOffHandStack().isIn(PersonalityMod.WALKING_STICKS) && !player.getMainHandStack().isIn(PersonalityMod.WALKING_STICKS)) {
@@ -85,8 +88,45 @@ public class PersonalityServer implements ModInitializer {
 				instance.tryRemoveModifier(NO_STICK_SLOWNESS);
 			}
 
+			// Apply Height Offset
+			ScaleData data = ScaleTypes.BASE.getScaleData(player);
+			var modifiersList = data.getBaseValueModifiers();
+
+			float scale = 1 + (c.getHeightOffset()/100);
+			if (c.getHeightOffset() != 0 && data.getScale() != scale)
+				data.setTargetScale(scale);
+			else if (c.getHeightOffset() == 0 && data.getScale() != 1)
+				data.setTargetScale(1F);
+
+
+
 		}
 
+	}
+
+	public static final ScaleModifier testModifier = ScaleRegistries.register(
+		ScaleRegistries.SCALE_MODIFIERS,
+		PersonalityMod.id("test"),
+		new TypedScaleModifier(() -> ScaleTypes.BASE, (modifiedScale,scale) -> modifiedScale * 5)
+	);
+
+
+	public static Map<Character,ScaleModifier> modifiers = new HashMap<>();
+
+	private static void setModifier(Character c, ScaleData data) {
+		ScaleModifier modifier = ScaleRegistries.register(
+			ScaleRegistries.SCALE_MODIFIERS,
+			PersonalityMod.id(c.getUUID()),
+			new TypedScaleModifier(() -> ScaleTypes.BASE,
+				(modifiedScale,scale) -> scale + c.getHeightOffset())
+		);
+		modifiers.put(c, modifier);
+		data.getBaseValueModifiers().add(modifier);
+	}
+	private static void removeModifier(Character c, ScaleData data) {
+		data.getBaseValueModifiers().remove(modifiers.get(c));
+		modifiers.remove(c);
+		ScaleRegistries.SCALE_MODIFIERS.remove(PersonalityMod.id(c.getUUID()));
 	}
 
 }

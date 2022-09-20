@@ -54,6 +54,7 @@ dependencies {
 	modLocalRuntime modCompileOnly("com.terraformersmc:modmenu:${project.modmenu_version}")
 	modImplementation "com.github.apace100:origins-fabric:${project.origin_version}"
 	modImplementation "io.github.ladysnake:satin:${satin_version}"
+	modImplementation "dev.emi:trinkets:${trinkets_version}"
 	include "io.github.ladysnake:satin:${satin_version}"
 
 	implementation 'com.github.Dansoftowner:jSystemThemeDetector:3.8'

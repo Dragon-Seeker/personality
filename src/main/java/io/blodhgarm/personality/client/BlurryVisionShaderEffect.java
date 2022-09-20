@@ -1,5 +1,6 @@
 package io.blodhgarm.personality.client;
 
+import dev.emi.trinkets.api.TrinketsApi;
 import io.blodhgarm.personality.Character;
 import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.server.config.ConfigHelper;
@@ -26,8 +27,7 @@ public class BlurryVisionShaderEffect implements ShaderEffectRenderCallback {
         if (client.player != null) {
             Character c = ClientCharacters.getCharacter(client.player);
 
-            if (ConfigHelper.shouldApply(CONFIG.NO_GLASSES_BLURRINESS, c) && progress < getStrength(c)
-                    && !client.player.getEquippedStack(EquipmentSlot.HEAD).isIn(PersonalityMod.VISION_GLASSES))
+            if (ConfigHelper.shouldApply(CONFIG.NO_GLASSES_BLURRINESS, c) && progress < getStrength(c) && !hasGlasses())
                 progress += 0.05;
             else if (progress > 0)
                 progress -= 0.05;
@@ -41,5 +41,15 @@ public class BlurryVisionShaderEffect implements ShaderEffectRenderCallback {
 
     private float getStrength(Character c) {
         return ConfigHelper.apply(CONFIG.NO_GLASSES_BLURRINESS, c) / CONFIG.NO_GLASSES_BLURRINESS.END_VALUE();
+    }
+
+    private boolean hasGlasses() {
+        if (client.player.getEquippedStack(EquipmentSlot.HEAD).isIn(PersonalityMod.VISION_GLASSES))
+            return true;
+
+        if (TrinketsApi.getTrinketComponent(client.player).isEmpty())
+            return false;
+
+        return TrinketsApi.getTrinketComponent(client.player).get().getEquipped(stack -> stack.isIn(PersonalityMod.VISION_GLASSES)).size() > 0;
     }
 }

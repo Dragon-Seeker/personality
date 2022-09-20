@@ -17,7 +17,7 @@ public class PersonalityConfigModel {
     @Nest public GradualValue NO_STICK_SLOWNESS     = new GradualValue(60, Integer.MAX_VALUE, 0, 0.45F, Curve.LINEAR);
 
     @Sync(value = Option.SyncMode.OVERRIDE_CLIENT)
-    @Nest public GradualValue NO_GLASSES_BLURRINESS = new GradualValue(60, Integer.MAX_VALUE, 0, 16F, Curve.LINEAR);
+    @Nest public GradualValue NO_GLASSES_BLURRINESS = new GradualValue(60, 110, 0, 16F, Curve.LINEAR);
 
     @Sync(value = Option.SyncMode.OVERRIDE_CLIENT)
     public int BASE_MAXIMUM_AGE = 80;
