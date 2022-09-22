@@ -1,6 +1,6 @@
 package io.blodhgarm.personality.mixin.client;
 
-import io.blodhgarm.personality.client.compat.BetterTextFieldWidget;
+import io.blodhgarm.personality.client.screens.components.vanilla.BetterTextFieldWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.util.math.MatrixStack;
 import org.spongepowered.asm.mixin.Mixin;

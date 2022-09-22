@@ -1,4 +1,4 @@
-package io.blodhgarm.personality.client.compat.origins.gui;
+package io.blodhgarm.personality.client.compat.origins.gui.components;
 
 import io.github.apace100.apoli.power.PowerType;
 import io.github.apace100.origins.badge.Badge;
@@ -19,17 +19,25 @@ import java.util.List;
 
 public class OriginInfoContainer extends VerticalFlowLayout {
 
-    protected OriginInfoContainer(Sizing horizontalSizing, Sizing verticalSizing, Origin origin, Text randomOriginText, boolean isOriginRandom) {
+    private Origin origin;
+    private Text randomOriginText;
+    private boolean isOriginRandom;
+
+    public OriginInfoContainer(Sizing horizontalSizing, Sizing verticalSizing, Origin origin, Text randomOriginText, boolean isOriginRandom) {
         super(horizontalSizing, verticalSizing);
 
-        build(this, origin, randomOriginText, isOriginRandom);
+        this.origin = origin; this.randomOriginText = randomOriginText; this.isOriginRandom = isOriginRandom;
+
+        build(this);
     }
 
     public void origin(Origin origin, Text randomOriginText, boolean isOriginRandom){
-        this.onUpdate(this, origin, randomOriginText, isOriginRandom);
+        this.origin = origin; this.randomOriginText = randomOriginText; this.isOriginRandom = isOriginRandom;
+
+        this.onUpdate(this);
     }
 
-    public void build(FlowLayout rootComponent, Origin origin, Text randomOriginText, boolean isOriginRandom){
+    public void build(FlowLayout rootComponent){
         rootComponent.child(Components.label(origin.getDescription())
                 .color(Color.ofRgb(0xCCCCCC))
                 .id("origin_info")
@@ -40,7 +48,7 @@ public class OriginInfoContainer extends VerticalFlowLayout {
         rootComponent.child(createSecondaryInfoComponent(origin, randomOriginText, isOriginRandom));
     }
 
-    public void onUpdate(FlowLayout rootComponent, Origin origin, Text randomOriginText, boolean isOriginRandom){
+    public void onUpdate(FlowLayout rootComponent){
         rootComponent.childById(LabelComponent.class, "origin_info").text(origin.getDescription());
 
         rootComponent.removeChild(rootComponent.childById(FlowLayout.class, "origin_secondary_info"));

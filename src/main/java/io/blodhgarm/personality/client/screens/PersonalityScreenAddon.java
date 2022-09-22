@@ -1,8 +1,68 @@
 package io.blodhgarm.personality.client.screens;
 
+import io.wispforest.owo.ui.base.BaseParentComponent;
+import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
+import io.wispforest.owo.ui.core.Component;
+import io.wispforest.owo.ui.core.Sizing;
 
-public interface PersonalityScreenAddon {
+public abstract class PersonalityScreenAddon {
 
-    void build(FlowLayout rootComponent, boolean darkMode);
+    private final String addonId;
+
+    private PersonalityCreationScreen originScreen = null;
+
+    protected BaseParentComponent rootBranchComponent;
+
+    public PersonalityScreenAddon(String addonId){
+        this.addonId = addonId;
+    }
+
+    public String addonId(){
+        return addonId;
+    }
+
+    public final FlowLayout createMainFlowlayout(boolean darkMode){
+        return (FlowLayout) Containers.verticalFlow(Sizing.content(), Sizing.content())
+                .child(this.build(darkMode))
+                .id(this.addonId());
+    }
+
+    public final PersonalityScreenAddon linkAddon(PersonalityCreationScreen screen){
+        this.originScreen = screen;
+
+        return this;
+    }
+
+    public final void closeAddon(){
+        this.originScreen.pushScreenAddon(this);
+    }
+
+    //-------------------------------------------------------------------------------
+
+    public boolean requiresUserInput(){
+        return false;
+    }
+
+    /**
+     * Method used to build the main portion of the addon Screen
+     */
+    public abstract FlowLayout build(boolean darkMode);
+
+    /**
+     * Method used to add the component that will toggle the addons side screen
+     */
+    public Component addBranchComponent(BaseParentComponent rootComponent){
+        this.rootBranchComponent = rootComponent;
+
+        return Containers.verticalFlow(Sizing.content(), Sizing.content());
+    }
+
+    /**
+     * Used to update the given branch component
+     */
+    public abstract void branchUpdate();
+
+    //TODO: IMPLEMENT THIS
+    public abstract void saveAddonData();
 }

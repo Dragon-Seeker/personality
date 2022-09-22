@@ -1,5 +1,6 @@
-package io.blodhgarm.personality.client.compat.origins.gui;
+package io.blodhgarm.personality.client.compat.origins.gui.components;
 
+import io.blodhgarm.personality.client.compat.origins.gui.OriginSelectionDisplayAddon;
 import io.github.apace100.apoli.power.PowerType;
 import io.github.apace100.origins.badge.Badge;
 import io.wispforest.owo.ui.component.TextureComponent;
@@ -22,6 +23,6 @@ public class OriginBadgeComponent extends TextureComponent {
 
     @Override
     public List<TooltipComponent> tooltip() {
-        return badge.getTooltipComponents(type, this.parent().width(), OriginSelectionComponent.time,  MinecraftClient.getInstance().textRenderer);
+        return badge.getTooltipComponents(type, this.parent().width(), OriginSelectionDisplayAddon.time,  MinecraftClient.getInstance().textRenderer);
     }
 }

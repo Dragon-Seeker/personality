@@ -1,6 +1,7 @@
-package io.blodhgarm.personality.client.compat.origins.gui;
+package io.blodhgarm.personality.client.compat.origins.gui.components;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import io.blodhgarm.personality.client.compat.origins.gui.OriginSelectionDisplayAddon;
 import io.github.apace100.origins.Origins;
 import io.github.apace100.origins.origin.Impact;
 import io.wispforest.owo.ui.base.BaseComponent;
@@ -39,7 +40,7 @@ public class OriginImpactComponent extends BaseComponent {
 
     @Override
     public void draw(MatrixStack matrices, int mouseX, int mouseY, float partialTicks, float delta) {
-        RenderSystem.setShaderTexture(0, OriginSelectionComponent.ORIGINS_GUI_TEXTURE);
+        RenderSystem.setShaderTexture(0, OriginSelectionDisplayAddon.ORIGINS_GUI_TEXTURE);
         RenderSystem.enableDepthTest();
 
         matrices.push();

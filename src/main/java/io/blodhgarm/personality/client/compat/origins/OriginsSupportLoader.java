@@ -1,6 +1,6 @@
 package io.blodhgarm.personality.client.compat.origins;
 
-import io.blodhgarm.personality.client.compat.origins.gui.OriginSelectionComponent;
+import io.blodhgarm.personality.client.compat.origins.gui.OriginSelectionDisplayAddon;
 import io.blodhgarm.personality.client.screens.PersonalityCreationScreen;
 import io.github.apace100.origins.component.OriginComponent;
 import io.github.apace100.origins.origin.Origin;
@@ -54,6 +54,6 @@ public class OriginsSupportLoader {
             }
         }
 
-        screen.addAddon(new OriginSelectionComponent(layers, 0));
+        screen.addAddon(new OriginSelectionDisplayAddon(layers, 0));
     }
 }
