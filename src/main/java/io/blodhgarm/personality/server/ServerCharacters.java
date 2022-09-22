@@ -21,6 +21,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class ServerCharacters {
 
@@ -90,6 +91,13 @@ public class ServerCharacters {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void associateCharacterToPlayer(String characterUUID, String playerUUID){
+        ServerCharacters.playerIDToCharacterID.inverse().remove(characterUUID);
+        ServerCharacters.playerIDToCharacterID.put(playerUUID, characterUUID);
+        ServerCharacters.saveCharacterReference();
+        Networking.sendToAll(new SyncS2CPackets.Association(characterUUID, playerUUID));
     }
 
     public static void killCharacter(Character c) {

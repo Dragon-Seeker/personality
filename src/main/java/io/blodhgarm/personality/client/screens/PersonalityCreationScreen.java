@@ -1,21 +1,28 @@
 package io.blodhgarm.personality.client.screens;
 
+import io.blodhgarm.personality.Character;
+import io.blodhgarm.personality.Networking;
 import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.client.screens.components.CustomSurfaces;
 import io.blodhgarm.personality.client.screens.components.vanilla.BetterEditBoxWidget;
 import io.blodhgarm.personality.client.screens.components.vanilla.BetterTextFieldWidget;
 import io.blodhgarm.personality.client.compat.CustomEntityComponent;
+import io.blodhgarm.personality.packets.SyncC2SPackets;
 import io.wispforest.owo.Owo;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.base.BaseParentComponent;
 import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.Components;
+import io.wispforest.owo.ui.component.SliderComponent;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.container.HorizontalFlowLayout;
 import io.wispforest.owo.ui.core.*;
 import io.wispforest.owo.ui.util.UIErrorToast;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.widget.EditBoxWidget;
+import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.stat.Stats;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
@@ -126,6 +133,7 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> {
                                                         .child(
                                                                 BetterTextFieldWidget.textBox(Sizing.fixed(112), "") //132
                                                                         .bqColor(Color.ofArgb(0xFF555555))
+                                                                        .id("character_name")
                                                         )
                                                         .horizontalAlignment(HorizontalAlignment.LEFT)
                                                         .verticalAlignment(VerticalAlignment.CENTER)
@@ -178,6 +186,7 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> {
                                                                 BetterEditBoxWidget.editBox(Sizing.fixed(136), Sizing.fixed(60), Text.of(""), Text.of(""))
                                                                         .textWidth(130)
                                                                         .bqColor(Color.ofArgb(0xFF555555))
+                                                                        .id("description_text_box")
                                                         )
                                                         .margins(Insets.bottom(8))
                                         )
@@ -191,6 +200,7 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> {
                                                                 BetterEditBoxWidget.editBox(Sizing.fixed(136), Sizing.fixed(60), Text.of(""), Text.of(""))
                                                                         .textWidth(130)
                                                                         .bqColor(Color.ofArgb(0xFF555555))
+                                                                        .id("biography_text_box")
                                                         )
                                         )
                                 )
@@ -221,7 +231,9 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> {
                         )
                         .child(
                                 Components.button(Text.of("Done"), (ButtonComponent button) -> {
-
+                                    if(this.finishCharacterCreation(rootComponent)){
+                                        this.close();
+                                    }
                                 })
                                 .horizontalSizing(Sizing.fixed(100))
                                 .margins(Insets.top(6))
@@ -233,21 +245,58 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> {
 
         // Root Component Manipulation
 
-        mainFlowLayout.positioning(Positioning.relative(50, -350));
+        mainFlowLayout.positioning(Positioning.relative(50, -100));
 
         mainFlowLayout.positioning().animate(2000, Easing.CUBIC, Positioning.relative(50, 50)).forwards();
 
         rootComponent.child(mainFlowLayout);
 
-        rootComponent.keyPress().subscribe((keyCode, scanCode, modifiers) -> {
-            if (keyCode == GLFW.GLFW_KEY_R && (modifiers & GLFW.GLFW_MOD_SHIFT) != 0) {
-                this.clearAndInit();
+        rootComponent.surface(Surface.VANILLA_TRANSLUCENT);
+    }
 
-                return true;
-            }
+    public Component createGenderComponent(){
+        FlowLayout horizontalComponent = Containers.horizontalFlow(Sizing.content(), Sizing.content());
 
-            return false;
-        });
+        horizontalComponent
+                .child(
+                        Components.label(Text.of("Gender: "))
+                )
+                .child(
+                        Components.button(currentSelection.translation, (ButtonComponent button) -> {
+                                    int nextIndex = currentSelection.ordinal() + 1;
+
+                                    currentSelection = GenderSelection.values()[nextIndex >= GenderSelection.values().length ? 0 : nextIndex];
+
+                                    button.setMessage(currentSelection.translation);
+
+                                    if(!currentSelection.openTextField()) {
+                                        BetterTextFieldWidget child = horizontalComponent.childById(BetterTextFieldWidget.class, "gender_text_field");
+
+                                        if(child != null) horizontalComponent.removeChild(child);
+
+                                    } else {
+                                        horizontalComponent.child(
+                                                BetterTextFieldWidget.textBox(Sizing.fixed(58), "")
+                                                        .setEditAbility(currentSelection.openTextField())
+                                                        .id("gender_text_field")
+                                        );
+                                    }
+
+                                    button.horizontalSizing(Sizing.fixed(MinecraftClient.getInstance().textRenderer.getWidth(currentSelection.translation.asOrderedText()) + 10));
+                                })
+                                .horizontalSizing(Sizing.fixed(MinecraftClient.getInstance().textRenderer.getWidth(currentSelection.translation.asOrderedText()) + 10)) //fixed(65)
+                                .margins(Insets.of(1, 1, 0,4))
+                ).verticalAlignment(VerticalAlignment.CENTER);
+
+        if(currentSelection.openTextField()){
+            horizontalComponent.child(
+                    BetterTextFieldWidget.textBox(Sizing.fixed(51), "")
+                            .setEditAbility(currentSelection.openTextField())
+                            .id("gender_text_field")
+            );
+        }
+
+        return horizontalComponent.margins(Insets.bottom(8));
     }
 
     public void pushScreenAddon(PersonalityScreenAddon screenAddon){
@@ -278,55 +327,36 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> {
         );
     }
 
-    public Component createGenderComponent(){
-        FlowLayout horizontalComponent = Containers.horizontalFlow(Sizing.content(), Sizing.content());
-
-        horizontalComponent
-                .child(
-                        Components.label(Text.of("Gender: "))
-                )
-                .child(
-                        Components.button(currentSelection.translation, (ButtonComponent button) -> {
-                            int nextIndex = currentSelection.ordinal() + 1;
-
-                            currentSelection = GenderSelection.values()[nextIndex >= GenderSelection.values().length ? 0 : nextIndex];
-
-                            button.setMessage(currentSelection.translation);
-
-                            if(!currentSelection.openTextField()) {
-                                BetterTextFieldWidget child = horizontalComponent.childById(BetterTextFieldWidget.class, "gender_text_field");
-
-                                if(child != null) horizontalComponent.removeChild(child);
-
-                            } else {
-                                horizontalComponent.child(
-                                        BetterTextFieldWidget.textBox(Sizing.fixed(58), "")
-                                                .setEditAbility(currentSelection.openTextField())
-                                                .id("gender_text_field")
-                                );
-                            }
-
-                            button.horizontalSizing(Sizing.fixed(MinecraftClient.getInstance().textRenderer.getWidth(currentSelection.translation.asOrderedText()) + 10));
-                        })
-                                .horizontalSizing(Sizing.fixed(MinecraftClient.getInstance().textRenderer.getWidth(currentSelection.translation.asOrderedText()) + 10)) //fixed(65)
-                                .margins(Insets.of(1, 1, 0,4))
-                ).verticalAlignment(VerticalAlignment.CENTER);
-
-        if(currentSelection.openTextField()){
-            horizontalComponent.child(
-                    BetterTextFieldWidget.textBox(Sizing.fixed(51), "")
-                            .setEditAbility(currentSelection.openTextField())
-                            .id("gender_text_field")
-            );
-        }
-
-        return horizontalComponent.margins(Insets.bottom(8));
-    }
-
     private boolean finishCharacterCreation(BaseParentComponent rootComponent){
+        String name = rootComponent.childById(TextFieldWidget.class, "character_name").getText();
+
+        String gender = currentSelection != GenderSelection.OTHER
+                ? currentSelection.translation.getString()
+                : rootComponent.childById(TextFieldWidget.class, "gender_text_field").getText();
+
+        String description = rootComponent.childById(BetterEditBoxWidget.class, "description_text_box").convertTextBox();
+
+        String biography = rootComponent.childById(BetterEditBoxWidget.class, "biography_text_box").convertTextBox();
+
+        float heightOffset = (float) rootComponent.childById(SliderComponent.class, "height_slider").value();
+
+        int age = (int) rootComponent.childById(SliderComponent.class, "age_slider").value();
+
+        int activityOffset = MinecraftClient.getInstance().player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME));
+
         //TODO: IMPLEMENT THIS
 
+        Character character = new Character(name, gender, description, biography, heightOffset, age, activityOffset);
+
+        Networking.sendC2S(new SyncC2SPackets.NewCharacter(character.serialise()));
+        Networking.sendC2S(new SyncC2SPackets.AssociatePlayerToCharacter(character.getUUID()));
+
         return true;
+    }
+
+    @Override
+    public boolean shouldCloseOnEsc() {
+        return false;
     }
 
     public static boolean guiScale4OrAbove(){

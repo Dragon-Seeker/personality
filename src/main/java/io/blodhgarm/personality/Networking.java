@@ -13,28 +13,33 @@ public class Networking {
     public static void registerNetworking(){
         //S2C - Server to Client
         CHANNEL.registerClientboundDeferred(OpenCharacterCreationScreenS2CPacket.class);
+
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.Initial.class);
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.SyncCharacter.class);
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.RemoveCharacter.class);
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.Association.class);
+
         CHANNEL.registerClientboundDeferred(IntroductionPacket.class);
 
         //C2S - Client to Server
         CHANNEL.registerServerbound(SyncC2SPackets.ModifyCharacter.class, SyncC2SPackets.ModifyCharacter::modifyCharacter);
         CHANNEL.registerServerbound(SyncC2SPackets.NewCharacter.class, SyncC2SPackets.NewCharacter::newCharacter);
+        CHANNEL.registerServerbound(SyncC2SPackets.AssociatePlayerToCharacter.class, SyncC2SPackets.AssociatePlayerToCharacter::associate);
+
         CHANNEL.registerServerbound(RevealCharacterC2SPacket.ToPlayer.class, RevealCharacterC2SPacket.ToPlayer::revealToPlayer);
         CHANNEL.registerServerbound(RevealCharacterC2SPacket.InRange.class, RevealCharacterC2SPacket.InRange::revealToPlayersInRange);
-
 
     }
 
     public static void registerNetworkingClient(){
         //S2C - Server to Client
         CHANNEL.registerClientbound(OpenCharacterCreationScreenS2CPacket.class, OpenCharacterCreationScreenS2CPacket::openScreen);
+
         CHANNEL.registerClientbound(SyncS2CPackets.Initial.class, SyncS2CPackets.Initial::initialSync);
         CHANNEL.registerClientbound(SyncS2CPackets.SyncCharacter.class, SyncS2CPackets.SyncCharacter::syncCharacter);
         CHANNEL.registerClientbound(SyncS2CPackets.RemoveCharacter.class, SyncS2CPackets.RemoveCharacter::removeCharacter);
         CHANNEL.registerClientbound(SyncS2CPackets.Association.class, SyncS2CPackets.Association::syncAssociation);
+
         CHANNEL.registerClientbound(IntroductionPacket.class, IntroductionPacket::beenIntroduced);
     }
 

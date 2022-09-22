@@ -13,3 +13,5 @@ accessible field net/minecraft/client/gui/widget/EditBoxWidget tick I
 extendable method net/minecraft/client/gui/widget/EditBoxWidget drawSelection (Lnet/minecraft/client/util/math/MatrixStack;IIII)V
 
 accessible class net/minecraft/client/gui/EditBox$Substring
+
+accessible field net/minecraft/client/gui/EditBox$Substring EMPTY Lnet/minecraft/client/gui/EditBox$Substring;

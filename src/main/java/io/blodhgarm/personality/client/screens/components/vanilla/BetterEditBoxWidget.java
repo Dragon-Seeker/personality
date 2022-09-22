@@ -232,6 +232,20 @@ public class BetterEditBoxWidget extends EditBoxWidget implements ComponentStub 
         return CursorStyle.TEXT;
     }
 
+    public String convertTextBox(){
+        StringBuilder builder = new StringBuilder();
+
+        for(EditBox.Substring substring : this.editBox.getLines()){
+            if(substring != EditBox.Substring.EMPTY){
+                builder.append(this.editBox.getText(), substring.beginIndex(), substring.endIndex());
+            }
+
+            builder.append("\n");
+        }
+
+        return builder.toString();
+    }
+
     @Override
     public boolean canFocus(FocusSource source) {
         return true;

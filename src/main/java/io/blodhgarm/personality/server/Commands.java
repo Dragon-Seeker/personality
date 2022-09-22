@@ -193,11 +193,8 @@ public class Commands {
 
 
     private static int associate(CommandContext<ServerCommandSource> context, PlayerEntity player) {
-        String uuid = getString(context, "uuid");
-        ServerCharacters.playerIDToCharacterID.inverse().remove(uuid);
-        ServerCharacters.playerIDToCharacterID.put(player.getUuidAsString(), uuid);
-        ServerCharacters.saveCharacterReference();
-        Networking.sendToAll(new SyncS2CPackets.Association(uuid, player.getUuidAsString()));
+        ServerCharacters.associateCharacterToPlayer(getString(context, "uuid"), player.getUuidAsString());
+
         return msg(context, "Character associated");
     }
 

@@ -35,6 +35,7 @@ repositories {
 			includeGroupByRegex 'io\\.github\\.onyxstudios.*'
 		}
 	}
+	mavenLocal()
 }
 
 dependencies {

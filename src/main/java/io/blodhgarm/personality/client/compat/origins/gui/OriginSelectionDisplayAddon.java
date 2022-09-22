@@ -186,11 +186,12 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
                                         new OriginHeaderComponent(Sizing.content(), Sizing.content(), getCurrentOrigin())
                                                 .margins(Insets.of(4,0,4,0))
                                                 .verticalAlignment(VerticalAlignment.CENTER)
+                                                .zIndex(1)
                                 )
                                 .child(Containers.verticalScroll(Sizing.fixed(150), Sizing.fixed(121),// y = 142, x = 154
                                         new OriginInfoContainer(Sizing.fixed(137), Sizing.content(), getCurrentOrigin(), randomOriginText, isOriginRandom) //143
                                                 .margins(Insets.left(6)
-                                        ))
+                                        ).zIndex(1))
                                         .scrollbar(ScrollContainer.Scrollbar.vanilla())
                                         .scrollbarThiccness(8)
                                         .fixedScrollbarLength(27)
@@ -198,7 +199,6 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
                                         .padding(Insets.of(8, 4, 0,0))
                                         .id("origin_info"))
                                 .surface(CustomSurfaces.INVERSE_PANEL)
-                                .zIndex(-2)
                                     .margins(Insets.of(1,0,0,0))
                     )
                     .child(Containers.horizontalFlow(Sizing.content(), Sizing.content())
@@ -238,7 +238,7 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
                     .surface(panel)
                 )
                 .horizontalAlignment(HorizontalAlignment.CENTER)
-                .margins(Insets.left(PersonalityCreationScreen.guiScale4OrAbove() ? 2 : 10));
+                .margins(Insets.left(PersonalityCreationScreen.guiScale4OrAbove() ? 6 : 10));
     }
 
     @Override

@@ -27,4 +27,12 @@ public class SyncC2SPackets {
         }
     }
 
+    public record AssociatePlayerToCharacter(String characterUUID){
+        public static void associate(AssociatePlayerToCharacter message, ServerAccess access){
+            if(ServerCharacters.characterIDToCharacter.containsKey(message.characterUUID())){
+                ServerCharacters.associateCharacterToPlayer(message.characterUUID(), access.player().getUuidAsString());
+            }
+        }
+    }
+
 }

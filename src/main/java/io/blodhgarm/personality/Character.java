@@ -1,5 +1,7 @@
 package io.blodhgarm.personality;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.blodhgarm.personality.server.ServerCharacters;
 import io.blodhgarm.personality.server.config.PersonalityConfig;
 import net.minecraft.item.ItemStack;
@@ -13,6 +15,8 @@ import java.util.UUID;
 import static java.lang.Math.*;
 
 public class Character {
+
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     public enum Stage {YOUTH, PRIME, OLD}
     public static final int WEEK_IN_MILLISECONDS = 604_800_000;
@@ -180,6 +184,10 @@ public class Character {
         return false;
     }
 
+    public String serialise(){
+        return GSON.toJson(this);
+    }
+
     public String getInfo() {
         return name + "§r\n"
                 + "\n§lUUID§r: " + uuid
@@ -206,5 +214,6 @@ public class Character {
                 ",\n knowCharacters=" + knowCharacters +
                 "\n}";
     }
+
 
 }
