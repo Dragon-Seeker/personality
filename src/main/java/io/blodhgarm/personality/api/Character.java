@@ -1,9 +1,11 @@
-package io.blodhgarm.personality;
+package io.blodhgarm.personality.api;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import io.blodhgarm.personality.server.ServerCharacters;
-import io.blodhgarm.personality.server.config.PersonalityConfig;
+import io.blodhgarm.personality.PersonalityMod;
+import io.blodhgarm.personality.impl.ServerCharacters;
+import io.blodhgarm.personality.misc.PersonalityTags;
+import io.blodhgarm.personality.misc.config.PersonalityConfig;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.stat.Stats;
@@ -130,18 +132,21 @@ public class Character {
     }
 
     public int getPlaytime() {
-        ServerPlayerEntity player = ServerCharacters.getPlayer(uuid);
-        if (player == null)
-            return 0;
-        return player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME)) - playtimeOffset;
+        ServerPlayerEntity player = ServerCharacters.INSTANCE.getPlayer(uuid);
+
+        return player != null ? player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME)) - playtimeOffset : 0;
     }
 
     public boolean setPlaytime(int playtime) {
-        ServerPlayerEntity player = ServerCharacters.getPlayer(uuid);
-        if (player == null)
-            return false;
-        playtimeOffset = playtime - player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME));
-        return true;
+        ServerPlayerEntity player = ServerCharacters.INSTANCE.getPlayer(uuid);
+
+        if (player != null) {
+            playtimeOffset = playtime - player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME));
+
+            return true;
+        }
+
+        return false;
     }
 
     public int getMaxAge() {
@@ -153,34 +158,35 @@ public class Character {
         double hoursPlayed = (float) getPlaytime() / HOUR_IN_MILLISECONDS;
         int extraYears = 0;
 
-        if (hoursPlayed < config.START_HOURS_PER_EXTRA_LIFE() || getAge() < config.MIN_AGE())
-            return 0;
+        if (hoursPlayed > config.START_HOURS_PER_EXTRA_LIFE() && getAge() > config.MIN_AGE()) {
+            for (int i = 1; ; i++) {
+                double hoursNeeded = config.START_HOURS_PER_EXTRA_LIFE() + config.CURVE_MULTIPLIER() * switch (config.CURVE()) {
+                    case NONE -> 0;
+                    case LINEAR -> i - 1;
+                    case QUADRATIC -> pow(i, 2) - 1;
+                    case SQRT -> sqrt(i) - 1;
+                    case EXPONENTIAL, EXPONENTIAL_EXTREME -> pow(E, i - 1) - 1;
+                    case LOGARITHMIC, LOGARITHMIC_EXTREME -> log(i);
+                };
 
-        for (int i = 1 ;; i++) {
-            double hoursNeeded = config.START_HOURS_PER_EXTRA_LIFE() + config.CURVE_MULTIPLIER() * switch (config.CURVE()) {
-                case NONE -> 0;
-                case LINEAR -> i-1;
-                case QUADRATIC -> pow(i, 2) - 1;
-                case SQRT -> sqrt(i) - 1;
-                case EXPONENTIAL, EXPONENTIAL_EXTREME -> pow(E, i - 1) - 1;
-                case LOGARITHMIC, LOGARITHMIC_EXTREME -> log(i);
-            };
-            if (hoursPlayed < hoursNeeded)
-                break;
-            hoursPlayed -= hoursNeeded;
+                if (hoursPlayed < hoursNeeded) break;
+
+                hoursPlayed -= hoursNeeded;
+            }
         }
 
         return extraYears;
     }
 
     public boolean isObscured() {
-        ServerPlayerEntity player = ServerCharacters.getPlayer(uuid);
-        if (player == null)
-            return false;
+        ServerPlayerEntity player = ServerCharacters.INSTANCE.getPlayer(uuid);
 
-        for (ItemStack stack : player.getItemsEquipped())
-            if (stack.isIn(PersonalityMod.OBSCURES_IDENTITY))
-                return true;
+        if (player != null) {
+            for (ItemStack stack : player.getItemsEquipped()) {
+                if (stack.isIn(PersonalityTags.OBSCURES_IDENTITY)) return true;
+            }
+        }
+
         return false;
     }
 

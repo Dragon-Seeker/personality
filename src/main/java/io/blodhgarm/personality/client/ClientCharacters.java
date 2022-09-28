@@ -1,62 +1,34 @@
 package io.blodhgarm.personality.client;
 
-import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import io.blodhgarm.personality.server.PersonalityServer;
-import io.blodhgarm.personality.Character;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.server.network.ServerPlayerEntity;
+import io.blodhgarm.personality.api.Character;
+import io.blodhgarm.personality.api.CharacterManager;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.AbstractClientPlayerEntity;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
-public class ClientCharacters {
-
-    public static BiMap<String, String> playerIDToCharacterID = HashBiMap.create();
-    public static Map<String, Character> characterIDToCharacter = new HashMap<>();
-
-    @Nullable
-    public static Character getCharacter(ClientPlayerEntity player) {
-        return getCharacter(playerIDToCharacterID.get(player.getUuidAsString()));
-    }
-
-    @Nullable
-    public static Character getCharacter(String uuid) {
-        Character c = characterIDToCharacter.get(uuid);
-
-        if (c != null)
-            return c;
-
-        //TODO: Implement
-        return null;
-    }
-
-    @Nullable
-    public static ServerPlayerEntity getPlayer(Character c) {
-        return getPlayer(c.getInfo());
-    }
-
-    @Nullable
-    public static ServerPlayerEntity getPlayer(String uuid) {
-        return PersonalityServer.getPlayer(uuid);
-    }
-
-    @Nullable
-    public static String getPlayerUUID(Character c) {
-        return getPlayerUUID(c.getUUID());
-    }
-
-    @Nullable
-    public static String getPlayerUUID(String uuid) {
-        return playerIDToCharacterID.inverse().get(uuid);
-    }
+public class ClientCharacters extends CharacterManager<AbstractClientPlayerEntity> {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    public static void init(List<String> characters, Map<String,String> associations) {
+
+    public static ClientCharacters INSTANCE = new ClientCharacters();
+
+    @Nullable
+    public AbstractClientPlayerEntity getPlayer(String uuid) {
+        return MinecraftClient.getInstance().world.getPlayers()
+                .stream()
+                .filter(abstractClientPlayerEntity -> Objects.equals(abstractClientPlayerEntity.getUuidAsString(), uuid))
+                .findFirst()
+                .orElse(null);
+    }
+
+    public void init(List<String> characters, Map<String,String> associations) {
         playerIDToCharacterID = HashBiMap.create(associations);
         characterIDToCharacter.clear();
         for (String characterJson : characters) {

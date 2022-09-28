@@ -2,7 +2,7 @@ package io.blodhgarm.personality.packets;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import io.blodhgarm.personality.Character;
+import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.client.ClientCharacters;
 import io.wispforest.owo.network.ClientAccess;
 import net.fabricmc.api.EnvType;
@@ -18,7 +18,7 @@ public class SyncS2CPackets {
     public record Initial(List<String> characters, Map<String,String> associations) {
         @Environment(EnvType.CLIENT)
         public static void initialSync(Initial message, ClientAccess access) {
-            ClientCharacters.init(message.characters, message.associations);
+            ClientCharacters.INSTANCE.init(message.characters, message.associations);
         }
     }
 
@@ -26,23 +26,28 @@ public class SyncS2CPackets {
         @Environment(EnvType.CLIENT)
         public static void syncCharacter(SyncCharacter message, ClientAccess access) {
             Character c = GSON.fromJson(message.characterJson, Character.class);
-            ClientCharacters.characterIDToCharacter.put(c.getUUID(), c);
+            ClientCharacters.INSTANCE.characterLookupMap().put(c.getUUID(), c);
         }
     }
 
     public record RemoveCharacter(String characterUUID) {
         @Environment(EnvType.CLIENT)
         public static void removeCharacter(RemoveCharacter message, ClientAccess access) {
-            ClientCharacters.playerIDToCharacterID.inverse().remove(message.characterUUID);
-            ClientCharacters.characterIDToCharacter.remove(message.characterUUID);
+            ClientCharacters.INSTANCE.removeCharacter(message.characterUUID);
         }
     }
 
     public record Association(String characterUUID, String newPlayerUUID) {
         @Environment(EnvType.CLIENT)
         public static void syncAssociation(Association message, ClientAccess access) {
-            ClientCharacters.playerIDToCharacterID.inverse().remove(message.characterUUID);
-            ClientCharacters.playerIDToCharacterID.put(message.newPlayerUUID, message.characterUUID);
+            ClientCharacters.INSTANCE.associateCharacterToPlayer(message.characterUUID, message.newPlayerUUID);
+        }
+    }
+
+    public record Dissociation(String uuid, boolean characterUUID) {
+        @Environment(EnvType.CLIENT)
+        public static void syncDissociation(Dissociation message, ClientAccess access) {
+            ClientCharacters.INSTANCE.dissociateUUID(message.uuid, message.characterUUID);
         }
     }
 

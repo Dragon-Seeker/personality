@@ -1,4 +1,4 @@
-package io.blodhgarm.personality.server.config;
+package io.blodhgarm.personality.misc.config;
 
 import io.blodhgarm.personality.PersonalityMod;
 import io.wispforest.owo.config.Option;
@@ -36,7 +36,6 @@ public class PersonalityConfigModel {
         SYSTEM
     }
 
-
     public enum Curve { NONE, LINEAR, QUADRATIC, SQRT, EXPONENTIAL, LOGARITHMIC, EXPONENTIAL_EXTREME, LOGARITHMIC_EXTREME }
 
     public static class GradualValue {
@@ -71,8 +70,4 @@ public class PersonalityConfigModel {
         }
 
     }
-
-
-
-
 }

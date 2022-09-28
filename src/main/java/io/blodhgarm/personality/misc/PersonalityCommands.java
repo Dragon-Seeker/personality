@@ -1,4 +1,4 @@
-package io.blodhgarm.personality.server;
+package io.blodhgarm.personality.misc;
 
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -7,10 +7,10 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.logging.LogUtils;
-import io.blodhgarm.personality.Character;
+import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.Networking;
 import io.blodhgarm.personality.packets.OpenCharacterCreationScreenS2CPacket;
-import io.blodhgarm.personality.packets.SyncS2CPackets;
+import io.blodhgarm.personality.impl.ServerCharacters;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.command.ServerCommandSource;
@@ -34,7 +34,7 @@ import static com.mojang.brigadier.arguments.StringArgumentType.*;
 import static net.minecraft.command.argument.EntityArgumentType.*;
 import static net.minecraft.server.command.CommandManager.*;
 
-public class Commands {
+public class PersonalityCommands {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -54,7 +54,7 @@ public class Commands {
                             .then(argument("biography", string() )
                                 .then(argument("heightOffset", floatArg(-0.5F, 0.5F) )
                                     .then(argument("age", integer(17, 60) )
-                                        .executes(Commands::create) )))))))
+                                        .executes(PersonalityCommands::create) )))))))
 
             .then(literal("get")
                 .executes(c -> get(c, getCharacterFromSelf(c)))
@@ -68,9 +68,9 @@ public class Commands {
                         .executes(c -> get(c, getCharacterFromUUID(c))))))
 
             .then(literal("set")
-                .then(setters(literal("self"), Commands::getCharacterFromSelf ))
-                .then(literal("player").then(setters(argument("player", player()), Commands::getCharacterFromPlayer )))
-                .then(literal("uuid").then(setters(argument("uuid", string()), Commands::getCharacterFromUUID))))
+                .then(setters(literal("self"), PersonalityCommands::getCharacterFromSelf ))
+                .then(literal("player").then(setters(argument("player", player()), PersonalityCommands::getCharacterFromPlayer )))
+                .then(literal("uuid").then(setters(argument("uuid", string()), PersonalityCommands::getCharacterFromUUID))))
 
             .then(literal("associate")
                 .then(argument("uuid", string())
@@ -102,25 +102,25 @@ public class Commands {
                         .executes(c -> revealRange(c, getInteger(c,"range") ))))
                 .then(literal("players")
                     .then(argument("players", players())
-                        .executes(Commands::revealPerson))))
+                        .executes(PersonalityCommands::revealPerson))))
 
             .then(literal("characters")
                 .then(literal("list")
-                    .executes(Commands::listKnownCharacters))
+                    .executes(PersonalityCommands::listKnownCharacters))
                 .then(literal("add")
                     .then(argument("players", players())
-                        .executes(Commands::addKnownCharacterByPlayer))
+                        .executes(PersonalityCommands::addKnownCharacterByPlayer))
                     .then(argument("uuid", string())
-                        .executes(Commands::addKnownCharacterByUUID)))
+                        .executes(PersonalityCommands::addKnownCharacterByUUID)))
                 .then(literal("remove")
                     .then(argument("players", players())
-                        .executes(Commands::removeKnownCharacterByPlayer))
+                        .executes(PersonalityCommands::removeKnownCharacterByPlayer))
                     .then(argument("uuid", string())
-                        .executes(Commands::removeKnownCharacterByUUID))))
+                        .executes(PersonalityCommands::removeKnownCharacterByUUID))))
 
             .then(literal("screen")
                 .then(literal("creation")
-                    .executes(Commands::openCreationScreen)))
+                    .executes(PersonalityCommands::openCreationScreen)))
             ;
     }
 
@@ -155,9 +155,9 @@ public class Commands {
 
             Character c = new Character(name, gender, description, biography, heightOffset, age, activityOffset);
 
-            ServerCharacters.playerIDToCharacterID.put(player.getUuidAsString(), c.getUUID());
-            ServerCharacters.saveCharacter(c);
-            ServerCharacters.saveCharacterReference();
+            ServerCharacters.INSTANCE.playerToCharacterReferences().put(player.getUuidAsString(), c.getUUID());
+            ServerCharacters.INSTANCE.saveCharacter(c);
+            ServerCharacters.INSTANCE.saveCharacterReference();
 
             return msg(context, "Character Created");
         }
@@ -182,7 +182,7 @@ public class Commands {
     private static int setProperty(CommandContext<ServerCommandSource> context, Supplier<Integer> code) {
         try {
             int out = code.get();
-            ServerCharacters.saveCharacter(ServerCharacters.getCharacter(context.getSource().getPlayer()));
+            ServerCharacters.INSTANCE.saveCharacter(ServerCharacters.INSTANCE.getCharacter(context.getSource().getPlayer()));
             return out;
         }
         catch (Exception e) {
@@ -193,14 +193,14 @@ public class Commands {
 
 
     private static int associate(CommandContext<ServerCommandSource> context, PlayerEntity player) {
-        ServerCharacters.associateCharacterToPlayer(getString(context, "uuid"), player.getUuidAsString());
+        ServerCharacters.INSTANCE.associateCharacterToPlayer(getString(context, "uuid"), player.getUuidAsString());
 
         return msg(context, "Character associated");
     }
 
     private static int revealRange(CommandContext<ServerCommandSource> context, int range) {
         try {
-            ServerCharacters.revealToPlayersInRange(context.getSource().getPlayer(), range);
+            ServerCharacters.INSTANCE.revealToPlayersInRange(context.getSource().getPlayer(), range);
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -217,12 +217,12 @@ public class Commands {
             ServerPlayerEntity player = context.getSource().getPlayer();
             MutableText text = Text.literal("\n§nKnown Characters§r:\n\n");
 
-            Character c = ServerCharacters.getCharacter(player);
+            Character c = ServerCharacters.INSTANCE.getCharacter(player);
 
             if(c == null) return errorNoCharacterMsg(context, context.getSource().getPlayer());
 
             for (String uuid : c.knowCharacters) {
-                Character pc = ServerCharacters.getCharacter(uuid);
+                Character pc = ServerCharacters.INSTANCE.getCharacter(uuid);
 
                 if(pc != null) {
                     text.append(Text.literal(pc.getName() + "\n").setStyle(Style.EMPTY.withHoverEvent(
@@ -242,12 +242,12 @@ public class Commands {
 
     private static int addKnownCharacterByPlayer(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
         ServerPlayerEntity player = context.getSource().getPlayer();
-        Character c = ServerCharacters.getCharacter(player);
+        Character c = ServerCharacters.INSTANCE.getCharacter(player);
 
         if(c == null) return errorNoCharacterMsg(context, context.getSource().getPlayer());
 
         for (ServerPlayerEntity p : getPlayers(context, "players")) {
-            Character pCharacter = ServerCharacters.getCharacter(p);
+            Character pCharacter = ServerCharacters.INSTANCE.getCharacter(p);
 
             if(pCharacter != null) {
                 c.knowCharacters.add(pCharacter.getUUID());
@@ -256,29 +256,29 @@ public class Commands {
             }
         }
 
-        ServerCharacters.saveCharacter(c);
+        ServerCharacters.INSTANCE.saveCharacter(c);
         return msg(context, "Character(s) Added");
     }
 
     private static int addKnownCharacterByUUID(CommandContext<ServerCommandSource> context) {
-        Character c = ServerCharacters.getCharacter(context.getSource().getPlayer());
+        Character c = ServerCharacters.INSTANCE.getCharacter(context.getSource().getPlayer());
 
         if(c == null) return errorNoCharacterMsg(context, context.getSource().getPlayer());
 
         c.knowCharacters.add(getString(context, "uuid"));
-        ServerCharacters.saveCharacter(c);
+        ServerCharacters.INSTANCE.saveCharacter(c);
 
         return msg(context, "Character Added");
     }
 
     private static int removeKnownCharacterByPlayer(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
         ServerPlayerEntity player = context.getSource().getPlayer();
-        Character c = ServerCharacters.getCharacter(player);
+        Character c = ServerCharacters.INSTANCE.getCharacter(player);
 
         if(c == null) return errorNoCharacterMsg(context, context.getSource().getPlayer());
 
         for (ServerPlayerEntity p : getPlayers(context, "players")) {
-            Character pCharacter = ServerCharacters.getCharacter(p);
+            Character pCharacter = ServerCharacters.INSTANCE.getCharacter(p);
 
             if(pCharacter != null) {
                 c.knowCharacters.remove(pCharacter.getUUID());
@@ -287,44 +287,44 @@ public class Commands {
             }
         }
 
-        ServerCharacters.saveCharacter(c);
+        ServerCharacters.INSTANCE.saveCharacter(c);
         return msg(context, "Character(s) Removed");
     }
 
     private static int removeKnownCharacterByUUID(CommandContext<ServerCommandSource> context) {
-        Character c = ServerCharacters.getCharacter(context.getSource().getPlayer());
+        Character c = ServerCharacters.INSTANCE.getCharacter(context.getSource().getPlayer());
 
         if(c == null)
             return errorNoCharacterMsg(context, context.getSource().getPlayer());
 
         c.knowCharacters.remove( getString(context, "uuid") );
-        ServerCharacters.saveCharacter(c);
+        ServerCharacters.INSTANCE.saveCharacter(c);
 
         return msg(context, "Character Removed");
     }
 
     private static int deleteCharacter(CommandContext<ServerCommandSource> context, boolean onlyKill) {
-        Character c = ServerCharacters.getCharacter(context.getSource().getPlayer());
+        Character c = ServerCharacters.INSTANCE.getCharacter(context.getSource().getPlayer());
         if(c == null)
             return errorNoCharacterMsg(context, context.getSource().getPlayer());
 
         if (onlyKill)
-            ServerCharacters.killCharacter(c);
+            ServerCharacters.INSTANCE.killCharacter(c);
         else
-            ServerCharacters.deleteCharacter(c);
+            ServerCharacters.INSTANCE.deleteCharacter(c);
 
         return msg(context, "Character(s) Deleted");
     }
 
     private static int deleteCharacterByPlayer(CommandContext<ServerCommandSource> context, boolean onlyKill) throws CommandSyntaxException {
         for (ServerPlayerEntity p : getPlayers(context, "players")) {
-           Character pCharacter = ServerCharacters.getCharacter(p);
+           Character pCharacter = ServerCharacters.INSTANCE.getCharacter(p);
 
             if(pCharacter != null) {
                 if (onlyKill)
-                    ServerCharacters.killCharacter(pCharacter);
+                    ServerCharacters.INSTANCE.killCharacter(pCharacter);
                 else
-                    ServerCharacters.deleteCharacter(pCharacter);
+                    ServerCharacters.INSTANCE.deleteCharacter(pCharacter);
             } else {
                 LOGGER.error("There was a attempt to delete a players character but the CharacterManager could not find anything: [Player: {}]", p);
             }
@@ -335,9 +335,9 @@ public class Commands {
 
     private static int deleteCharacterByUUID(CommandContext<ServerCommandSource> context, boolean onlyKill) {
         if (onlyKill)
-            ServerCharacters.killCharacter(getString(context, "uuid"));
+            ServerCharacters.INSTANCE.killCharacter(getString(context, "uuid"));
         else
-            ServerCharacters.deleteCharacter(getString(context, "uuid"));
+            ServerCharacters.INSTANCE.deleteCharacter(getString(context, "uuid"));
         return msg(context, "Character Deleted");
     }
 
@@ -361,12 +361,12 @@ public class Commands {
     }
 
     private static Character getCharacterFromSelf(CommandContext<ServerCommandSource> context) {
-        return ServerCharacters.getCharacter(context.getSource().getPlayer());
+        return ServerCharacters.INSTANCE.getCharacter(context.getSource().getPlayer());
     }
 
     private static Character getCharacterFromUUID(CommandContext<ServerCommandSource> context) {
         try {
-            return ServerCharacters.getCharacter(getString(context, "uuid"));
+            return ServerCharacters.INSTANCE.getCharacter(getString(context, "uuid"));
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -376,7 +376,7 @@ public class Commands {
 
     private static Character getCharacterFromPlayer(CommandContext<ServerCommandSource> context) {
         try {
-            return ServerCharacters.getCharacter(getPlayer(context, "player"));
+            return ServerCharacters.INSTANCE.getCharacter(getPlayer(context, "player"));
         } catch (CommandSyntaxException | NoSuchElementException e) {
             e.printStackTrace();
             return null;

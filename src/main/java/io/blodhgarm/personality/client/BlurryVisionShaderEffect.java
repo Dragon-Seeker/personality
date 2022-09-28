@@ -1,9 +1,9 @@
 package io.blodhgarm.personality.client;
 
 import dev.emi.trinkets.api.TrinketsApi;
-import io.blodhgarm.personality.Character;
-import io.blodhgarm.personality.PersonalityMod;
-import io.blodhgarm.personality.server.config.ConfigHelper;
+import io.blodhgarm.personality.api.Character;
+import io.blodhgarm.personality.misc.PersonalityTags;
+import io.blodhgarm.personality.misc.config.ConfigHelper;
 import ladysnake.satin.api.event.ShaderEffectRenderCallback;
 import ladysnake.satin.api.managed.ManagedShaderEffect;
 import ladysnake.satin.api.managed.ShaderEffectManager;
@@ -25,7 +25,7 @@ public class BlurryVisionShaderEffect implements ShaderEffectRenderCallback {
     @Override
     public void renderShaderEffects(float tickDelta) {
         if (client.player != null) {
-            Character c = ClientCharacters.getCharacter(client.player);
+            Character c = ClientCharacters.INSTANCE.getCharacter(client.player);
 
             if (ConfigHelper.shouldApply(CONFIG.NO_GLASSES_BLURRINESS, c) && progress < getStrength(c) && !hasGlasses())
                 progress += 0.05;
@@ -44,12 +44,12 @@ public class BlurryVisionShaderEffect implements ShaderEffectRenderCallback {
     }
 
     private boolean hasGlasses() {
-        if (client.player.getEquippedStack(EquipmentSlot.HEAD).isIn(PersonalityMod.VISION_GLASSES))
+        if (client.player.getEquippedStack(EquipmentSlot.HEAD).isIn(PersonalityTags.VISION_GLASSES))
             return true;
 
         if (TrinketsApi.getTrinketComponent(client.player).isEmpty())
             return false;
 
-        return TrinketsApi.getTrinketComponent(client.player).get().getEquipped(stack -> stack.isIn(PersonalityMod.VISION_GLASSES)).size() > 0;
+        return TrinketsApi.getTrinketComponent(client.player).get().getEquipped(stack -> stack.isIn(PersonalityTags.VISION_GLASSES)).size() > 0;
     }
 }

@@ -1,9 +1,8 @@
 package io.blodhgarm.personality.mixin;
 
-import io.blodhgarm.personality.Character;
-import io.blodhgarm.personality.server.ServerCharacters;
-import io.blodhgarm.personality.PersonalityMod;
-import io.blodhgarm.personality.server.config.ConfigHelper;
+import io.blodhgarm.personality.api.Character;
+import io.blodhgarm.personality.impl.ServerCharacters;
+import io.blodhgarm.personality.misc.config.ConfigHelper;
 import net.minecraft.entity.player.HungerManager;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -23,7 +22,7 @@ public abstract class HungerManagerMixin {
 
     @Inject(method = "update", at = @At("HEAD"))
     public void personality$getPlayerForAgeModifiers(PlayerEntity player, CallbackInfo info) {
-        this.character = ServerCharacters.getCharacter((ServerPlayerEntity)player);
+        this.character = ServerCharacters.INSTANCE.getCharacter((ServerPlayerEntity)player);
     }
 
     @ModifyConstant(method = "update", constant = @Constant(intValue = 80, ordinal = 0))

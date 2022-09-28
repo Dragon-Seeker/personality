@@ -1,7 +1,7 @@
-package io.blodhgarm.personality.server.config;
+package io.blodhgarm.personality.misc.config;
 
-import io.blodhgarm.personality.Character;
-import io.blodhgarm.personality.server.config.PersonalityConfig.GradualValue;
+import io.blodhgarm.personality.api.Character;
+import io.blodhgarm.personality.misc.config.PersonalityConfig.GradualValue;
 
 import static io.blodhgarm.personality.PersonalityMod.CONFIG;
 import static java.lang.Math.*;

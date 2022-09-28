@@ -58,6 +58,12 @@ dependencies {
 	modImplementation "dev.emi:trinkets:${trinkets_version}"
 	include "io.github.ladysnake:satin:${satin_version}"
 
+	modImplementation "dev.onyxstudios.cardinal-components-api:cardinal-components-base:<VERSION>"
+	modImplementation "dev.onyxstudios.cardinal-components-api:cardinal-components-world:<VERSION>"
+
+	include "dev.onyxstudios.cardinal-components-api:cardinal-components-base:<VERSION>"
+	include "dev.onyxstudios.cardinal-components-api:cardinal-components-world:<VERSION>"
+
 	implementation 'com.github.Dansoftowner:jSystemThemeDetector:3.8'
 }
 

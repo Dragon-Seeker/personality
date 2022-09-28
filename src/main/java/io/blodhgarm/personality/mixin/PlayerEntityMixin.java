@@ -1,8 +1,8 @@
 package io.blodhgarm.personality.mixin;
 
-import io.blodhgarm.personality.Character;
-import io.blodhgarm.personality.server.ServerCharacters;
-import io.blodhgarm.personality.server.config.ConfigHelper;
+import io.blodhgarm.personality.api.Character;
+import io.blodhgarm.personality.impl.ServerCharacters;
+import io.blodhgarm.personality.misc.config.ConfigHelper;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
@@ -19,7 +19,7 @@ public class PlayerEntityMixin {
         if (!((PlayerEntity)(Object)this instanceof ServerPlayerEntity))
             return original;
 
-        Character character = ServerCharacters.getCharacter((ServerPlayerEntity)(Object)this);
+        Character character = ServerCharacters.INSTANCE.getCharacter((ServerPlayerEntity)(Object)this);
 
         if (ConfigHelper.shouldApply(CONFIG.FASTER_EXHAUSTION, character))
             return original * ConfigHelper.apply(CONFIG.FASTER_EXHAUSTION, character);

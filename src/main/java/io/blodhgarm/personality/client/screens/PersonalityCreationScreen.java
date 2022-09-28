@@ -1,14 +1,13 @@
 package io.blodhgarm.personality.client.screens;
 
-import io.blodhgarm.personality.Character;
+import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.Networking;
-import io.blodhgarm.personality.PersonalityMod;
+import io.blodhgarm.personality.client.PersonalityClient;
 import io.blodhgarm.personality.client.screens.components.CustomSurfaces;
 import io.blodhgarm.personality.client.screens.components.vanilla.BetterEditBoxWidget;
 import io.blodhgarm.personality.client.screens.components.vanilla.BetterTextFieldWidget;
 import io.blodhgarm.personality.client.compat.CustomEntityComponent;
 import io.blodhgarm.personality.packets.SyncC2SPackets;
-import io.wispforest.owo.Owo;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.base.BaseParentComponent;
 import io.wispforest.owo.ui.component.ButtonComponent;
@@ -18,14 +17,11 @@ import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.container.HorizontalFlowLayout;
 import io.wispforest.owo.ui.core.*;
-import io.wispforest.owo.ui.util.UIErrorToast;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.widget.EditBoxWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.stat.Stats;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,7 +78,7 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> {
     protected void build(FlowLayout rootComponent) {
         HorizontalFlowLayout mainFlowLayout = (HorizontalFlowLayout) Containers.horizontalFlow(Sizing.content(), Sizing.content()).id("main_flow_layout");
 
-        Surface panel = PersonalityMod.isDarkMode() ? Surface.DARK_PANEL : Surface.PANEL;
+        Surface panel = PersonalityClient.isDarkMode() ? Surface.DARK_PANEL : Surface.PANEL;
 
         //Panel 1
 
@@ -315,7 +311,7 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> {
         if(screenAddon == null) return;
 
         addonMainFlow = (FlowLayout) Containers.verticalFlow(Sizing.content(), Sizing.content())
-                .child(screenAddon.createMainFlowlayout(PersonalityMod.isDarkMode()))
+                .child(screenAddon.createMainFlowlayout(PersonalityClient.isDarkMode()))
                 .id("current_addon_screen");
 
 //        addonMainFlow.positioning(Positioning.relative(300, 50));

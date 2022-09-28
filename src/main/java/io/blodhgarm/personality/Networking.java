@@ -1,7 +1,8 @@
 package io.blodhgarm.personality;
 
+import io.blodhgarm.personality.impl.ServerCharacters;
 import io.blodhgarm.personality.packets.*;
-import io.blodhgarm.personality.server.PersonalityServer;
+import io.blodhgarm.personality.utils.ServerAccess;
 import io.wispforest.owo.network.OwoNetChannel;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Identifier;
@@ -18,6 +19,7 @@ public class Networking {
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.SyncCharacter.class);
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.RemoveCharacter.class);
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.Association.class);
+        CHANNEL.registerClientboundDeferred(SyncS2CPackets.Dissociation.class);
 
         CHANNEL.registerClientboundDeferred(IntroductionPacket.class);
 
@@ -28,7 +30,6 @@ public class Networking {
 
         CHANNEL.registerServerbound(RevealCharacterC2SPacket.ToPlayer.class, RevealCharacterC2SPacket.ToPlayer::revealToPlayer);
         CHANNEL.registerServerbound(RevealCharacterC2SPacket.InRange.class, RevealCharacterC2SPacket.InRange::revealToPlayersInRange);
-
     }
 
     public static void registerNetworkingClient(){
@@ -39,6 +40,7 @@ public class Networking {
         CHANNEL.registerClientbound(SyncS2CPackets.SyncCharacter.class, SyncS2CPackets.SyncCharacter::syncCharacter);
         CHANNEL.registerClientbound(SyncS2CPackets.RemoveCharacter.class, SyncS2CPackets.RemoveCharacter::removeCharacter);
         CHANNEL.registerClientbound(SyncS2CPackets.Association.class, SyncS2CPackets.Association::syncAssociation);
+        CHANNEL.registerClientbound(SyncS2CPackets.Dissociation.class, SyncS2CPackets.Dissociation::syncDissociation);
 
         CHANNEL.registerClientbound(IntroductionPacket.class, IntroductionPacket::beenIntroduced);
     }
@@ -48,7 +50,7 @@ public class Networking {
     }
 
     public static <R extends Record> void sendToAll(R packet) {
-        CHANNEL.serverHandle(PersonalityServer.server).send(packet);
+        CHANNEL.serverHandle(ServerAccess.getServer()).send(packet);
     }
 
     public static <R extends Record> void sendS2C(PlayerEntity player, R packet) {

@@ -20,7 +20,7 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "io.blodhgarm.personality.server.PersonalityServer"
+      "io.blodhgarm.personality.PersonalityMod"
     ],
     "client": [
       "io.blodhgarm.personality.client.PersonalityClient"
