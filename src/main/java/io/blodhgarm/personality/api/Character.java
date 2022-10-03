@@ -1,8 +1,10 @@
 package io.blodhgarm.personality.api;
 
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.blodhgarm.personality.PersonalityMod;
+import io.blodhgarm.personality.api.addons.BaseAddon;
 import io.blodhgarm.personality.impl.ServerCharacters;
 import io.blodhgarm.personality.misc.PersonalityTags;
 import io.blodhgarm.personality.misc.config.PersonalityConfig;
@@ -10,9 +12,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.stat.Stats;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.lang.reflect.Type;
+import java.util.*;
 
 import static java.lang.Math.*;
 
@@ -39,6 +40,10 @@ public class Character {
     private long created;
 
     private int playtimeOffset;
+
+    public static final Type REF_MAP_TYPE = new TypeToken<Map<String, BaseAddon<?>>>() {}.getType();
+
+    public transient final Map<String, BaseAddon<?>> characterAddons = new HashMap<>();
 
     public Set<String> knowCharacters;
 

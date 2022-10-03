@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.api.CharacterManager;
+import io.blodhgarm.personality.api.addons.BaseAddon;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import org.jetbrains.annotations.Nullable;
@@ -28,11 +29,14 @@ public class ClientCharacters extends CharacterManager<AbstractClientPlayerEntit
                 .orElse(null);
     }
 
-    public void init(List<String> characters, Map<String,String> associations) {
+    public void init(Map<String, String> characters, Map<String, String> associations) {
         playerIDToCharacterID = HashBiMap.create(associations);
         characterIDToCharacter.clear();
-        for (String characterJson : characters) {
-            Character c = GSON.fromJson(characterJson, Character.class);
+        for (Map.Entry<String, String> entry : characters.entrySet()) {
+            Character c = GSON.fromJson(entry.getKey(), Character.class);
+
+            c.characterAddons.putAll(GSON.fromJson(entry.getValue(), Character.REF_MAP_TYPE));
+
             characterIDToCharacter.put(c.getUUID(), c);
         }
 

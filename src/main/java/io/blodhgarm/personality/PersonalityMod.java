@@ -1,16 +1,20 @@
 package io.blodhgarm.personality;
 
 import com.jthemedetecor.OsThemeDetector;
+import io.blodhgarm.personality.api.AddonRegistry;
 import io.blodhgarm.personality.api.Character;
+import io.blodhgarm.personality.api.PersonalityEntrypoint;
 import io.blodhgarm.personality.impl.CharacterTick;
 import io.blodhgarm.personality.impl.ServerCharacters;
 import io.blodhgarm.personality.misc.PersonalityCommands;
 import io.blodhgarm.personality.misc.config.PersonalityConfig;
 import io.blodhgarm.personality.utils.ServerAccess;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
@@ -42,6 +46,12 @@ public class PersonalityMod implements ModInitializer {
         ServerWorldEvents.LOAD.register(PersonalityMod.id("on_world_load"), PersonalityMod::onWorldLoad);
 
         ServerPlayConnectionEvents.JOIN.register(PersonalityMod.id("on_player_join"), ServerCharacters.INSTANCE);
+
+        ServerLifecycleEvents.END_DATA_PACK_RELOAD.register(AddonRegistry.INSTANCE);
+
+        FabricLoader.getInstance().getEntrypoints("personality", PersonalityEntrypoint.class).forEach(personalityEntrypoint -> {
+            personalityEntrypoint.addonRegistry(AddonRegistry.INSTANCE);
+        });
     }
 
     public static void onWorldLoad(MinecraftServer server, ServerWorld world) {

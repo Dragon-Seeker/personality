@@ -6,14 +6,17 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import io.blodhgarm.personality.Networking;
+import io.blodhgarm.personality.api.AddonRegistry;
 import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.api.CharacterManager;
+import io.blodhgarm.personality.api.addons.BaseAddon;
 import io.blodhgarm.personality.packets.IntroductionPacket;
 import io.blodhgarm.personality.packets.SyncS2CPackets;
 import io.blodhgarm.personality.utils.ServerAccess;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -27,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -48,7 +52,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
         if(c == null) {
             try {
-                Path path = getPath(uuid);
+                Path path = getCharacterInfo(uuid);
 
                 if (!Files.exists(path)) return null;
 
@@ -58,7 +62,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
                 characterLookupMap().put(uuid, c);
 
-                Networking.sendToAll(new SyncS2CPackets.SyncCharacter(characterJson));
+                Networking.sendToAll(new SyncS2CPackets.SyncCharacter(characterJson, GSON.toJson(AddonRegistry.INSTANCE.loadAddonsForCharacter(c))));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -77,18 +81,35 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     public void associateCharacterToPlayer(String characterUUID, String playerUUID){
         super.associateCharacterToPlayer(characterUUID, playerUUID);
 
+        applyAddons(characterUUID);
+
         Networking.sendToAll(new SyncS2CPackets.Association(characterUUID, playerUUID));
 
         saveCharacterReference();
     }
 
     @Override
-    public void dissociateUUID(String UUID, boolean characterUUID) {
-        super.dissociateUUID(UUID, characterUUID);
+    public String dissociateUUID(String UUID, boolean isCharacterUUID) {
+        ServerPlayerEntity player = ServerAccess.getPlayer(super.dissociateUUID(UUID, isCharacterUUID));
 
-        Networking.sendToAll(new SyncS2CPackets.Dissociation(UUID, characterUUID));
+        Networking.sendToAll(new SyncS2CPackets.Dissociation(UUID, isCharacterUUID));
+
+        for (BaseAddon<?> defaultAddon : AddonRegistry.INSTANCE.getDefaultAddons()) defaultAddon.applyAddon(player);
 
         saveCharacterReference();
+
+        return player.getUuidAsString();
+    }
+
+    public void applyAddons(String characterUUID){
+        Character c = getCharacter(characterUUID);
+        PlayerEntity player = getPlayer(characterUUID);
+
+        if(c != null) {
+            c.characterAddons.forEach((s, baseAddon) -> {
+                baseAddon.applyAddon(player);
+            });
+        }
     }
 
     @Override
@@ -122,7 +143,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
         this.removeCharacter(uuid);
 
         try {
-            Files.delete(getPath(uuid));
+            Files.delete(getCharacterInfo(uuid));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -160,17 +181,33 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     public void saveCharacter(Character character, boolean syncCharacter) {
         String characterJson = GSON.toJson(character);
 
-        if(syncCharacter) Networking.sendToAll(new SyncS2CPackets.SyncCharacter(characterJson));
+        if(syncCharacter) Networking.sendToAll(new SyncS2CPackets.SyncCharacter(characterJson, ""));
 
         try {
-            Files.writeString(getPath(character.getUUID()), characterJson);
+            Files.writeString(getCharacterInfo(character.getUUID()), characterJson);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private static Path getPath(String uuid) {
-        return CHARACTER_PATH.resolve(uuid + ".json");
+    public static Path getBasePath() {
+        return BASE_PATH;
+    }
+
+    public static Path getCharacterPath() {
+        return CHARACTER_PATH;
+    }
+
+    public static Path getReferencePath() {
+        return REFERENCE_PATH;
+    }
+
+    public static Path getSpecificCharacterPath(String uuid) {
+        return CHARACTER_PATH.resolve(uuid);
+    }
+
+    private static Path getCharacterInfo(String uuid) {
+        return CHARACTER_PATH.resolve(uuid + "/info.json");
     }
 
     public void loadCharacterReference() {
@@ -216,10 +253,14 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
     @Override
     public void onPlayReady(ServerPlayNetworkHandler handler, PacketSender sender, MinecraftServer server) {
-        List<String> characters = new ArrayList<>();
+        Map<String, String> characters = new HashMap<>();
 
-        for (Character c : characterLookupMap().values()) characters.add(GSON.toJson(c));
+        for (Character c : characterLookupMap().values()){
+            characters.put(GSON.toJson(c), GSON.toJson(c.characterAddons));
+        }
 
         Networking.sendS2C(handler.player, new SyncS2CPackets.Initial(characters, playerToCharacterReferences()));
+
+
     }
 }

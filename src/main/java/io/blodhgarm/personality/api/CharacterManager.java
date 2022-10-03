@@ -1,16 +1,17 @@
 package io.blodhgarm.personality.api;
 
 import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashBiMap;
+import com.google.common.collect.Table;
+import io.blodhgarm.personality.api.addons.BaseAddon;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Base interface for storing and managing Character data
@@ -19,6 +20,7 @@ import java.util.Objects;
 public abstract class CharacterManager<P extends PlayerEntity> {
 
     protected BiMap<String, String> playerIDToCharacterID = HashBiMap.create();
+
     protected Map<String, Character> characterIDToCharacter = new HashMap<>();
 
     /**
@@ -132,8 +134,18 @@ public abstract class CharacterManager<P extends PlayerEntity> {
         playerToCharacterReferences().put(playerUUID, cUUID);
     }
 
-    public void dissociateUUID(String UUID, boolean characterUUID){
-        (characterUUID ? playerToCharacterReferences().inverse() : playerToCharacterReferences()).remove(UUID);
+    /**
+     *
+     * @return Player UUID
+     */
+    public String dissociateUUID(String UUID, boolean isCharacterUUID){
+        if(isCharacterUUID){
+            return playerToCharacterReferences().inverse().remove(UUID);
+        } else {
+            playerToCharacterReferences().remove(UUID);
+
+            return UUID;
+        }
     }
 
     public void removeCharacter(String characterUUID){
