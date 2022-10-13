@@ -5,6 +5,8 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
+import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.Networking;
 import io.blodhgarm.personality.api.AddonRegistry;
 import io.blodhgarm.personality.api.Character;
@@ -13,6 +15,7 @@ import io.blodhgarm.personality.api.addons.BaseAddon;
 import io.blodhgarm.personality.packets.IntroductionPacket;
 import io.blodhgarm.personality.packets.SyncS2CPackets;
 import io.blodhgarm.personality.utils.ServerAccess;
+import io.wispforest.owo.Owo;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -21,9 +24,13 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.WorldSavePath;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
@@ -35,6 +42,8 @@ import java.util.List;
 import java.util.Map;
 
 public class ServerCharacters extends CharacterManager<ServerPlayerEntity> implements ServerPlayConnectionEvents.Join, ServerWorldEvents.Load {
+
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Type REF_MAP_TYPE = new TypeToken<Map<String, String>>() {}.getType();
@@ -62,7 +71,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
                 characterLookupMap().put(uuid, c);
 
-                Networking.sendToAll(new SyncS2CPackets.SyncCharacter(characterJson, GSON.toJson(AddonRegistry.INSTANCE.loadAddonsForCharacter(c))));
+                Networking.sendToAll(new SyncS2CPackets.SyncCharacter(characterJson, AddonRegistry.INSTANCE.loadAddonsForCharacter(c)));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -181,21 +190,67 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     public void saveCharacter(Character character, boolean syncCharacter) {
         String characterJson = GSON.toJson(character);
 
-        if(syncCharacter) Networking.sendToAll(new SyncS2CPackets.SyncCharacter(characterJson, ""));
+        if(syncCharacter) Networking.sendToAll(new SyncS2CPackets.SyncCharacter(characterJson, Map.of()));
 
         try {
-            Files.writeString(getCharacterInfo(character.getUUID()), characterJson);
+            File characterFile = getCharacterInfo(character.getUUID()).toAbsolutePath().toFile();
+
+            characterFile.getParentFile().mkdirs();
+
+            Files.writeString(characterFile.toPath(), characterJson);
         } catch (IOException e) {
+            LOGGER.error("[ServerCharacters] A Character [Name:{}, UUID:{}] was unable to be saved to disc", character.getName(), character.getUUID());
+
             e.printStackTrace();
         }
     }
 
-    public static Path getBasePath() {
-        return BASE_PATH;
+    public void saveAddonsForCharacter(Character c, boolean syncAddons){
+        Map<Identifier, String> addonData = new HashMap<>();
+
+        c.characterAddons.keySet().forEach(s -> {
+            String addonJson = saveAddonForCharacter(c, s, false);
+
+            if(addonJson != null) addonData.put(s, addonJson);
+        });
+
+        if(syncAddons) Networking.sendToAll(new SyncS2CPackets.SyncAddonData(c.getUUID(), addonData));
+
     }
 
-    public static Path getCharacterPath() {
-        return CHARACTER_PATH;
+    public String saveAddonForCharacter(Character c, Identifier addonId, boolean syncAddons){
+        BaseAddon<?> addon = c.characterAddons.get(addonId);
+
+        if(addon != null){
+
+            String addonJson = GSON.toJson(addon);
+
+            try {
+                if(addon.loadedProperly){
+                    File addonFile = ServerCharacters.getSpecificCharacterPath(c.getUUID()).resolve("addons/" + addonId.getNamespace() + "/" + addonId.getPath() + ".json").toFile();
+
+                    addonFile.getParentFile().mkdirs();
+
+                    Files.writeString(addonFile.toPath(), addonJson);
+                }
+
+                if(syncAddons) Networking.sendToAll(new SyncS2CPackets.SyncAddonData(c.getUUID(), Map.of(addonId, addonJson)));
+
+                return addonJson;
+            } catch (IOException e){
+                LOGGER.error("[AddonLoading] {} addon for [Name: {}, UUID: {}] was unable to be save to Disc, data was not saved.", addonId, c.getName(), c.getUUID());
+
+                e.printStackTrace();
+            }
+        } else {
+            LOGGER.warn("A addon was attempted to be saved to disc but the character doesn't have such a addon");
+        }
+
+        return null;
+    }
+
+    public static Path getBasePath() {
+        return BASE_PATH;
     }
 
     public static Path getReferencePath() {
@@ -206,12 +261,17 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
         return CHARACTER_PATH.resolve(uuid);
     }
 
+    public static Path getCharacterPath(String uuid) {
+        return CHARACTER_PATH.resolve(uuid);
+    }
+
     private static Path getCharacterInfo(String uuid) {
         return CHARACTER_PATH.resolve(uuid + "/info.json");
     }
 
     public void loadCharacterReference() {
         BASE_PATH = ServerAccess.getServer().getSavePath(WorldSavePath.ROOT).resolve("mod_data/personality");
+
         CHARACTER_PATH = BASE_PATH.resolve("characters");
         REFERENCE_PATH = BASE_PATH.resolve("reference.json");
 
@@ -219,7 +279,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
         characterIDToCharacter.clear();
 
         try {
-            Files.createDirectories(CHARACTER_PATH);
+            if(!Files.exists(CHARACTER_PATH)) Files.createDirectories(CHARACTER_PATH);
 
             JsonObject o = GSON.fromJson(Files.readString(REFERENCE_PATH), JsonObject.class);
             playerIDToCharacterID = HashBiMap.create(GSON.fromJson(o.getAsJsonObject("player_to_character"), REF_MAP_TYPE));

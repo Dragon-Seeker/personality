@@ -5,14 +5,16 @@
   "compatibilityLevel": "JAVA_17",
   "mixins": [
     "HungerManagerMixin",
+    "ModPacketsC2SAccessor",
+    "OriginLayerAccessor",
     "PlayerEntityMixin"
   ],
   "client": [
+    "client.EntityRendererMixin",
+    "client.TextFieldWidgetMixin",
     "client.accessor.EditBoxAccessor",
     "client.accessor.EditBoxWidgetAccessor",
     "client.accessor.TextFieldWidgetAccessor",
-    "client.EntityRendererMixin",
-    "client.TextFieldWidgetMixin",
     "client.origins.ModPacketsS2CMixin"
   ],
   "injectors": {

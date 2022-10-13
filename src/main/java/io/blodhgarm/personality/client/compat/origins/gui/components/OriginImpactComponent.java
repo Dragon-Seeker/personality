@@ -55,7 +55,7 @@ public class OriginImpactComponent extends BaseComponent {
                     y,
                     regionWidth,
                     regionHeight,
-                    39,
+                    36,
                     v,
                     regionWidth,
                     regionHeight,

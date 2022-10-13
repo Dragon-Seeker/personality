@@ -38,6 +38,7 @@ public class Networking {
 
         CHANNEL.registerClientbound(SyncS2CPackets.Initial.class, SyncS2CPackets.Initial::initialSync);
         CHANNEL.registerClientbound(SyncS2CPackets.SyncCharacter.class, SyncS2CPackets.SyncCharacter::syncCharacter);
+        CHANNEL.registerClientbound(SyncS2CPackets.SyncAddonData.class, SyncS2CPackets.SyncAddonData::syncAddons);
         CHANNEL.registerClientbound(SyncS2CPackets.RemoveCharacter.class, SyncS2CPackets.RemoveCharacter::removeCharacter);
         CHANNEL.registerClientbound(SyncS2CPackets.Association.class, SyncS2CPackets.Association::syncAssociation);
         CHANNEL.registerClientbound(SyncS2CPackets.Dissociation.class, SyncS2CPackets.Dissociation::syncDissociation);

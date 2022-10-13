@@ -1,10 +1,13 @@
 package io.blodhgarm.personality.client.compat.origins.gui;
 
+import io.blodhgarm.personality.api.addons.BaseAddon;
+import io.blodhgarm.personality.client.compat.origins.OriginAddon;
 import io.blodhgarm.personality.client.compat.origins.gui.components.OriginHeaderComponent;
 import io.blodhgarm.personality.client.compat.origins.gui.components.OriginImpactComponent;
 import io.blodhgarm.personality.client.compat.origins.gui.components.OriginInfoContainer;
+import io.blodhgarm.personality.client.screens.AddonObservable;
 import io.blodhgarm.personality.client.screens.PersonalityCreationScreen;
-import io.blodhgarm.personality.client.screens.PersonalityScreenAddon;
+import io.blodhgarm.personality.api.client.PersonalityScreenAddon;
 import io.blodhgarm.personality.client.screens.components.CustomSurfaces;
 import io.github.apace100.origins.Origins;
 import io.github.apace100.origins.origin.Impact;
@@ -30,7 +33,9 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
 
@@ -38,9 +43,12 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
 
     //----------------------------
 
-    private Origin origin;
-    private boolean isOriginRandom;
-    private Text randomOriginText;
+    private final ArrayList<OriginLayer> layerList;
+
+    private final Map<OriginLayer, OriginLayerHelper> originLayerHelpers = new HashMap<>();
+    private final Map<OriginLayer, Origin> selectedOrigins = new HashMap<>();
+
+    private Origin currentOrigin;
 
     protected int scrollPos = 0;
     public static float time = 0;
@@ -50,13 +58,10 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
 
     //----------------------------
 
-    private final ArrayList<OriginLayer> layerList;
-    private final int currentLayerIndex;
-    private int currentOrigin = 0;
-    private final List<Origin> originSelection;
+    private int currentLayerIndex;
+    private int currentOriginIndex = 0;
+    private List<Origin> originSelection;
     private int maxSelection;
-
-    private Origin randomOrigin;
 
     //----------------------------
 
@@ -72,6 +77,11 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
 
         this.layerList = layerList;
         this.currentLayerIndex = currentLayerIndex;
+
+        setupForSelectedLayer();
+    }
+
+    private void setupForSelectedLayer(){
         this.originSelection = new ArrayList<>(10);
 
         PlayerEntity player = MinecraftClient.getInstance().player;
@@ -108,21 +118,33 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
             //openNextLayerScreen();
         }
 
-        Origin newOrigin = getCurrentOriginInternal();
-        showOrigin(newOrigin, layerList.get(currentLayerIndex), newOrigin == randomOrigin);
+        Origin origin;
+
+        if(!originLayerHelpers.containsKey(currentLayer)){
+            originLayerHelpers.put(currentLayer, new OriginLayerHelper(currentLayer, originSelection.get(0)));
+        }
+
+        if(!selectedOrigins.containsKey(currentLayer)){
+            currentOriginIndex = 0;
+
+            origin = getCurrentOriginInternal();
+        } else {
+            // If the OriginLayer was already selected, then we should set the display to such
+
+            origin = selectedOrigins.get(currentLayer);
+
+            currentOriginIndex = originSelection.indexOf(origin);
+        }
+
+        resetWithOrigin(origin);
     }
 
     //----------------------------
 
-    public void showOrigin(Origin origin, OriginLayer layer, boolean isRandom) {
-        this.origin = origin;
-        this.isOriginRandom = isRandom;
+    public void resetWithOrigin(Origin origin) {
+        this.currentOrigin = origin;
         this.scrollPos = 0;
         this.time = 0;
-    }
-
-    public void setRandomOriginText(Text text) {
-        this.randomOriginText = text;
     }
 
     //----------------------------
@@ -131,18 +153,21 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
     //----------------------------
 
     private Origin getCurrentOriginInternal() {
-        if(currentOrigin == originSelection.size()) {
-            if(randomOrigin == null) {
+        OriginLayer layer = layerList.get(currentLayerIndex);
+
+        if(currentOriginIndex == originSelection.size()) {
+            if(originLayerHelpers.get(layer).randomOrigin == null) {
                 initRandomOrigin(layerList);
             }
-            return randomOrigin;
+
+            return originLayerHelpers.get(layer).randomOrigin;
         }
 
-        return originSelection.get(currentOrigin);
+        return originSelection.get(currentOriginIndex);
     }
 
     private void initRandomOrigin(ArrayList<OriginLayer> layerList) {
-        this.randomOrigin = new Origin(Origins.identifier("random"), new ItemStack(ModItems.ORB_OF_ORIGIN), Impact.NONE, -1, Integer.MAX_VALUE);
+        Origin randomOrigin = new Origin(Origins.identifier("random"), new ItemStack(ModItems.ORB_OF_ORIGIN), Impact.NONE, -1, Integer.MAX_VALUE);
 
         MutableText randomOriginText = (MutableText)Text.of("");
 
@@ -160,11 +185,18 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
             randomOriginText.append(Text.of("\n"));
         }
 
-        setRandomOriginText(randomOriginText);
+        originLayerHelpers.get(layerList.get(currentLayerIndex)).setRandomInfo(randomOrigin, randomOriginText);
+    }
+
+    public boolean isOriginRandom(Origin origin){
+        OriginLayer layer = layerList.get(currentLayerIndex);
+        Origin randomOrigin = originLayerHelpers.get(layer).randomOrigin;
+
+        return randomOrigin != null && origin == randomOrigin;
     }
 
     public Origin getCurrentOrigin() {
-        return origin;
+        return currentOrigin;
     }
 
     //----------------------------
@@ -178,18 +210,26 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
 
         FlowLayout rootComponent = Containers.verticalFlow(Sizing.content(), Sizing.content());
 
+        OriginLayer currentLayer = layerList.get(currentLayerIndex);
+
+        Text randomOriginText = null;
+
+        if(isOriginRandom(getCurrentOrigin())){
+            randomOriginText = originLayerHelpers.get(currentLayer).randomOriginText;
+        }
+
         return (FlowLayout) rootComponent
                 .child(Containers.verticalFlow(Sizing.fixed(176), Sizing.fixed(182))
                     .child(
                             Containers.verticalFlow(Sizing.fixed(162), Sizing.fixed(143))// y = 168
                                 .child(
-                                        new OriginHeaderComponent(Sizing.content(), Sizing.content(), getCurrentOrigin())
+                                        new OriginHeaderComponent(Sizing.fixed(150), Sizing.fixed(26), getCurrentOrigin(), layerList.get(currentLayerIndex))
                                                 .margins(Insets.of(4,0,4,0))
                                                 .verticalAlignment(VerticalAlignment.CENTER)
                                                 .zIndex(1)
                                 )
                                 .child(Containers.verticalScroll(Sizing.fixed(150), Sizing.fixed(121),// y = 142, x = 154
-                                        new OriginInfoContainer(Sizing.fixed(137), Sizing.content(), getCurrentOrigin(), randomOriginText, isOriginRandom) //143
+                                        new OriginInfoContainer(Sizing.fixed(137), Sizing.content(), getCurrentOrigin(), randomOriginText, isOriginRandom(getCurrentOrigin())) //143
                                                 .margins(Insets.left(6)
                                         ).zIndex(1))
                                         .scrollbar(ScrollContainer.Scrollbar.vanilla())
@@ -203,30 +243,34 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
                     )
                     .child(Containers.horizontalFlow(Sizing.content(), Sizing.content())
                             .child(Components.button(Text.of("<"), (ButtonComponent button) -> {
-                                        currentOrigin = (currentOrigin - 1 + maxSelection) % maxSelection;
+                                        currentOriginIndex = (currentOriginIndex - 1 + maxSelection) % maxSelection;
                                         Origin newOrigin = getCurrentOriginInternal();
-                                        showOrigin(newOrigin, layerList.get(currentLayerIndex), newOrigin == randomOrigin);
+                                        resetWithOrigin(newOrigin);
                                         updateOriginData(rootComponent);
                                     }).sizing(Sizing.fixed(20))
                             )
                             .child(Components.button(Text.translatable(Origins.MODID + ".gui.select"), (ButtonComponent button) -> {
+                                        selectedOrigins.put(layerList.get(currentLayerIndex), getCurrentOriginInternal());
+
+                                        this.currentLayerIndex = this.currentLayerIndex + 1;
+
+                                        if(this.currentLayerIndex >= this.layerList.size()){
+                                            this.currentLayerIndex = 0;
+                                        }
+
+                                        setupForSelectedLayer();
+
+                                        updateOriginData(rootComponent);
+
+                                        if(selectedOrigins.keySet().containsAll(layerList)) {
                                             this.closeAddon();
-//                                        PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
-//                                        if(currentOrigin == originSelection.size()) {
-//                                            buf.writeString(layerList.get(currentLayerIndex).getIdentifier().toString());
-//                                            ClientPlayNetworking.send(ModPackets.CHOOSE_RANDOM_ORIGIN, buf);
-//                                        } else {
-//                                            buf.writeString(getCurrentOrigin().getIdentifier().toString());
-//                                            buf.writeString(layerList.get(currentLayerIndex).getIdentifier().toString());
-//                                            ClientPlayNetworking.send(ModPackets.CHOOSE_ORIGIN, buf);
-//                                        }
-                                        //openNextLayerScreen();
+                                        }
                                     }).sizing(Sizing.fixed(100), Sizing.fixed(20))
                                     .margins(Insets.horizontal(10)))
                             .child(Components.button(Text.of(">"), (ButtonComponent button) -> {
-                                        currentOrigin = (currentOrigin + 1) % maxSelection;
+                                        currentOriginIndex = (currentOriginIndex + 1) % maxSelection;
                                         Origin newOrigin = getCurrentOriginInternal();
-                                        showOrigin(newOrigin, layerList.get(currentLayerIndex), newOrigin == randomOrigin);
+                                        resetWithOrigin(newOrigin);
                                         updateOriginData(rootComponent);
                                     }).sizing(Sizing.fixed(20))
                             )
@@ -244,26 +288,75 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
     @Override
     public void branchUpdate() {
         if(rootBranchComponent != null) {
-            rootBranchComponent.childById(OriginHeaderComponent.class, "addon_component_origin_header").Origin(getCurrentOrigin());
+            rootBranchComponent.childById(OriginHeaderComponent.class, "addon_component_origin_header").Origin(getCurrentOrigin(), layerList.get(currentLayerIndex));
         }
     }
 
     @Override
-    public Component addBranchComponent(BaseParentComponent rootComponent) {
+    public Component addBranchComponent(AddonObservable addonObservable, BaseParentComponent rootComponent) {
         this.rootBranchComponent = rootComponent;
 
-        return new OriginHeaderComponent(Sizing.content(), Sizing.content(), getCurrentOrigin())
+        return new OriginHeaderComponent(Sizing.fixed(122), Sizing.fixed(32), getCurrentOrigin(), layerList.get(currentLayerIndex))
                 .shortVersion(true)
-                .verticalAlignment(VerticalAlignment.CENTER)
+                .showLayerInfo(true)
+                .showButtons(
+                        buttonComponent -> {
+                            this.currentLayerIndex = this.currentLayerIndex - 1;
+
+                            if(this.currentLayerIndex < 0){
+                                this.currentLayerIndex = this.layerList.size() - 1;
+                            }
+
+                            setupForSelectedLayer();
+
+                            if(addonObservable.isAddonOpen(this)){
+                                updateOriginData(rootComponent);
+                            } else {
+                                branchUpdate();
+                            }
+                        },
+                        buttonComponent -> {
+                            this.currentLayerIndex = this.currentLayerIndex + 1;
+
+                            if(this.currentLayerIndex >= this.layerList.size()){
+                                this.currentLayerIndex = 0;
+                            }
+
+                            setupForSelectedLayer();
+
+                            if(addonObservable.isAddonOpen(this)){
+                                updateOriginData(rootComponent);
+                            } else {
+                                branchUpdate();
+                            }
+                        }
+                )
+                .rebuildComponent()
                 .id("addon_component_origin_header");
     }
 
     @Override
-    public void saveAddonData() {
-        //TODO: IMPLEMENT THIS
+    public Map<String, BaseAddon<?>> saveAddonData(BaseParentComponent rootComponent) {
+        Map<String, BaseAddon<?>> addonData = new HashMap<>();
+
+        if(!selectedOrigins.isEmpty()) {
+            selectedOrigins.forEach((originLayer, origin1) ->
+                addonData.put(originLayer.getIdentifier().toString(), new OriginAddon(origin1.getIdentifier(), originLayer.getIdentifier()))
+            );
+        }
+
+        layerList.forEach(originLayer -> {
+            Identifier originLayerId = originLayer.getIdentifier();
+
+            if(!addonData.containsKey(originLayerId.toString())){
+                addonData.put(originLayerId.toString(), new OriginAddon(originLayerHelpers.get(originLayer).defaultOrigin.getIdentifier(), originLayerId));
+            }
+        });
+
+        return addonData;
     }
 
-    public void updateOriginData(FlowLayout rootComponent){
+    public void updateOriginData(BaseParentComponent rootComponent){
         ScrollContainer<?> container = rootComponent.childById(ScrollContainer.class, "origin_info");
 
         OriginInfoContainer child = ((OriginInfoContainer)container.child());
@@ -271,13 +364,39 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
         //container.onChildMutated(child);
         container.scrollTo(child);
 
-        child.origin(getCurrentOrigin(), randomOriginText, isOriginRandom);
+        if(isOriginRandom(getCurrentOrigin())){
+            child.randomOrigin(getCurrentOrigin(), originLayerHelpers.get(layerList.get(currentLayerIndex)).randomOriginText);
+        } else {
+            child.origin(getCurrentOrigin());
+        }
+
 
         rootComponent.childById(LabelComponent.class, "origin_name").text(getCurrentOrigin().getName());
         rootComponent.childById(OriginImpactComponent.class, "origin_impact").setImpact(getCurrentOrigin().getImpact());
         rootComponent.childById(ItemComponent.class, "origin_icon").stack(getCurrentOrigin().getDisplayItem());
 
         branchUpdate();
+    }
+
+    private record RandomOriginHelper(Origin randomOrigin, MutableText randomOriginText){}
+
+    private static class OriginLayerHelper {
+        public Origin randomOrigin = null;
+        public MutableText randomOriginText = null;
+
+        public final Origin defaultOrigin;
+
+        public final OriginLayer layer;
+
+        public OriginLayerHelper(OriginLayer layer, Origin defaultOrigin){
+            this.layer = layer;
+            this.defaultOrigin = defaultOrigin;
+        }
+
+        public void setRandomInfo(Origin randomOrigin, MutableText randomOriginText){
+            this.randomOrigin = randomOrigin;
+            this.randomOriginText = randomOriginText;
+        }
     }
 
     //----------------------------

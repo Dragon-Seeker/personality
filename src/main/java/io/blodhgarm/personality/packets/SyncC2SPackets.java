@@ -2,9 +2,15 @@ package io.blodhgarm.personality.packets;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
+import io.blodhgarm.personality.api.AddonRegistry;
 import io.blodhgarm.personality.api.Character;
+import io.blodhgarm.personality.api.addons.BaseAddon;
 import io.blodhgarm.personality.impl.ServerCharacters;
 import io.wispforest.owo.network.ServerAccess;
+import net.minecraft.util.Identifier;
+
+import java.util.Map;
 
 public class SyncC2SPackets {
 
@@ -18,11 +24,38 @@ public class SyncC2SPackets {
         }
     }
 
-    public record NewCharacter(String characterJson) {
+    public record NewCharacter(String characterJson, Map<String, String> addonData, boolean immediateAssociation) {
         public static void newCharacter(NewCharacter message, ServerAccess access) {
             Character c = GSON.fromJson(message.characterJson, Character.class);
-            ServerCharacters.INSTANCE.characterLookupMap().put(c.getUUID(), c);
+
+            message.addonData.forEach((s, s2) -> {
+                BaseAddon<?> addon = null;
+
+                Identifier addonId = Identifier.tryParse(s);
+
+                try {
+                    addon = GSON.fromJson(s2, AddonRegistry.INSTANCE.getAddonClass(addonId));
+                } catch (JsonSyntaxException e){
+                    e.printStackTrace();
+                }
+
+                addon = AddonRegistry.INSTANCE.validateOrDefault(addonId, addon);
+
+                c.characterAddons.put(addonId, addon);
+            });
+
             ServerCharacters.INSTANCE.saveCharacter(c);
+
+            ServerCharacters.INSTANCE.saveAddonsForCharacter(c, true);
+
+            if(message.immediateAssociation){
+                if(ServerCharacters.INSTANCE.getCharacterUUID(access.player()) != null){
+                    ServerCharacters.INSTANCE.dissociateUUID(access.player().getUuidAsString(), false);
+                }
+
+                ServerCharacters.INSTANCE.associateCharacterToPlayer(c.getUUID(), access.player().getUuidAsString());
+            }
+
             //TODO: Other New Character Stuff, like Associations. Maybe chat messages?
         }
     }

@@ -11,6 +11,7 @@ import io.blodhgarm.personality.misc.config.PersonalityConfig;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.stat.Stats;
+import net.minecraft.util.Identifier;
 
 import java.lang.reflect.Type;
 import java.util.*;
@@ -41,9 +42,9 @@ public class Character {
 
     private int playtimeOffset;
 
-    public static final Type REF_MAP_TYPE = new TypeToken<Map<String, BaseAddon<?>>>() {}.getType();
+    public static final Type REF_MAP_TYPE = new TypeToken<Map<Identifier, BaseAddon<?>>>() {}.getType();
 
-    public transient final Map<String, BaseAddon<?>> characterAddons = new HashMap<>();
+    public transient final Map<Identifier, BaseAddon<?>> characterAddons = new HashMap<>();
 
     public Set<String> knowCharacters;
 

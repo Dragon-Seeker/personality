@@ -21,12 +21,13 @@ public class OriginsSupportLoader {
 
     public static void addToPersonalityScreen(PersonalityCreationScreen screen, ClientPlayerEntity player){
         ArrayList<OriginLayer> layers = new ArrayList<>();
-        OriginComponent component = ModComponents.ORIGIN.get(player);
+
         OriginLayers.getLayers().forEach(layer -> {
-            if(layer.isEnabled() && !component.hasOrigin(layer)) {
+            if(layer.isEnabled()) {
                 layers.add(layer);
             }
         });
+
         Collections.sort(layers);
 
         if(layers.isEmpty()){

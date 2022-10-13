@@ -1,6 +1,5 @@
 package io.blodhgarm.personality.api.addons;
 
-import com.google.gson.JsonObject;
 import net.minecraft.entity.player.PlayerEntity;
 
 public abstract class BaseAddon<T> {

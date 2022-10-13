@@ -12,7 +12,7 @@ public class KeyBindings {
 
     private static final MinecraftClient client = MinecraftClient.getInstance();
 
-    public static final KeyBinding REVEAL_KEYBIND = register("reveal", GLFW.GLFW_KEY_LEFT_ALT);
+    public static final KeyBinding REVEAL_KEYBIND = register("reveal", GLFW.GLFW_KEY_LEFT_ALT & GLFW.GLFW_KEY_P);
 
     private static KeyBinding register(String key, int defaultKey) {
         KeyBinding binding = new KeyBinding("personality.keybind." + key, InputUtil.Type.KEYSYM, defaultKey, KeyBinding.MISC_CATEGORY);
@@ -24,6 +24,5 @@ public class KeyBindings {
         while (REVEAL_KEYBIND.wasPressed())
             client.setScreen(new RevealIdentityScreen());
     }
-
 
 }

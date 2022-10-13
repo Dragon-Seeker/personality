@@ -2,6 +2,11 @@ package io.blodhgarm.personality.misc.config;
 
 import io.wispforest.owo.config.ConfigWrapper;
 import io.wispforest.owo.config.Option;
+import io.wispforest.owo.util.Observable;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
 
 public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.misc.config.PersonalityConfigModel> {
 
@@ -56,8 +61,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void MIN_AGE(int value) {
-            instance.FASTER_EXHAUSTION.MIN_AGE = value;
-            FASTER_EXHAUSTION_MIN_AGE.synchronizeWithBackingField();
+            FASTER_EXHAUSTION_MIN_AGE.set(value);
         }
 
         public int MAX_AGE() {
@@ -65,8 +69,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void MAX_AGE(int value) {
-            instance.FASTER_EXHAUSTION.MAX_AGE = value;
-            FASTER_EXHAUSTION_MAX_AGE.synchronizeWithBackingField();
+            FASTER_EXHAUSTION_MAX_AGE.set(value);
         }
 
         public float START_VALUE() {
@@ -74,8 +77,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void START_VALUE(float value) {
-            instance.FASTER_EXHAUSTION.START_VALUE = value;
-            FASTER_EXHAUSTION_START_VALUE.synchronizeWithBackingField();
+            FASTER_EXHAUSTION_START_VALUE.set(value);
         }
 
         public float END_VALUE() {
@@ -83,8 +85,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void END_VALUE(float value) {
-            instance.FASTER_EXHAUSTION.END_VALUE = value;
-            FASTER_EXHAUSTION_END_VALUE.synchronizeWithBackingField();
+            FASTER_EXHAUSTION_END_VALUE.set(value);
         }
 
         public io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve CURVE() {
@@ -92,8 +93,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void CURVE(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value) {
-            instance.FASTER_EXHAUSTION.CURVE = value;
-            FASTER_EXHAUSTION_CURVE.synchronizeWithBackingField();
+            FASTER_EXHAUSTION_CURVE.set(value);
         }
 
     }
@@ -104,8 +104,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void MIN_AGE(int value) {
-            instance.FASTER_HEAL.MIN_AGE = value;
-            FASTER_HEAL_MIN_AGE.synchronizeWithBackingField();
+            FASTER_HEAL_MIN_AGE.set(value);
         }
 
         public int MAX_AGE() {
@@ -113,8 +112,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void MAX_AGE(int value) {
-            instance.FASTER_HEAL.MAX_AGE = value;
-            FASTER_HEAL_MAX_AGE.synchronizeWithBackingField();
+            FASTER_HEAL_MAX_AGE.set(value);
         }
 
         public float START_VALUE() {
@@ -122,8 +120,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void START_VALUE(float value) {
-            instance.FASTER_HEAL.START_VALUE = value;
-            FASTER_HEAL_START_VALUE.synchronizeWithBackingField();
+            FASTER_HEAL_START_VALUE.set(value);
         }
 
         public float END_VALUE() {
@@ -131,8 +128,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void END_VALUE(float value) {
-            instance.FASTER_HEAL.END_VALUE = value;
-            FASTER_HEAL_END_VALUE.synchronizeWithBackingField();
+            FASTER_HEAL_END_VALUE.set(value);
         }
 
         public io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve CURVE() {
@@ -140,8 +136,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void CURVE(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value) {
-            instance.FASTER_HEAL.CURVE = value;
-            FASTER_HEAL_CURVE.synchronizeWithBackingField();
+            FASTER_HEAL_CURVE.set(value);
         }
 
     }
@@ -152,8 +147,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void MIN_AGE(int value) {
-            instance.LOWER_HUNGER_MINIMUM.MIN_AGE = value;
-            LOWER_HUNGER_MINIMUM_MIN_AGE.synchronizeWithBackingField();
+            LOWER_HUNGER_MINIMUM_MIN_AGE.set(value);
         }
 
         public int MAX_AGE() {
@@ -161,8 +155,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void MAX_AGE(int value) {
-            instance.LOWER_HUNGER_MINIMUM.MAX_AGE = value;
-            LOWER_HUNGER_MINIMUM_MAX_AGE.synchronizeWithBackingField();
+            LOWER_HUNGER_MINIMUM_MAX_AGE.set(value);
         }
 
         public float START_VALUE() {
@@ -170,8 +163,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void START_VALUE(float value) {
-            instance.LOWER_HUNGER_MINIMUM.START_VALUE = value;
-            LOWER_HUNGER_MINIMUM_START_VALUE.synchronizeWithBackingField();
+            LOWER_HUNGER_MINIMUM_START_VALUE.set(value);
         }
 
         public float END_VALUE() {
@@ -179,8 +171,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void END_VALUE(float value) {
-            instance.LOWER_HUNGER_MINIMUM.END_VALUE = value;
-            LOWER_HUNGER_MINIMUM_END_VALUE.synchronizeWithBackingField();
+            LOWER_HUNGER_MINIMUM_END_VALUE.set(value);
         }
 
         public io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve CURVE() {
@@ -188,8 +179,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void CURVE(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value) {
-            instance.LOWER_HUNGER_MINIMUM.CURVE = value;
-            LOWER_HUNGER_MINIMUM_CURVE.synchronizeWithBackingField();
+            LOWER_HUNGER_MINIMUM_CURVE.set(value);
         }
 
     }
@@ -200,8 +190,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void MIN_AGE(int value) {
-            instance.NO_STICK_SLOWNESS.MIN_AGE = value;
-            NO_STICK_SLOWNESS_MIN_AGE.synchronizeWithBackingField();
+            NO_STICK_SLOWNESS_MIN_AGE.set(value);
         }
 
         public int MAX_AGE() {
@@ -209,8 +198,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void MAX_AGE(int value) {
-            instance.NO_STICK_SLOWNESS.MAX_AGE = value;
-            NO_STICK_SLOWNESS_MAX_AGE.synchronizeWithBackingField();
+            NO_STICK_SLOWNESS_MAX_AGE.set(value);
         }
 
         public float START_VALUE() {
@@ -218,8 +206,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void START_VALUE(float value) {
-            instance.NO_STICK_SLOWNESS.START_VALUE = value;
-            NO_STICK_SLOWNESS_START_VALUE.synchronizeWithBackingField();
+            NO_STICK_SLOWNESS_START_VALUE.set(value);
         }
 
         public float END_VALUE() {
@@ -227,8 +214,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void END_VALUE(float value) {
-            instance.NO_STICK_SLOWNESS.END_VALUE = value;
-            NO_STICK_SLOWNESS_END_VALUE.synchronizeWithBackingField();
+            NO_STICK_SLOWNESS_END_VALUE.set(value);
         }
 
         public io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve CURVE() {
@@ -236,8 +222,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void CURVE(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value) {
-            instance.NO_STICK_SLOWNESS.CURVE = value;
-            NO_STICK_SLOWNESS_CURVE.synchronizeWithBackingField();
+            NO_STICK_SLOWNESS_CURVE.set(value);
         }
 
     }
@@ -248,8 +233,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void MIN_AGE(int value) {
-            instance.NO_GLASSES_BLURRINESS.MIN_AGE = value;
-            NO_GLASSES_BLURRINESS_MIN_AGE.synchronizeWithBackingField();
+            NO_GLASSES_BLURRINESS_MIN_AGE.set(value);
         }
 
         public int MAX_AGE() {
@@ -257,8 +241,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void MAX_AGE(int value) {
-            instance.NO_GLASSES_BLURRINESS.MAX_AGE = value;
-            NO_GLASSES_BLURRINESS_MAX_AGE.synchronizeWithBackingField();
+            NO_GLASSES_BLURRINESS_MAX_AGE.set(value);
         }
 
         public float START_VALUE() {
@@ -266,8 +249,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void START_VALUE(float value) {
-            instance.NO_GLASSES_BLURRINESS.START_VALUE = value;
-            NO_GLASSES_BLURRINESS_START_VALUE.synchronizeWithBackingField();
+            NO_GLASSES_BLURRINESS_START_VALUE.set(value);
         }
 
         public float END_VALUE() {
@@ -275,8 +257,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void END_VALUE(float value) {
-            instance.NO_GLASSES_BLURRINESS.END_VALUE = value;
-            NO_GLASSES_BLURRINESS_END_VALUE.synchronizeWithBackingField();
+            NO_GLASSES_BLURRINESS_END_VALUE.set(value);
         }
 
         public io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve CURVE() {
@@ -284,8 +265,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void CURVE(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value) {
-            instance.NO_GLASSES_BLURRINESS.CURVE = value;
-            NO_GLASSES_BLURRINESS_CURVE.synchronizeWithBackingField();
+            NO_GLASSES_BLURRINESS_CURVE.set(value);
         }
 
     }
@@ -294,8 +274,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
     }
 
     public void BASE_MAXIMUM_AGE(int value) {
-        instance.BASE_MAXIMUM_AGE = value;
-        BASE_MAXIMUM_AGE.synchronizeWithBackingField();
+        BASE_MAXIMUM_AGE.set(value);
     }
 
     public final EXTRA_LIFE EXTRA_LIFE = new EXTRA_LIFE();
@@ -305,8 +284,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void MIN_AGE(int value) {
-            instance.EXTRA_LIFE.MIN_AGE = value;
-            EXTRA_LIFE_MIN_AGE.synchronizeWithBackingField();
+            EXTRA_LIFE_MIN_AGE.set(value);
         }
 
         public int MAX_AGE() {
@@ -314,8 +292,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void MAX_AGE(int value) {
-            instance.EXTRA_LIFE.MAX_AGE = value;
-            EXTRA_LIFE_MAX_AGE.synchronizeWithBackingField();
+            EXTRA_LIFE_MAX_AGE.set(value);
         }
 
         public float START_HOURS_PER_EXTRA_LIFE() {
@@ -323,8 +300,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void START_HOURS_PER_EXTRA_LIFE(float value) {
-            instance.EXTRA_LIFE.START_HOURS_PER_EXTRA_LIFE = value;
-            EXTRA_LIFE_START_HOURS_PER_EXTRA_LIFE.synchronizeWithBackingField();
+            EXTRA_LIFE_START_HOURS_PER_EXTRA_LIFE.set(value);
         }
 
         public float CURVE_MULTIPLIER() {
@@ -332,8 +308,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void CURVE_MULTIPLIER(float value) {
-            instance.EXTRA_LIFE.CURVE_MULTIPLIER = value;
-            EXTRA_LIFE_CURVE_MULTIPLIER.synchronizeWithBackingField();
+            EXTRA_LIFE_CURVE_MULTIPLIER.set(value);
         }
 
         public io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve CURVE() {
@@ -341,8 +316,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
         public void CURVE(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value) {
-            instance.EXTRA_LIFE.CURVE = value;
-            EXTRA_LIFE_CURVE.synchronizeWithBackingField();
+            EXTRA_LIFE_CURVE.set(value);
         }
 
     }
@@ -351,8 +325,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
     }
 
     public void MAX_EXTRA_YEARS_OF_LIFE(int value) {
-        instance.MAX_EXTRA_YEARS_OF_LIFE = value;
-        MAX_EXTRA_YEARS_OF_LIFE.synchronizeWithBackingField();
+        MAX_EXTRA_YEARS_OF_LIFE.set(value);
     }
 
     public io.blodhgarm.personality.misc.config.PersonalityConfigModel.ThemeMode THEME_MODE() {
@@ -360,23 +333,10 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
     }
 
     public void THEME_MODE(io.blodhgarm.personality.misc.config.PersonalityConfigModel.ThemeMode value) {
-        instance.THEME_MODE = value;
-        THEME_MODE.synchronizeWithBackingField();
+        THEME_MODE.set(value);
     }
 
 
-    public interface ExtraLife {
-        int MIN_AGE();
-        void MIN_AGE(int value);
-        int MAX_AGE();
-        void MAX_AGE(int value);
-        float START_HOURS_PER_EXTRA_LIFE();
-        void START_HOURS_PER_EXTRA_LIFE(float value);
-        float CURVE_MULTIPLIER();
-        void CURVE_MULTIPLIER(float value);
-        io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve CURVE();
-        void CURVE(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value);
-    }
     public interface GradualValue {
         int MIN_AGE();
         void MIN_AGE(int value);
@@ -386,6 +346,18 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         void START_VALUE(float value);
         float END_VALUE();
         void END_VALUE(float value);
+        io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve CURVE();
+        void CURVE(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value);
+    }
+    public interface ExtraLife {
+        int MIN_AGE();
+        void MIN_AGE(int value);
+        int MAX_AGE();
+        void MAX_AGE(int value);
+        float START_HOURS_PER_EXTRA_LIFE();
+        void START_HOURS_PER_EXTRA_LIFE(float value);
+        float CURVE_MULTIPLIER();
+        void CURVE_MULTIPLIER(float value);
         io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve CURVE();
         void CURVE(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value);
     }

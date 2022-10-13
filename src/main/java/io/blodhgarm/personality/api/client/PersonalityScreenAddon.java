@@ -1,10 +1,15 @@
-package io.blodhgarm.personality.client.screens;
+package io.blodhgarm.personality.api.client;
 
+import io.blodhgarm.personality.api.addons.BaseAddon;
+import io.blodhgarm.personality.client.screens.AddonObservable;
+import io.blodhgarm.personality.client.screens.PersonalityCreationScreen;
 import io.wispforest.owo.ui.base.BaseParentComponent;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Component;
 import io.wispforest.owo.ui.core.Sizing;
+
+import java.util.Map;
 
 public abstract class PersonalityScreenAddon {
 
@@ -52,7 +57,7 @@ public abstract class PersonalityScreenAddon {
     /**
      * Method used to add the component that will toggle the addons side screen
      */
-    public Component addBranchComponent(BaseParentComponent rootComponent){
+    public Component addBranchComponent(AddonObservable addonObservable, BaseParentComponent rootComponent){
         this.rootBranchComponent = rootComponent;
 
         return Containers.verticalFlow(Sizing.content(), Sizing.content());
@@ -64,5 +69,5 @@ public abstract class PersonalityScreenAddon {
     public abstract void branchUpdate();
 
     //TODO: IMPLEMENT THIS
-    public abstract void saveAddonData();
+    public abstract Map<String, BaseAddon<?>> saveAddonData(BaseParentComponent rootComponent);
 }

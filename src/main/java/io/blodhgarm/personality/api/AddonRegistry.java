@@ -6,13 +6,13 @@ import com.google.gson.JsonSyntaxException;
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.api.addons.BaseAddon;
 import io.blodhgarm.personality.impl.ServerCharacters;
-import io.wispforest.owo.offline.DataSavedEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.mixin.event.lifecycle.DataPackContentsMixin;
 import net.minecraft.resource.LifecycledResourceManager;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,9 +21,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public class AddonRegistry<A extends BaseAddon<?>> implements ServerLifecycleEvents.EndDataPackReload {
+public class AddonRegistry<A extends BaseAddon<?>> implements ServerLifecycleEvents.EndDataPackReload, ServerLifecycleEvents.ServerStarted {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -37,17 +38,13 @@ public class AddonRegistry<A extends BaseAddon<?>> implements ServerLifecycleEve
 
     private final List<Consumer<AddonRegistry<A>>> DELAYED_REGISTERY = new ArrayList<>();
 
-    private final Map<String, RegistryHelper<A>> LOADERS = new HashMap<>();
-
-    private final Map<String, Supplier<A>> DEFAULT_ADDONS = new HashMap<>();
+    private final Map<Identifier, AddonLoaderStorage<A>> LOADERS = new HashMap<>();
 
     //--------------------------------------------------------------------------------
 
-    public void registerAddon(String addonId, Class<A> addonClass, Supplier<A> defaultAddon){
+    public void registerAddon(Identifier addonId, Class<A> addonClass, Supplier<A> defaultAddon, Predicate<A> addonValidator){
         if(!LOADERS.containsKey(addonId)){
-            DEFAULT_ADDONS.put(addonId, defaultAddon);
-
-            LOADERS.put(addonId, new RegistryHelper<>(addonId, addonClass));
+            LOADERS.put(addonId, new AddonLoaderStorage<>(addonId, addonClass, defaultAddon, addonValidator));
         }
     }
 
@@ -57,23 +54,39 @@ public class AddonRegistry<A extends BaseAddon<?>> implements ServerLifecycleEve
 
     //--------------------------------------------------------------------------------
 
-    public Class<A> getAddonClass(String addonId){
+    public Class<A> getAddonClass(Identifier addonId){
         return LOADERS.get(addonId).addonClass();
     }
 
     public List<A> getDefaultAddons(){
-        return DEFAULT_ADDONS.values().stream().map(Supplier::get).toList();
+        return LOADERS.values().stream().map(loaderStorage -> loaderStorage.defaultAddon.get()).toList();
+    }
+
+    public A validateOrDefault(Identifier addonId, @Nullable A addonClass){
+        AddonLoaderStorage<A> loaderStorage = LOADERS.get(addonId);
+
+        if(addonClass != null){
+            boolean valid = loaderStorage.addonValidator().test(addonClass);
+
+            if(valid) {
+                return addonClass;
+            } else {
+                LOGGER.warn("[AddonValidation] A characters addon from {} was found to be invalid, will be replaced with the default value", addonId);
+            }
+        }
+
+        return loaderStorage.defaultAddon().get();
     }
 
     //--------------------------------------------------------------------------------
 
-    public Map<String, String> loadAddonsForCharacter(Character c){
+    public Map<Identifier, String> loadAddonsForCharacter(Character c){
         Path characterFolder = ServerCharacters.getSpecificCharacterPath(c.getUUID());
 
-        Map<String, String> addonData = new HashMap<>();
+        Map<Identifier, String> addonData = new HashMap<>();
 
         LOADERS.forEach((s, registryHelper) -> {
-            Path currentAddonFolder = characterFolder.resolve("addons/" + s + ".json");
+            Path currentAddonFolder = characterFolder.resolve("addons/" + s.getNamespace() + "/" + s.getPath() + ".json");
 
             A addon;
 
@@ -86,13 +99,13 @@ public class AddonRegistry<A extends BaseAddon<?>> implements ServerLifecycleEve
             } catch (IOException e){
                 LOGGER.error("[AddonLoading] {} addon for [Name: {}, UUID: {}] was unable to be loaded from the Disc, setting such to default.", s, c.getName(), c.getUUID());
 
-                addon = DEFAULT_ADDONS.get(s).get();
+                addon = registryHelper.defaultAddon.get();
 
                 e.printStackTrace();
             } catch (JsonSyntaxException e){
                 LOGGER.error("[AddonLoading] {} addon for [Name: {}, UUID: {}] was unable to be serialized, setting such to default.", s, c.getName(), c.getUUID());
 
-                addon = DEFAULT_ADDONS.get(s).get();
+                addon = registryHelper.defaultAddon.get();
                 addon.improperLoad();
 
                 e.printStackTrace();
@@ -104,43 +117,6 @@ public class AddonRegistry<A extends BaseAddon<?>> implements ServerLifecycleEve
         return addonData;
     }
 
-//    public Map<String, String> saveAddonsForCharacter(Character c){
-//        Path characterFolder = ServerCharacters.getSpecificCharacterPath(c.getUUID());
-//
-//        Map<String, String> addonData = new HashMap<>();
-//
-//        LOADERS.forEach((s, registryHelper) -> {
-//            Path currentAddonFolder = characterFolder.resolve("addons/" + s + ".json");
-//
-//            A addon;
-//
-//            try {
-//                String addonJson = Files.readString(currentAddonFolder);
-//
-//                addonData.put(s, addonJson);
-//
-//                addon = GSON.fromJson(addonJson, registryHelper.addonClass());
-//            } catch (IOException e){
-//                LOGGER.error("[AddonLoading] {} addon for [Name: {}, UUID: {}] was unable to be loaded from the Disc, setting such to default.", s, c.getName(), c.getUUID());
-//
-//                addon = DEFAULT_ADDONS.get(s).get();
-//
-//                e.printStackTrace();
-//            } catch (JsonSyntaxException e){
-//                LOGGER.error("[AddonLoading] {} addon for [Name: {}, UUID: {}] was unable to be serialized, setting such to default.", s, c.getName(), c.getUUID());
-//
-//                addon = DEFAULT_ADDONS.get(s).get();
-//                addon.improperLoad();
-//
-//                e.printStackTrace();
-//            }
-//
-//            c.characterAddons.put(s, addon);
-//        });
-//
-//        return addonData;
-//    }
-
     //--------------------------------------------------------------------------------
 
     @Override
@@ -148,5 +124,10 @@ public class AddonRegistry<A extends BaseAddon<?>> implements ServerLifecycleEve
         DELAYED_REGISTERY.forEach(addonRegistryConsumer -> addonRegistryConsumer.accept(this));
     }
 
-    public static record RegistryHelper<A extends BaseAddon<?>>(String addonId, Class<A> addonClass){}
+    @Override
+    public void onServerStarted(MinecraftServer server) {
+        DELAYED_REGISTERY.forEach(addonRegistryConsumer -> addonRegistryConsumer.accept(this));
+    }
+
+    public static record AddonLoaderStorage<A extends BaseAddon<?>>(Identifier addonId, Class<A> addonClass, Supplier<A> defaultAddon, Predicate<A> addonValidator){}
 }

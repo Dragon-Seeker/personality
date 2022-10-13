@@ -47,7 +47,9 @@ public abstract class CharacterManager<P extends PlayerEntity> {
      */
     @Nullable
     public Character getCharacter(P player){
-        return getCharacter(playerToCharacterReferences().getOrDefault(player.getUuidAsString(), "none"));
+        String cUUID = getCharacterUUID(player);
+
+        return cUUID != null ? getCharacter(cUUID) : null;
     }
 
     /**
@@ -58,8 +60,6 @@ public abstract class CharacterManager<P extends PlayerEntity> {
      */
     @Nullable
     public Character getCharacter(String UUID){
-        if(Objects.equals(UUID, "none")) return null;
-
         return characterLookupMap().get(UUID);
     }
 
@@ -82,7 +82,7 @@ public abstract class CharacterManager<P extends PlayerEntity> {
      */
     @Nullable
     public String getCharacterUUID(String UUID){
-        return playerToCharacterReferences().inverse().get(UUID);
+        return playerToCharacterReferences().get(UUID);
     }
 
     /**

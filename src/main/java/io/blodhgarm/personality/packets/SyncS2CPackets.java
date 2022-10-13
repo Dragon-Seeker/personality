@@ -10,6 +10,7 @@ import io.blodhgarm.personality.client.ClientCharacters;
 import io.wispforest.owo.network.ClientAccess;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 
 import java.util.List;
@@ -28,13 +29,15 @@ public class SyncS2CPackets {
         }
     }
 
-    public record SyncCharacter(String characterJson, String addonJsons) {
+    public record SyncCharacter(String characterJson, Map<Identifier, String> addonJsons) {
         @Environment(EnvType.CLIENT)
         public static void syncCharacter(SyncCharacter message, ClientAccess access) {
             Character c = GSON.fromJson(message.characterJson, Character.class);
 
             if(!message.addonJsons.isEmpty()) {
-                c.characterAddons.putAll(GSON.fromJson(message.characterJson(), Character.REF_MAP_TYPE));
+                message.addonJsons.forEach((identifier, s) -> {
+                    c.characterAddons.put(identifier, GSON.fromJson(s, AddonRegistry.INSTANCE.getAddonClass(identifier)));
+                });
             } else {
                 Character oldCharacter = ClientCharacters.INSTANCE.getCharacter(c.getUUID());
 
@@ -45,7 +48,7 @@ public class SyncS2CPackets {
         }
     }
 
-    public record SyncAddonData(String characterUUID, Map<String, String> addonJsons){
+    public record SyncAddonData(String characterUUID, Map<Identifier, String> addonJsons){
 
         @Environment(EnvType.CLIENT)
         public static void syncAddons(SyncAddonData message, ClientAccess access) {

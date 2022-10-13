@@ -31,8 +31,14 @@ public class OriginInfoContainer extends VerticalFlowLayout {
         build(this);
     }
 
-    public void origin(Origin origin, Text randomOriginText, boolean isOriginRandom){
-        this.origin = origin; this.randomOriginText = randomOriginText; this.isOriginRandom = isOriginRandom;
+    public void origin(Origin origin){
+        this.origin = origin; this.randomOriginText = null; this.isOriginRandom = false;
+
+        this.onUpdate(this);
+    }
+
+    public void randomOrigin(Origin origin, Text randomOriginText){
+        this.origin = origin; this.randomOriginText = randomOriginText; this.isOriginRandom = true;
 
         this.onUpdate(this);
     }

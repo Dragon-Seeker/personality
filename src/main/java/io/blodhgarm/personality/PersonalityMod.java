@@ -41,13 +41,15 @@ public class PersonalityMod implements ModInitializer {
 
         ServerTickEvents.END_WORLD_TICK.register(PersonalityMod.id("tick"), new CharacterTick());
 
-        ServerWorldEvents.LOAD.register(PersonalityMod.id("on_world_load"), ServerCharacters.INSTANCE);
         ServerWorldEvents.LOAD.register(PersonalityMod.id("on_world_load"), new ServerAccess());
+
+        ServerWorldEvents.LOAD.register(PersonalityMod.id("on_world_load"), ServerCharacters.INSTANCE);
         ServerWorldEvents.LOAD.register(PersonalityMod.id("on_world_load"), PersonalityMod::onWorldLoad);
 
         ServerPlayConnectionEvents.JOIN.register(PersonalityMod.id("on_player_join"), ServerCharacters.INSTANCE);
 
         ServerLifecycleEvents.END_DATA_PACK_RELOAD.register(AddonRegistry.INSTANCE);
+        ServerLifecycleEvents.SERVER_STARTED.register(AddonRegistry.INSTANCE);
 
         FabricLoader.getInstance().getEntrypoints("personality", PersonalityEntrypoint.class).forEach(personalityEntrypoint -> {
             personalityEntrypoint.addonRegistry(AddonRegistry.INSTANCE);

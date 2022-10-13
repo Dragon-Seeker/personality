@@ -24,6 +24,9 @@
     ],
     "client": [
       "io.blodhgarm.personality.client.PersonalityClient"
+    ],
+    "personality": [
+      "io.blodhgarm.personality.compat.OriginsAddonRegistry"
     ]
   },
   "mixins": [ "personality.mixins.json" ],
