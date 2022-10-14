@@ -5,12 +5,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.api.CharacterManager;
-import io.blodhgarm.personality.api.addons.BaseAddon;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 

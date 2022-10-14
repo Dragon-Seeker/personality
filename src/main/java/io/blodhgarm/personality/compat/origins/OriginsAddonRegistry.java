@@ -1,10 +1,10 @@
-package io.blodhgarm.personality.compat;
+package io.blodhgarm.personality.compat.origins;
 
 import com.mojang.logging.LogUtils;
-import io.blodhgarm.personality.api.AddonRegistry;
+import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.PersonalityEntrypoint;
-import io.blodhgarm.personality.api.addons.BaseAddon;
-import io.blodhgarm.personality.client.compat.origins.OriginAddon;
+import io.blodhgarm.personality.api.addon.BaseAddon;
+import io.blodhgarm.personality.compat.origins.client.OriginAddon;
 import io.blodhgarm.personality.mixin.OriginLayerAccessor;
 import io.github.apace100.origins.origin.Origin;
 import io.github.apace100.origins.origin.OriginLayer;
@@ -20,12 +20,11 @@ import java.util.Random;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class OriginsAddonRegistry implements PersonalityEntrypoint {
+public class OriginsAddonRegistry {
 
-    private static Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = LogUtils.getLogger();
 
-    @Override
-    public <T extends BaseAddon<?>> void addonRegistry(AddonRegistry<T> registry) {
+    public static <T extends BaseAddon> void addonRegistry(AddonRegistry<T> registry) {
         registry.registerDelayedAddon(delayedRegistery -> {
             Predicate<T> addonValidation = t -> {
                 if (t instanceof OriginAddon originAddon) {

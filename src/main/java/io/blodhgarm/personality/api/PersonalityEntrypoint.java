@@ -1,8 +1,9 @@
 package io.blodhgarm.personality.api;
 
-import io.blodhgarm.personality.api.addons.BaseAddon;
+import io.blodhgarm.personality.api.addon.AddonRegistry;
+import io.blodhgarm.personality.api.addon.BaseAddon;
 
 public interface PersonalityEntrypoint {
 
-    <T extends BaseAddon<?>> void addonRegistry(AddonRegistry<T> registry);
+    <T extends BaseAddon> void addonRegistry(AddonRegistry<T> registry);
 }

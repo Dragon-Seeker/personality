@@ -3,9 +3,9 @@ package io.blodhgarm.personality.packets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
-import io.blodhgarm.personality.api.AddonRegistry;
+import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.Character;
-import io.blodhgarm.personality.api.addons.BaseAddon;
+import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.impl.ServerCharacters;
 import io.wispforest.owo.network.ServerAccess;
 import net.minecraft.util.Identifier;
@@ -24,17 +24,15 @@ public class SyncC2SPackets {
         }
     }
 
-    public record NewCharacter(String characterJson, Map<String, String> addonData, boolean immediateAssociation) {
+    public record NewCharacter(String characterJson, Map<Identifier, String> addonData, boolean immediateAssociation) {
         public static void newCharacter(NewCharacter message, ServerAccess access) {
             Character c = GSON.fromJson(message.characterJson, Character.class);
 
-            message.addonData.forEach((s, s2) -> {
-                BaseAddon<?> addon = null;
-
-                Identifier addonId = Identifier.tryParse(s);
+            message.addonData.forEach((addonId, addonJson) -> {
+                BaseAddon addon = null;
 
                 try {
-                    addon = GSON.fromJson(s2, AddonRegistry.INSTANCE.getAddonClass(addonId));
+                    addon = GSON.fromJson(addonJson, AddonRegistry.INSTANCE.getAddonClass(addonId));
                 } catch (JsonSyntaxException e){
                     e.printStackTrace();
                 }

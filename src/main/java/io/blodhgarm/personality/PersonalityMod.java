@@ -1,9 +1,11 @@
 package io.blodhgarm.personality;
 
 import com.jthemedetecor.OsThemeDetector;
-import io.blodhgarm.personality.api.AddonRegistry;
+import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.api.PersonalityEntrypoint;
+import io.blodhgarm.personality.api.addon.BaseAddon;
+import io.blodhgarm.personality.compat.origins.OriginsAddonRegistry;
 import io.blodhgarm.personality.impl.CharacterTick;
 import io.blodhgarm.personality.impl.ServerCharacters;
 import io.blodhgarm.personality.misc.PersonalityCommands;
@@ -23,7 +25,7 @@ import virtuoel.pehkui.api.*;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PersonalityMod implements ModInitializer {
+public class PersonalityMod implements ModInitializer, PersonalityEntrypoint{
 
     public static final PersonalityConfig CONFIG = PersonalityConfig.createAndLoad();
     public static final OsThemeDetector detector = OsThemeDetector.getDetector();
@@ -85,4 +87,10 @@ public class PersonalityMod implements ModInitializer {
         ScaleRegistries.SCALE_MODIFIERS.remove(PersonalityMod.id(c.getUUID()));
     }
 
+    @Override
+    public <T extends BaseAddon> void addonRegistry(AddonRegistry<T> registry) {
+        if(FabricLoader.getInstance().isModLoaded("origins")){
+            OriginsAddonRegistry.addonRegistry(registry);
+        }
+    }
 }

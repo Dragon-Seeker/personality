@@ -1,8 +1,8 @@
-package io.blodhgarm.personality.api.addons;
+package io.blodhgarm.personality.api.addon;
 
 import net.minecraft.entity.player.PlayerEntity;
 
-public abstract class BaseAddon<T> {
+public abstract class BaseAddon {
 
     public boolean loadedProperly = true;
 

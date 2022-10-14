@@ -1,10 +1,10 @@
-package io.blodhgarm.personality.api;
+package io.blodhgarm.personality.api.addon;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.mojang.logging.LogUtils;
-import io.blodhgarm.personality.api.addons.BaseAddon;
+import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.impl.ServerCharacters;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.resource.LifecycledResourceManager;
@@ -24,7 +24,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public class AddonRegistry<A extends BaseAddon<?>> implements ServerLifecycleEvents.EndDataPackReload, ServerLifecycleEvents.ServerStarted {
+public class AddonRegistry<A extends BaseAddon> implements ServerLifecycleEvents.EndDataPackReload, ServerLifecycleEvents.ServerStarted {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -32,7 +32,7 @@ public class AddonRegistry<A extends BaseAddon<?>> implements ServerLifecycleEve
 
     //--------------------------------------------------------------------------------
 
-    public static final AddonRegistry<BaseAddon<?>> INSTANCE = new AddonRegistry<>();
+    public static final AddonRegistry<BaseAddon> INSTANCE = new AddonRegistry<>();
 
     //--------------------------------------------------------------------------------
 
@@ -129,5 +129,5 @@ public class AddonRegistry<A extends BaseAddon<?>> implements ServerLifecycleEve
         DELAYED_REGISTERY.forEach(addonRegistryConsumer -> addonRegistryConsumer.accept(this));
     }
 
-    public static record AddonLoaderStorage<A extends BaseAddon<?>>(Identifier addonId, Class<A> addonClass, Supplier<A> defaultAddon, Predicate<A> addonValidator){}
+    public static record AddonLoaderStorage<A extends BaseAddon>(Identifier addonId, Class<A> addonClass, Supplier<A> defaultAddon, Predicate<A> addonValidator){}
 }

@@ -1,6 +1,6 @@
 package io.blodhgarm.personality.client.screens;
 
-import io.blodhgarm.personality.api.client.PersonalityScreenAddon;
+import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddon;
 
 public interface AddonObservable {
 

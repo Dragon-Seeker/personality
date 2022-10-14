@@ -4,7 +4,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.blodhgarm.personality.PersonalityMod;
-import io.blodhgarm.personality.api.addons.BaseAddon;
+import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.impl.ServerCharacters;
 import io.blodhgarm.personality.misc.PersonalityTags;
 import io.blodhgarm.personality.misc.config.PersonalityConfig;
@@ -42,9 +42,9 @@ public class Character {
 
     private int playtimeOffset;
 
-    public static final Type REF_MAP_TYPE = new TypeToken<Map<Identifier, BaseAddon<?>>>() {}.getType();
+    public static final Type REF_MAP_TYPE = new TypeToken<Map<Identifier, BaseAddon>>() {}.getType();
 
-    public transient final Map<Identifier, BaseAddon<?>> characterAddons = new HashMap<>();
+    public transient final Map<Identifier, BaseAddon> characterAddons = new HashMap<>();
 
     public Set<String> knowCharacters;
 

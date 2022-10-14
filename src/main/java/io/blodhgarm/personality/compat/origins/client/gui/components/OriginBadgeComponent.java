@@ -1,6 +1,6 @@
-package io.blodhgarm.personality.client.compat.origins.gui.components;
+package io.blodhgarm.personality.compat.origins.client.gui.components;
 
-import io.blodhgarm.personality.client.compat.origins.gui.OriginSelectionDisplayAddon;
+import io.blodhgarm.personality.compat.origins.client.gui.OriginSelectionDisplayAddon;
 import io.github.apace100.apoli.power.PowerType;
 import io.github.apace100.origins.badge.Badge;
 import io.wispforest.owo.ui.component.TextureComponent;

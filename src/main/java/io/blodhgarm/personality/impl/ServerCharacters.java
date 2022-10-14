@@ -5,17 +5,15 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonSyntaxException;
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.Networking;
-import io.blodhgarm.personality.api.AddonRegistry;
+import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.api.CharacterManager;
-import io.blodhgarm.personality.api.addons.BaseAddon;
+import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.packets.IntroductionPacket;
 import io.blodhgarm.personality.packets.SyncS2CPackets;
 import io.blodhgarm.personality.utils.ServerAccess;
-import io.wispforest.owo.Owo;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -30,15 +28,12 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class ServerCharacters extends CharacterManager<ServerPlayerEntity> implements ServerPlayConnectionEvents.Join, ServerWorldEvents.Load {
@@ -103,7 +98,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
         Networking.sendToAll(new SyncS2CPackets.Dissociation(UUID, isCharacterUUID));
 
-        for (BaseAddon<?> defaultAddon : AddonRegistry.INSTANCE.getDefaultAddons()) defaultAddon.applyAddon(player);
+        for (BaseAddon defaultAddon : AddonRegistry.INSTANCE.getDefaultAddons()) defaultAddon.applyAddon(player);
 
         saveCharacterReference();
 
@@ -219,7 +214,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     }
 
     public String saveAddonForCharacter(Character c, Identifier addonId, boolean syncAddons){
-        BaseAddon<?> addon = c.characterAddons.get(addonId);
+        BaseAddon addon = c.characterAddons.get(addonId);
 
         if(addon != null){
 

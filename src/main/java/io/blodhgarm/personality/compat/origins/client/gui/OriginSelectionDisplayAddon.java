@@ -1,13 +1,14 @@
-package io.blodhgarm.personality.client.compat.origins.gui;
+package io.blodhgarm.personality.compat.origins.client.gui;
 
-import io.blodhgarm.personality.api.addons.BaseAddon;
-import io.blodhgarm.personality.client.compat.origins.OriginAddon;
-import io.blodhgarm.personality.client.compat.origins.gui.components.OriginHeaderComponent;
-import io.blodhgarm.personality.client.compat.origins.gui.components.OriginImpactComponent;
-import io.blodhgarm.personality.client.compat.origins.gui.components.OriginInfoContainer;
+import io.blodhgarm.personality.api.addon.AddonRegistry;
+import io.blodhgarm.personality.api.addon.BaseAddon;
+import io.blodhgarm.personality.compat.origins.client.OriginAddon;
+import io.blodhgarm.personality.compat.origins.client.gui.components.OriginHeaderComponent;
+import io.blodhgarm.personality.compat.origins.client.gui.components.OriginImpactComponent;
+import io.blodhgarm.personality.compat.origins.client.gui.components.OriginInfoContainer;
 import io.blodhgarm.personality.client.screens.AddonObservable;
 import io.blodhgarm.personality.client.screens.PersonalityCreationScreen;
-import io.blodhgarm.personality.api.client.PersonalityScreenAddon;
+import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddon;
 import io.blodhgarm.personality.client.screens.components.CustomSurfaces;
 import io.github.apace100.origins.Origins;
 import io.github.apace100.origins.origin.Impact;
@@ -68,12 +69,8 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
 
     //----------------------------
 
-    public BaseParentComponent rootBranchComponent = null;
-
-    //----------------------------
-
     public OriginSelectionDisplayAddon(ArrayList<OriginLayer> layerList, int currentLayerIndex) {
-        super("origin_addon_component");
+        super(new Identifier("origins", "origin_selection_addon"));
 
         this.layerList = layerList;
         this.currentLayerIndex = currentLayerIndex;
@@ -287,15 +284,13 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
 
     @Override
     public void branchUpdate() {
-        if(rootBranchComponent != null) {
-            rootBranchComponent.childById(OriginHeaderComponent.class, "addon_component_origin_header").Origin(getCurrentOrigin(), layerList.get(currentLayerIndex));
+        if(getRootComponent() != null) {
+            getRootComponent().childById(OriginHeaderComponent.class, "addon_component_origin_header").Origin(getCurrentOrigin(), layerList.get(currentLayerIndex));
         }
     }
 
     @Override
-    public Component addBranchComponent(AddonObservable addonObservable, BaseParentComponent rootComponent) {
-        this.rootBranchComponent = rootComponent;
-
+    public Component buildBranchComponent(AddonObservable addonObservable, BaseParentComponent rootComponent) {
         return new OriginHeaderComponent(Sizing.fixed(122), Sizing.fixed(32), getCurrentOrigin(), layerList.get(currentLayerIndex))
                 .shortVersion(true)
                 .showLayerInfo(true)
@@ -336,24 +331,29 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
     }
 
     @Override
-    public Map<String, BaseAddon<?>> saveAddonData(BaseParentComponent rootComponent) {
-        Map<String, BaseAddon<?>> addonData = new HashMap<>();
+    public Map<Identifier, BaseAddon> getAddonData() {
+        Map<Identifier, BaseAddon> addonData = new HashMap<>();
 
         if(!selectedOrigins.isEmpty()) {
             selectedOrigins.forEach((originLayer, origin1) ->
-                addonData.put(originLayer.getIdentifier().toString(), new OriginAddon(origin1.getIdentifier(), originLayer.getIdentifier()))
+                addonData.put(originLayer.getIdentifier(), new OriginAddon(origin1.getIdentifier(), originLayer.getIdentifier()))
             );
         }
 
         layerList.forEach(originLayer -> {
             Identifier originLayerId = originLayer.getIdentifier();
 
-            if(!addonData.containsKey(originLayerId.toString())){
-                addonData.put(originLayerId.toString(), new OriginAddon(originLayerHelpers.get(originLayer).defaultOrigin.getIdentifier(), originLayerId));
+            if(!addonData.containsKey(originLayerId)){
+                addonData.put(originLayerId, new OriginAddon(originLayerHelpers.get(originLayer).defaultOrigin.getIdentifier(), originLayerId));
             }
         });
 
         return addonData;
+    }
+
+    @Override
+    public boolean isDataEmpty(BaseParentComponent rootComponent) {
+        return false;
     }
 
     public void updateOriginData(BaseParentComponent rootComponent){

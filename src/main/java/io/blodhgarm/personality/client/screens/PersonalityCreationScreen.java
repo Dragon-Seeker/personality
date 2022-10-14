@@ -4,30 +4,29 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.Networking;
-import io.blodhgarm.personality.api.client.PersonalityScreenAddon;
+import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddon;
+import io.blodhgarm.personality.api.client.PersonalityScreenAddonRegistry;
 import io.blodhgarm.personality.client.PersonalityClient;
 import io.blodhgarm.personality.client.screens.components.CustomSurfaces;
 import io.blodhgarm.personality.client.screens.components.vanilla.BetterEditBoxWidget;
 import io.blodhgarm.personality.client.screens.components.vanilla.BetterTextFieldWidget;
-import io.blodhgarm.personality.client.compat.CustomEntityComponent;
+import io.blodhgarm.personality.client.screens.components.CustomEntityComponent;
 import io.blodhgarm.personality.packets.SyncC2SPackets;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.base.BaseParentComponent;
 import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.component.DiscreteSliderComponent;
-import io.wispforest.owo.ui.component.SliderComponent;
-import io.wispforest.owo.ui.container.Containers;
-import io.wispforest.owo.ui.container.FlowLayout;
-import io.wispforest.owo.ui.container.HorizontalFlowLayout;
+import io.wispforest.owo.ui.container.*;
 import io.wispforest.owo.ui.core.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.stat.Stats;
 import net.minecraft.text.MutableText;
-import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 
@@ -35,7 +34,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> implements AddonObservable {
 
@@ -43,13 +41,14 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
 
     private static final MutableText requiredText = Text.literal("*").formatted(Formatting.BOLD, Formatting.RED);
 
-    private final List<PersonalityScreenAddon> screenAddons = new ArrayList<>();
+    private final Map<Identifier, PersonalityScreenAddon> screenAddons = new HashMap<>();
 
     public GenderSelection currentSelection = GenderSelection.MALE;
 
-    public PersonalityCreationScreen() {}
-
-
+    public PersonalityCreationScreen(ClientPlayerEntity player) {
+        PersonalityScreenAddonRegistry.ALL_SCREEN_ADDONS
+                .forEach((identifier, addonCreationFunc) -> screenAddons.put(identifier, addonCreationFunc.apply(player).linkAddon(this)));
+    }
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
@@ -78,137 +77,163 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
         return OwoUIAdapter.create(this, Containers::verticalFlow);
     }
 
-    public void addAddon(PersonalityScreenAddon addon){
-        screenAddons.add(addon.linkAddon(this));
-    }
-
     @Override
     protected void build(FlowLayout rootComponent) {
         HorizontalFlowLayout mainFlowLayout = (HorizontalFlowLayout) Containers.horizontalFlow(Sizing.content(), Sizing.content()).id("main_flow_layout");
 
         Surface panel = PersonalityClient.isDarkMode() ? Surface.DARK_PANEL : Surface.PANEL;
 
-        //Panel 1
+        //---------------------------- Character Panel ----------------------------
+
+        //--- Player Entity Display Panel ---
+
+        FlowLayout playerDisplayComponent = Containers.verticalFlow(Sizing.content(), Sizing.fixed(149));
+
+        Identifier originScreenAddon = new Identifier("origins", "origin_selection_addon");
+        boolean originAddonExists = screenAddons.containsKey(originScreenAddon);
+
+        if(originAddonExists) {
+            playerDisplayComponent.child(
+                    Containers.horizontalFlow(Sizing.content(), Sizing.fixed(26 + 12))
+                            .child(
+                                    screenAddons.get(originScreenAddon).addBranchComponent(this, rootComponent)
+                                            .margins(Insets.right(2))
+                            )
+                            .child(
+                                    Components.button(Text.of("✎"), (ButtonComponent component) -> {
+                                                this.pushScreenAddon(screenAddons.get(originScreenAddon));
+                                            })
+                                            .sizing(Sizing.fixed(12))
+                                            .positioning(Positioning.absolute(guiScale4OrAbove() ? 86 : 106, 30))
+                            )
+                            .allowOverflow(true)
+                            //.horizontalAlignment(HorizontalAlignment.CENTER)
+                            //.verticalAlignment(VerticalAlignment.CENTER)
+                            .margins(Insets.of(4, 0, 4, 4))
+            );
+        }
+
+        playerDisplayComponent.child(
+                (new CustomEntityComponent<>(Sizing.fixed(originAddonExists ? 85 : 100), MinecraftClient.getInstance().player))
+                        .scale(originAddonExists ? 0.55F : 0.65F)
+                        //.scaleToFit(true)
+                        .allowMouseRotation(true)
+                        .margins(Insets.of(10, 6, 5, 5))
+        );
+
+        //--------------------------------
+
+
+        //----- Character Properties -----
+
+        FlowLayout characterPropertiesContainer = Containers.verticalFlow(Sizing.content(), Sizing.content())
+                .child(
+                        Containers.horizontalFlow(Sizing.content(), Sizing.content())
+                                .child(
+                                        Components.label(Text.empty()
+                                                .append(requiredText.copy())
+                                                .append(Text.literal("Name: ")))
+                                        //.margins(Insets.of(6, 5, 0, 0))
+                                )
+                                .child(
+                                        BetterTextFieldWidget.textBox(Sizing.fixed(112), "") //132
+                                                .bqColor(Color.ofArgb(0xFF555555))
+                                                .id("character_name")
+                                )
+                                .horizontalAlignment(HorizontalAlignment.LEFT)
+                                .verticalAlignment(VerticalAlignment.CENTER)
+                                .margins(Insets.bottom(8))
+                )
+                .child(
+                        Containers.horizontalFlow(Sizing.content(), Sizing.content())
+                                .child(
+                                        Components.label(Text.of("Age: "))
+                                                .margins(Insets.right(6))
+                                )
+                                .child(
+                                        Components.discreteSlider(Sizing.fixed(114), 17, 60) //134
+                                                .snap(true)
+                                                .id("age_slider")
+                                )
+                                .verticalAlignment(VerticalAlignment.CENTER)
+                                .margins(Insets.bottom(8))
+                )
+                .child(
+                        Containers.horizontalFlow(Sizing.content(), Sizing.content())
+                                .child(
+                                        Components.label(Text.of("Height: "))
+                                )
+                                .child(
+                                        Components.discreteSlider(Sizing.fixed(108), -0.5f, 0.5f) //128
+                                                .decimalPlaces(1)
+                                                .snap(true)
+                                                .setFromDiscreteValue(0.0)
+                                                .message(s -> {
+                                                    if(!s.startsWith("-") && !s.equals("0.0")){
+                                                        s = "+" + s;
+                                                    }
+                                                    return Text.literal(s);
+                                                })
+                                                .id("height_slider")
+                                )
+                                .verticalAlignment(VerticalAlignment.CENTER)
+                                .margins(Insets.bottom(8))
+                )
+                .child(
+                        createGenderComponent()
+                )
+                .child(
+                        Containers.verticalFlow(Sizing.content(), Sizing.content())
+                                .child(
+                                        Components.label(Text.of("Description: "))
+                                                .margins(Insets.of(0, 4, 0, 0))
+                                )
+                                .child(
+                                        BetterEditBoxWidget.editBox(Sizing.fixed(136), Sizing.fixed(60), Text.of(""), Text.of(""))
+                                                .textWidth(130)
+                                                .bqColor(Color.ofArgb(0xFF555555))
+                                                .id("description_text_box")
+                                )
+                                .margins(Insets.bottom(8))
+                )
+                .child(
+                        Containers.verticalFlow(Sizing.content(), Sizing.content())
+                                .child(
+                                        Components.label(Text.of("Bio: "))
+                                                .margins(Insets.of(0, 4, 0, 0))
+                                )
+                                .child(
+                                        BetterEditBoxWidget.editBox(Sizing.fixed(136), Sizing.fixed(60), Text.of(""), Text.of(""))
+                                                .textWidth(130)
+                                                .bqColor(Color.ofArgb(0xFF555555))
+                                                .id("biography_text_box")
+                                )
+                );
+
+        screenAddons.entrySet()
+                .stream()
+                .filter(entry -> entry.getKey() == originScreenAddon)
+                .forEach(entry -> characterPropertiesContainer
+                        .child(entry.getValue().addBranchComponent(this, characterPropertiesContainer))
+                );
+
+        //--------------------------------
+
+
+        //--------- Panel Layout ---------
 
         FlowLayout mainOptionsSection = Containers.horizontalFlow(Sizing.content(), Sizing.content())
                 .child(
                         Containers.verticalFlow(Sizing.content(), Sizing.content())
                                 .child(
-                                        Containers.verticalFlow(Sizing.content(), Sizing.fixed(149))
-                                                .child(
-                                                        Containers.horizontalFlow(Sizing.content(), Sizing.fixed(26 + 12))
-                                                                .child(
-                                                                        screenAddons.get(0).addBranchComponent(this, rootComponent)
-                                                                                .margins(Insets.right(2))
-                                                                )
-                                                                .child(
-                                                                        Components.button(Text.of("✎"), (ButtonComponent component) -> {
-                                                                                    this.pushScreenAddon(screenAddons.get(0));
-                                                                                })
-                                                                                .sizing(Sizing.fixed(12))
-                                                                                .positioning(Positioning.absolute(guiScale4OrAbove() ? 86 : 106, 30))
-                                                                )
-                                                                .allowOverflow(true)
-                                                                //.horizontalAlignment(HorizontalAlignment.CENTER)
-                                                                //.verticalAlignment(VerticalAlignment.CENTER)
-                                                                .margins(Insets.of(4,0,4,4))
-                                                )
-                                                .child(
-                                                        (new CustomEntityComponent<>(Sizing.fixed(85), MinecraftClient.getInstance().player))
-                                                                .scale(0.55F)
-                                                                //.scaleToFit(true)
-                                                                .allowMouseRotation(true)
-                                                                .margins(Insets.of(10, 6, 5, 5))
-                                                )
+                                        playerDisplayComponent
                                                 .surface(CustomSurfaces.INVERSE_PANEL)
                                                 .horizontalAlignment(HorizontalAlignment.CENTER)
                                                 .margins(Insets.right(4))
                                 )
                 )
                 .child(
-                        Containers.verticalScroll(Sizing.content(), Sizing.fixed(149),
-                                Containers.verticalFlow(Sizing.content(), Sizing.content())
-                                        .child(
-                                                Containers.horizontalFlow(Sizing.content(), Sizing.content())
-                                                        .child(
-                                                                Components.label(requiredText.copy().append(Text.literal("Name: ")))
-                                                                //.margins(Insets.of(6, 5, 0, 0))
-                                                        )
-                                                        .child(
-                                                                BetterTextFieldWidget.textBox(Sizing.fixed(112), "") //132
-                                                                        .bqColor(Color.ofArgb(0xFF555555))
-                                                                        .id("character_name")
-                                                        )
-                                                        .horizontalAlignment(HorizontalAlignment.LEFT)
-                                                        .verticalAlignment(VerticalAlignment.CENTER)
-                                                        .margins(Insets.bottom(8))
-                                        )
-                                        .child(
-                                                Containers.horizontalFlow(Sizing.content(), Sizing.content())
-                                                        .child(
-                                                                Components.label(Text.of("Age: "))
-                                                                        .margins(Insets.right(6))
-                                                        )
-                                                        .child(
-                                                                Components.discreteSlider(Sizing.fixed(114), 17, 60) //134
-                                                                        .snap(true)
-                                                                        .id("age_slider")
-                                                        )
-                                                        .verticalAlignment(VerticalAlignment.CENTER)
-                                                        .margins(Insets.bottom(8))
-                                        )
-                                        .child(
-                                                Containers.horizontalFlow(Sizing.content(), Sizing.content())
-                                                        .child(
-                                                                Components.label(Text.of("Height: "))
-                                                        )
-                                                        .child(
-                                                                Components.discreteSlider(Sizing.fixed(108), -0.5f, 0.5f) //128
-                                                                        .decimalPlaces(1)
-                                                                        .snap(true)
-                                                                        .setFromDiscreteValue(0.0)
-                                                                        .message(s -> {
-                                                                            if(!s.startsWith("-") && !s.equals("0.0")){
-                                                                                s = "+" + s;
-                                                                            }
-                                                                            return Text.literal(s);
-                                                                        })
-                                                                        .id("height_slider")
-                                                        )
-                                                        .verticalAlignment(VerticalAlignment.CENTER)
-                                                        .margins(Insets.bottom(8))
-                                        )
-                                        .child(
-                                                createGenderComponent()
-                                        )
-                                        .child(
-                                                Containers.verticalFlow(Sizing.content(), Sizing.content())
-                                                        .child(
-                                                                Components.label(Text.of("Description: "))
-                                                                        .margins(Insets.of(0, 4, 0, 0))
-                                                        )
-                                                        .child(
-                                                                BetterEditBoxWidget.editBox(Sizing.fixed(136), Sizing.fixed(60), Text.of(""), Text.of(""))
-                                                                        .textWidth(130)
-                                                                        .bqColor(Color.ofArgb(0xFF555555))
-                                                                        .id("description_text_box")
-                                                        )
-                                                        .margins(Insets.bottom(8))
-                                        )
-                                        .child(
-                                                Containers.verticalFlow(Sizing.content(), Sizing.content())
-                                                        .child(
-                                                                Components.label(Text.of("Bio: "))
-                                                                        .margins(Insets.of(0, 4, 0, 0))
-                                                        )
-                                                        .child(
-                                                                BetterEditBoxWidget.editBox(Sizing.fixed(136), Sizing.fixed(60), Text.of(""), Text.of(""))
-                                                                        .textWidth(130)
-                                                                        .bqColor(Color.ofArgb(0xFF555555))
-                                                                        .id("biography_text_box")
-                                                        )
-                                        )
-                                )
+                        Containers.verticalScroll(Sizing.content(), Sizing.fixed(149), characterPropertiesContainer)
                                 .surface(Surface.DARK_PANEL)
                                 .padding(Insets.of(6))
                 );
@@ -238,6 +263,8 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
                                 Components.button(Text.of("Done"), (ButtonComponent button) -> {
                                     if(this.finishCharacterCreation(rootComponent)){
                                         this.close();
+                                    } else {
+                                        //TODO: Handle this
                                     }
                                 })
                                 .horizontalSizing(Sizing.fixed(100))
@@ -246,9 +273,10 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
                         .horizontalAlignment(HorizontalAlignment.CENTER)
         );
 
-        // END
+        //---------------------------------- END ----------------------------------
 
-        // Root Component Manipulation
+
+        //---------------------- Root Component Manipulation ----------------------
 
         mainFlowLayout.positioning(Positioning.relative(50, -100));
 
@@ -257,6 +285,8 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
         rootComponent.child(mainFlowLayout);
 
         rootComponent.surface(Surface.VANILLA_TRANSLUCENT);
+
+        //---------------------------------- END ----------------------------------
     }
 
     public Component createGenderComponent(){
@@ -302,7 +332,7 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
         if(addonMainFlow != null){
             flowLayout.removeChild(addonMainFlow);
 
-            if(addonMainFlow.childById(Component.class, screenAddon.addonId()) != null) return;
+            if(addonMainFlow.childById(Component.class, screenAddon.addonId().toString()) != null) return;
         }
 
         if(screenAddon == null) return;
@@ -319,11 +349,13 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
                 .childById(FlowLayout.class, "main_flow_layout"))
                 .childById(FlowLayout.class, "current_addon_screen");
 
-        return addonMainFlow != null && addonMainFlow.childById(Component.class, screenAddon.addonId()) != null;
+        return addonMainFlow != null && addonMainFlow.childById(Component.class, screenAddon.addonId().toString()) != null;
     }
 
     private boolean finishCharacterCreation(BaseParentComponent rootComponent){
         String name = rootComponent.childById(TextFieldWidget.class, "character_name").getText();
+
+        if(name.isEmpty()) return false;
 
         String gender = currentSelection != GenderSelection.OTHER
                 ? currentSelection.translation.getString()
@@ -339,16 +371,18 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
 
         int activityOffset = MinecraftClient.getInstance().player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME));
 
-        //TODO: IMPLEMENT THIS
-
         Character character = new Character(name, gender, description, biography, heightOffset, age, activityOffset);
 
-        Map<String, String> addonData = new HashMap<>();
+        //Addon Data
 
-        for(PersonalityScreenAddon addon : screenAddons){
-            addon.saveAddonData(rootComponent).forEach((s, baseAddon) -> {
-                addonData.put(s, GSON.toJson(baseAddon));
-            });
+        Map<Identifier, String> addonData = new HashMap<>();
+
+        for(Map.Entry<Identifier, PersonalityScreenAddon> entry : screenAddons.entrySet()){
+            PersonalityScreenAddon addon = entry.getValue();
+
+            if(addon.isDataEmpty(rootComponent) && addon.requiresUserInput()) return false;
+
+            addon.getAddonData().forEach((addonId, baseAddon) -> addonData.put(addonId, GSON.toJson(baseAddon)));
         }
 
         Networking.sendC2S(new SyncC2SPackets.NewCharacter(character.serialise(), addonData, true));

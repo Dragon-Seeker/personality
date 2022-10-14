@@ -1,10 +1,7 @@
 package io.blodhgarm.personality.api;
 
 import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashBiMap;
-import com.google.common.collect.Table;
-import io.blodhgarm.personality.api.addons.BaseAddon;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;

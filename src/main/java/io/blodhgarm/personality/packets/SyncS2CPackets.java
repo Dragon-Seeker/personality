@@ -3,9 +3,8 @@ package io.blodhgarm.personality.packets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.mojang.logging.LogUtils;
-import io.blodhgarm.personality.api.AddonRegistry;
+import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.Character;
-import io.blodhgarm.personality.api.addons.BaseAddon;
 import io.blodhgarm.personality.client.ClientCharacters;
 import io.wispforest.owo.network.ClientAccess;
 import net.fabricmc.api.EnvType;
@@ -13,7 +12,6 @@ import net.fabricmc.api.Environment;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 
-import java.util.List;
 import java.util.Map;
 
 public class SyncS2CPackets {

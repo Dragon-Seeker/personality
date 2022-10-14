@@ -1,4 +1,4 @@
-package io.blodhgarm.personality.client.compat.origins.gui.components;
+package io.blodhgarm.personality.compat.origins.client.gui.components;
 
 import io.blodhgarm.personality.client.screens.PersonalityCreationScreen;
 import io.github.apace100.origins.origin.Origin;
@@ -9,7 +9,6 @@ import io.wispforest.owo.ui.component.ItemComponent;
 import io.wispforest.owo.ui.component.LabelComponent;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
-import io.wispforest.owo.ui.container.HorizontalFlowLayout;
 import io.wispforest.owo.ui.container.VerticalFlowLayout;
 import io.wispforest.owo.ui.core.*;
 import net.minecraft.text.Text;

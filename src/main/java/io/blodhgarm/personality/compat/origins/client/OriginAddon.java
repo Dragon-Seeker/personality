@@ -1,23 +1,17 @@
-package io.blodhgarm.personality.client.compat.origins;
+package io.blodhgarm.personality.compat.origins.client;
 
-import io.blodhgarm.personality.api.addons.BaseAddon;
-import io.blodhgarm.personality.mixin.ModPacketsC2SAccessor;
-import io.blodhgarm.personality.utils.ServerAccess;
+import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.github.apace100.origins.Origins;
 import io.github.apace100.origins.component.OriginComponent;
-import io.github.apace100.origins.component.PlayerOriginComponent;
 import io.github.apace100.origins.origin.Origin;
 import io.github.apace100.origins.origin.OriginLayer;
 import io.github.apace100.origins.origin.OriginLayers;
 import io.github.apace100.origins.origin.OriginRegistry;
 import io.github.apace100.origins.registry.ModComponents;
-import io.netty.buffer.Unpooled;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
 
-public class OriginAddon extends BaseAddon<Origin> {
+public class OriginAddon extends BaseAddon {
 
     private Identifier origin_id;
     private Identifier layer_id;

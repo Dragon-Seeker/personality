@@ -1,7 +1,7 @@
-package io.blodhgarm.personality.client.compat.origins.gui.components;
+package io.blodhgarm.personality.compat.origins.client.gui.components;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import io.blodhgarm.personality.client.compat.origins.gui.OriginSelectionDisplayAddon;
+import io.blodhgarm.personality.compat.origins.client.gui.OriginSelectionDisplayAddon;
 import io.github.apace100.origins.Origins;
 import io.github.apace100.origins.origin.Impact;
 import io.wispforest.owo.ui.base.BaseComponent;
