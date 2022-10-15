@@ -19,7 +19,7 @@ import java.util.HashMap;
 
 public class OriginsSupportLoader {
 
-    public static PersonalityScreenAddon addToPersonalityScreen(ClientPlayerEntity player){
+    public static PersonalityScreenAddon addToPersonalityScreen(){
         ArrayList<OriginLayer> layers = new ArrayList<>();
 
         OriginLayers.getLayers().forEach(layer -> {

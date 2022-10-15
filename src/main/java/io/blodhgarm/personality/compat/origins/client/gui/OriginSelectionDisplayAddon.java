@@ -1,12 +1,11 @@
 package io.blodhgarm.personality.compat.origins.client.gui;
 
-import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.compat.origins.client.OriginAddon;
 import io.blodhgarm.personality.compat.origins.client.gui.components.OriginHeaderComponent;
 import io.blodhgarm.personality.compat.origins.client.gui.components.OriginImpactComponent;
 import io.blodhgarm.personality.compat.origins.client.gui.components.OriginInfoContainer;
-import io.blodhgarm.personality.client.screens.AddonObservable;
+import io.blodhgarm.personality.api.client.AddonObservable;
 import io.blodhgarm.personality.client.screens.PersonalityCreationScreen;
 import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddon;
 import io.blodhgarm.personality.client.screens.components.CustomSurfaces;

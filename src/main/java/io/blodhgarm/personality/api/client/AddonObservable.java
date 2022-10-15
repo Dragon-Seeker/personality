@@ -1,4 +1,4 @@
-package io.blodhgarm.personality.client.screens;
+package io.blodhgarm.personality.api.client;
 
 import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddon;
 

@@ -1,10 +1,10 @@
 package io.blodhgarm.personality.packets;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.mojang.logging.LogUtils;
-import io.blodhgarm.personality.api.addon.AddonRegistry;
+import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.Character;
+import io.blodhgarm.personality.api.addon.AddonRegistry;
+import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.client.ClientCharacters;
 import io.wispforest.owo.network.ClientAccess;
 import net.fabricmc.api.EnvType;
@@ -16,9 +16,7 @@ import java.util.Map;
 
 public class SyncS2CPackets {
 
-    private static Logger LOGGER = LogUtils.getLogger();
-
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     public record Initial(Map<String, String> characters, Map<String, String> associations) {
         @Environment(EnvType.CLIENT)
@@ -30,11 +28,17 @@ public class SyncS2CPackets {
     public record SyncCharacter(String characterJson, Map<Identifier, String> addonJsons) {
         @Environment(EnvType.CLIENT)
         public static void syncCharacter(SyncCharacter message, ClientAccess access) {
-            Character c = GSON.fromJson(message.characterJson, Character.class);
+            Character c = PersonalityMod.GSON.fromJson(message.characterJson, Character.class);
 
             if(!message.addonJsons.isEmpty()) {
-                message.addonJsons.forEach((identifier, s) -> {
-                    c.characterAddons.put(identifier, GSON.fromJson(s, AddonRegistry.INSTANCE.getAddonClass(identifier)));
+                message.addonJsons.forEach((addonId, s) -> {
+                    Class<BaseAddon> addonClass = AddonRegistry.INSTANCE.getAddonClass(addonId);
+
+                    if(addonClass != null) {
+                        c.characterAddons.put(addonId, PersonalityMod.GSON.fromJson(s, addonClass));
+                    } else {
+                        LOGGER.warn("[SyncCharacterPacket]: The given Identifier [{}] wasn't found within the AddonRegistry meaning it wasn't able to deserialize the info meaning such will be skipped.", addonId);
+                    }
                 });
             } else {
                 Character oldCharacter = ClientCharacters.INSTANCE.getCharacter(c.getUUID());
@@ -59,7 +63,13 @@ public class SyncS2CPackets {
             }
 
             message.addonJsons.forEach((addonId, addonJson) -> {
-                c.characterAddons.put(addonId, GSON.fromJson(addonJson, AddonRegistry.INSTANCE.getAddonClass(addonId)));
+                Class<BaseAddon> addonClass = AddonRegistry.INSTANCE.getAddonClass(addonId);
+
+                if(addonClass != null) {
+                    c.characterAddons.put(addonId, PersonalityMod.GSON.fromJson(addonJson, addonClass));
+                } else {
+                    LOGGER.warn("[SyncAddons]: The given Identifier [{}] wasn't found within the AddonRegistry meaning it wasn't able to deserialize the info meaning such will be skipped.", addonId);
+                }
             });
         }
     }

@@ -1,5 +1,7 @@
 package io.blodhgarm.personality;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.jthemedetecor.OsThemeDetector;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.Character;
@@ -26,6 +28,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class PersonalityMod implements ModInitializer, PersonalityEntrypoint{
+
+    public static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     public static final PersonalityConfig CONFIG = PersonalityConfig.createAndLoad();
     public static final OsThemeDetector detector = OsThemeDetector.getDetector();

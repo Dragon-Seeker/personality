@@ -3,22 +3,25 @@ package io.blodhgarm.personality.packets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
+import com.mojang.logging.LogUtils;
+import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.impl.ServerCharacters;
 import io.wispforest.owo.network.ServerAccess;
 import net.minecraft.util.Identifier;
+import org.slf4j.Logger;
 
 import java.util.Map;
 
 public class SyncC2SPackets {
 
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static Logger LOGGER = LogUtils.getLogger();
 
     public record ModifyCharacter(String characterJson) {
         public static void modifyCharacter(ModifyCharacter message, ServerAccess access) {
-            Character c = GSON.fromJson(message.characterJson, Character.class);
+            Character c = PersonalityMod.GSON.fromJson(message.characterJson, Character.class);
             ServerCharacters.INSTANCE.characterLookupMap().put(c.getUUID(), c);
             ServerCharacters.INSTANCE.saveCharacter(c);
         }
@@ -26,20 +29,28 @@ public class SyncC2SPackets {
 
     public record NewCharacter(String characterJson, Map<Identifier, String> addonData, boolean immediateAssociation) {
         public static void newCharacter(NewCharacter message, ServerAccess access) {
-            Character c = GSON.fromJson(message.characterJson, Character.class);
+            Character c = PersonalityMod.GSON.fromJson(message.characterJson, Character.class);
 
             message.addonData.forEach((addonId, addonJson) -> {
                 BaseAddon addon = null;
 
                 try {
-                    addon = GSON.fromJson(addonJson, AddonRegistry.INSTANCE.getAddonClass(addonId));
+                    Class<BaseAddon> addonClass = AddonRegistry.INSTANCE.getAddonClass(addonId);
+
+                    if(addonClass != null) {
+                        addon = PersonalityMod.GSON.fromJson(addonJson, addonClass);
+                    } else {
+                        LOGGER.warn("[NewCharacterPacket]: There was a attempt to get a addon class to read the packet but wasn't found meaning such will be skipped. [Identifier: {}]", addonId);
+
+                        return;
+                    }
                 } catch (JsonSyntaxException e){
                     e.printStackTrace();
                 }
 
                 addon = AddonRegistry.INSTANCE.validateOrDefault(addonId, addon);
 
-                c.characterAddons.put(addonId, addon);
+                if(addon != null) c.characterAddons.put(addonId, addon);
             });
 
             ServerCharacters.INSTANCE.saveCharacter(c);

@@ -1,7 +1,7 @@
 package io.blodhgarm.personality.api.addon.client;
 
 import io.blodhgarm.personality.api.addon.BaseAddon;
-import io.blodhgarm.personality.client.screens.AddonObservable;
+import io.blodhgarm.personality.api.client.AddonObservable;
 import io.blodhgarm.personality.client.screens.PersonalityCreationScreen;
 import io.wispforest.owo.ui.base.BaseParentComponent;
 import io.wispforest.owo.ui.container.Containers;
@@ -9,7 +9,6 @@ import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Component;
 import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.util.Identifier;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 

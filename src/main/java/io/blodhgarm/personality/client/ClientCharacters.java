@@ -3,6 +3,7 @@ package io.blodhgarm.personality.client;
 import com.google.common.collect.HashBiMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.api.CharacterManager;
 import net.minecraft.client.MinecraftClient;
@@ -13,8 +14,6 @@ import java.util.Map;
 import java.util.Objects;
 
 public class ClientCharacters extends CharacterManager<AbstractClientPlayerEntity> {
-
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     public static ClientCharacters INSTANCE = new ClientCharacters();
 
@@ -31,9 +30,9 @@ public class ClientCharacters extends CharacterManager<AbstractClientPlayerEntit
         playerIDToCharacterID = HashBiMap.create(associations);
         characterIDToCharacter.clear();
         for (Map.Entry<String, String> entry : characters.entrySet()) {
-            Character c = GSON.fromJson(entry.getKey(), Character.class);
+            Character c = PersonalityMod.GSON.fromJson(entry.getKey(), Character.class);
 
-            c.characterAddons.putAll(GSON.fromJson(entry.getValue(), Character.REF_MAP_TYPE));
+            c.characterAddons.putAll(PersonalityMod.GSON.fromJson(entry.getValue(), Character.REF_MAP_TYPE));
 
             characterIDToCharacter.put(c.getUUID(), c);
         }

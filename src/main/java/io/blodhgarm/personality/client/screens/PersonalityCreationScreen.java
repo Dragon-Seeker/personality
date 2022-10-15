@@ -2,9 +2,11 @@ package io.blodhgarm.personality.client.screens;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.Networking;
 import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddon;
+import io.blodhgarm.personality.api.client.AddonObservable;
 import io.blodhgarm.personality.api.client.PersonalityScreenAddonRegistry;
 import io.blodhgarm.personality.client.PersonalityClient;
 import io.blodhgarm.personality.client.screens.components.CustomSurfaces;
@@ -30,14 +32,10 @@ import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> implements AddonObservable {
-
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private static final MutableText requiredText = Text.literal("*").formatted(Formatting.BOLD, Formatting.RED);
 
@@ -47,7 +45,7 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
 
     public PersonalityCreationScreen(ClientPlayerEntity player) {
         PersonalityScreenAddonRegistry.ALL_SCREEN_ADDONS
-                .forEach((identifier, addonCreationFunc) -> screenAddons.put(identifier, addonCreationFunc.apply(player).linkAddon(this)));
+                .forEach((identifier, addonFactory) -> screenAddons.put(identifier, addonFactory.buildAddon().linkAddon(this)));
     }
 
     @Override
@@ -382,10 +380,10 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
 
             if(addon.isDataEmpty(rootComponent) && addon.requiresUserInput()) return false;
 
-            addon.getAddonData().forEach((addonId, baseAddon) -> addonData.put(addonId, GSON.toJson(baseAddon)));
+            addon.getAddonData().forEach((addonId, baseAddon) -> addonData.put(addonId, PersonalityMod.GSON.toJson(baseAddon)));
         }
 
-        Networking.sendC2S(new SyncC2SPackets.NewCharacter(character.serialise(), addonData, true));
+        Networking.sendC2S(new SyncC2SPackets.NewCharacter(PersonalityMod.GSON.toJson(character), addonData, true));
 
         return true;
     }
