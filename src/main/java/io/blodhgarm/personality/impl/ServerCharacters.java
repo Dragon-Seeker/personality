@@ -49,6 +49,10 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     private static Path CHARACTER_PATH;
     private static Path REFERENCE_PATH;
 
+    public ServerCharacters() {
+        super("server");
+    }
+
     @Nullable
     @Override
     public Character getCharacter(String uuid) {
@@ -85,8 +89,6 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     public void associateCharacterToPlayer(String characterUUID, String playerUUID){
         super.associateCharacterToPlayer(characterUUID, playerUUID);
 
-        applyAddons(characterUUID);
-
         Networking.sendToAll(new SyncS2CPackets.Association(characterUUID, playerUUID));
 
         saveCharacterReference();
@@ -103,17 +105,6 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
         saveCharacterReference();
 
         return player.getUuidAsString();
-    }
-
-    public void applyAddons(String characterUUID){
-        Character c = getCharacter(characterUUID);
-        PlayerEntity player = getPlayer(characterUUID);
-
-        if(c != null) {
-            c.characterAddons.forEach((s, baseAddon) -> {
-                baseAddon.applyAddon(player);
-            });
-        }
     }
 
     @Override

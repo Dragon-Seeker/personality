@@ -42,6 +42,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
     private final Option<java.lang.Float> EXTRA_LIFE_CURVE_MULTIPLIER = this.optionForKey(new Option.Key("EXTRA_LIFE.CURVE_MULTIPLIER"));
     private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> EXTRA_LIFE_CURVE = this.optionForKey(new Option.Key("EXTRA_LIFE.CURVE"));
     private final Option<java.lang.Integer> MAX_EXTRA_YEARS_OF_LIFE = this.optionForKey(new Option.Key("MAX_EXTRA_YEARS_OF_LIFE"));
+    private final Option<java.lang.Boolean> RESIZE_BOUNDS_ONLY = this.optionForKey(new Option.Key("RESIZE_BOUNDS_ONLY"));
     private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.ThemeMode> THEME_MODE = this.optionForKey(new Option.Key("THEME_MODE"));
 
     private PersonalityConfig() {
@@ -326,6 +327,18 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
 
     public void MAX_EXTRA_YEARS_OF_LIFE(int value) {
         MAX_EXTRA_YEARS_OF_LIFE.set(value);
+    }
+
+    public boolean RESIZE_BOUNDS_ONLY() {
+        return RESIZE_BOUNDS_ONLY.value();
+    }
+
+    public void RESIZE_BOUNDS_ONLY(boolean value) {
+        RESIZE_BOUNDS_ONLY.set(value);
+    }
+
+    public void subscribeToRESIZE_BOUNDS_ONLY(Consumer<java.lang.Boolean> subscriber) {
+        RESIZE_BOUNDS_ONLY.observe(subscriber);
     }
 
     public io.blodhgarm.personality.misc.config.PersonalityConfigModel.ThemeMode THEME_MODE() {

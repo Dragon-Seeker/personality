@@ -2,10 +2,7 @@ package io.blodhgarm.personality.misc.config;
 
 import io.blodhgarm.personality.PersonalityMod;
 import io.wispforest.owo.config.Option;
-import io.wispforest.owo.config.annotation.Config;
-import io.wispforest.owo.config.annotation.Modmenu;
-import io.wispforest.owo.config.annotation.Nest;
-import io.wispforest.owo.config.annotation.Sync;
+import io.wispforest.owo.config.annotation.*;
 
 @Modmenu(modId = PersonalityMod.MODID)
 @Config(name = PersonalityMod.MODID, wrapperName = "PersonalityConfig")
@@ -27,6 +24,9 @@ public class PersonalityConfigModel {
 
     @Sync(value = Option.SyncMode.OVERRIDE_CLIENT)
     public int MAX_EXTRA_YEARS_OF_LIFE = 30;
+
+    @Sync(value = Option.SyncMode.OVERRIDE_CLIENT)
+    @Hook public boolean RESIZE_BOUNDS_ONLY = true;
 
     public ThemeMode THEME_MODE = ThemeMode.SYSTEM;
 

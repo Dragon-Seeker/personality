@@ -60,6 +60,10 @@ public abstract class PersonalityScreenAddon {
         return false;
     }
 
+    public boolean hasSideScreenComponent(){
+        return true;
+    }
+
     /**
      * Method used to build the main portion of the addon Screen
      */
@@ -68,7 +72,7 @@ public abstract class PersonalityScreenAddon {
     /**
      * Method used to add the component that will toggle the addons side screen
      */
-    public abstract Component buildBranchComponent(AddonObservable addonObservable, BaseParentComponent rootBranchComponent);
+    protected abstract Component buildBranchComponent(AddonObservable addonObservable, BaseParentComponent rootBranchComponent);
 
     /**
      * Used to update the given branch component

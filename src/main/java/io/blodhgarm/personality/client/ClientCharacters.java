@@ -17,11 +17,15 @@ public class ClientCharacters extends CharacterManager<AbstractClientPlayerEntit
 
     public static ClientCharacters INSTANCE = new ClientCharacters();
 
+    public ClientCharacters() {
+        super("client");
+    }
+
     @Nullable
     public AbstractClientPlayerEntity getPlayer(String uuid) {
         return MinecraftClient.getInstance().world.getPlayers()
                 .stream()
-                .filter(abstractClientPlayerEntity -> Objects.equals(abstractClientPlayerEntity.getUuidAsString(), uuid))
+                .filter(abstractClientPlayerEntity -> Objects.equals(abstractClientPlayerEntity.getUuidAsString(), playerToCharacterReferences().inverse().get(uuid)))
                 .findFirst()
                 .orElse(null);
     }

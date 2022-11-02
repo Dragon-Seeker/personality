@@ -146,8 +146,8 @@ public class PersonalityCommands {
                         .executes(c -> setProperty(c, () -> { character.apply(c).setDescription(getString(c, "description")); return msg(c, "Description Set"); }))))
                 .then(literal("biography").then(argument("biography", greedyString())
                         .executes(c -> setProperty(c, () -> { character.apply(c).setBiography(getString(c, "biography")); return msg(c, "Biography Set"); }))))
-                .then(literal("heightOffset").then(argument("heightOffset", integer(-25, 25))
-                        .executes(c -> setProperty(c, () -> { character.apply(c).setHeightOffset(getInteger(c, "heightOffset")); return msg(c, "Height Offset Set"); }))))
+//                .then(literal("heightOffset").then(argument("heightOffset", integer(-25, 25))
+//                        .executes(c -> setProperty(c, () -> { character.apply(c).setHeightOffset(getInteger(c, "heightOffset")); return msg(c, "Height Offset Set"); }))))
                 .then(literal("age").then(argument("age", integer(17))
                         .executes(c -> setProperty(c, () -> { character.apply(c).setAge(getInteger(c, "age")); return msg(c, "Age Set"); }))))
                 .then(literal("playtime").then(argument("playtime",  longArg())
@@ -162,11 +162,11 @@ public class PersonalityCommands {
             String gender = getString(context, "gender");
             String description = getString(context, "description");
             String biography = getString(context, "biography");
-            float heightOffset = getFloat(context, "heightOffset");
+            //float heightOffset = getFloat(context, "heightOffset");
             int age = getInteger(context, "age");
             int activityOffset = player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME));
 
-            Character c = new Character(name, gender, description, biography, heightOffset, age, activityOffset);
+            Character c = new Character(name, gender, description, biography, age, activityOffset);
 
             ServerCharacters.INSTANCE.playerToCharacterReferences().put(player.getUuidAsString(), c.getUUID());
             ServerCharacters.INSTANCE.saveCharacter(c);

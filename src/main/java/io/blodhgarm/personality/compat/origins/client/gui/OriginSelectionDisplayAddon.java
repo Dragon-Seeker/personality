@@ -1,12 +1,12 @@
 package io.blodhgarm.personality.compat.origins.client.gui;
 
 import io.blodhgarm.personality.api.addon.BaseAddon;
-import io.blodhgarm.personality.compat.origins.client.OriginAddon;
+import io.blodhgarm.personality.client.PersonalityClient;
+import io.blodhgarm.personality.compat.origins.OriginAddon;
 import io.blodhgarm.personality.compat.origins.client.gui.components.OriginHeaderComponent;
 import io.blodhgarm.personality.compat.origins.client.gui.components.OriginImpactComponent;
 import io.blodhgarm.personality.compat.origins.client.gui.components.OriginInfoContainer;
 import io.blodhgarm.personality.api.client.AddonObservable;
-import io.blodhgarm.personality.client.screens.PersonalityCreationScreen;
 import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddon;
 import io.blodhgarm.personality.client.screens.components.CustomSurfaces;
 import io.github.apace100.origins.Origins;
@@ -32,10 +32,7 @@ import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
 
@@ -79,46 +76,22 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
 
     private void setupForSelectedLayer(){
         this.originSelection = new ArrayList<>(10);
-
-        PlayerEntity player = MinecraftClient.getInstance().player;
-
         OriginLayer currentLayer = layerList.get(currentLayerIndex);
 
-        List<Identifier> originIdentifiers = currentLayer.getOrigins(player);
-
-        originIdentifiers.forEach(originId -> {
-            Origin origin = OriginRegistry.get(originId);
-            if(origin.isChoosable()) {
-                ItemStack displayItem = origin.getDisplayItem();
-                if(displayItem.getItem() == Items.PLAYER_HEAD) {
-                    if(!displayItem.hasNbt() || !displayItem.getNbt().contains("SkullOwner")) {
-                        displayItem.getOrCreateNbt().putString("SkullOwner", player.getDisplayName().getString());
-                    }
-                }
-                this.originSelection.add(origin);
-            }
-        });
-
-        originSelection.sort((a, b) -> {
-            int impDelta = a.getImpact().getImpactValue() - b.getImpact().getImpactValue();
-            return impDelta == 0 ? a.getOrder() - b.getOrder() : impDelta;
-        });
-
-        maxSelection = originSelection.size();
-
-        if(currentLayer.isRandomAllowed() && currentLayer.getRandomOrigins(player).size() > 0) {
-            maxSelection += 1;
-        }
+        maxSelection = generateLayerData(originSelection, currentLayer);
 
         if(maxSelection == 0) {
+            currentLayerIndex++;
+
+            if(currentLayerIndex >= layerList.size()){
+                return;
+            }
+
+            setupForSelectedLayer();
             //openNextLayerScreen();
         }
 
         Origin origin;
-
-        if(!originLayerHelpers.containsKey(currentLayer)){
-            originLayerHelpers.put(currentLayer, new OriginLayerHelper(currentLayer, originSelection.get(0)));
-        }
 
         if(!selectedOrigins.containsKey(currentLayer)){
             currentOriginIndex = 0;
@@ -133,6 +106,43 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
         }
 
         resetWithOrigin(origin);
+    }
+
+    private int generateLayerData(List<Origin> originSelection, OriginLayer currentLayer){
+        PlayerEntity player = MinecraftClient.getInstance().player;
+
+        List<Identifier> originIdentifiers = currentLayer.getOrigins(player);
+
+        originIdentifiers.forEach(originId -> {
+            Origin origin = OriginRegistry.get(originId);
+            if(origin.isChoosable()) {
+                ItemStack displayItem = origin.getDisplayItem();
+                if(displayItem.getItem() == Items.PLAYER_HEAD) {
+                    if(!displayItem.hasNbt() || !displayItem.getNbt().contains("SkullOwner")) {
+                        displayItem.getOrCreateNbt().putString("SkullOwner", player.getDisplayName().getString());
+                    }
+                }
+
+                originSelection.add(origin);
+            }
+        });
+
+        originSelection.sort((a, b) -> {
+            int impDelta = a.getImpact().getImpactValue() - b.getImpact().getImpactValue();
+            return impDelta == 0 ? a.getOrder() - b.getOrder() : impDelta;
+        });
+
+        int maxSelection = originSelection.size();
+
+        if(currentLayer.isRandomAllowed() && currentLayer.getRandomOrigins(player).size() > 0) {
+            maxSelection += 1;
+        }
+
+        if(!originLayerHelpers.containsKey(currentLayer)){
+            originLayerHelpers.put(currentLayer, new OriginLayerHelper(currentLayer, originSelection.size() != 0 ? originSelection.get(0) : null, maxSelection));
+        }
+
+        return maxSelection;
     }
 
     //----------------------------
@@ -278,7 +288,7 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
                     .surface(panel)
                 )
                 .horizontalAlignment(HorizontalAlignment.CENTER)
-                .margins(Insets.left(PersonalityCreationScreen.guiScale4OrAbove() ? 6 : 10));
+                .margins(Insets.left(PersonalityClient.guiScale4OrAbove() ? 6 : 10));
     }
 
     @Override
@@ -290,43 +300,58 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
 
     @Override
     public Component buildBranchComponent(AddonObservable addonObservable, BaseParentComponent rootComponent) {
-        return new OriginHeaderComponent(Sizing.fixed(122), Sizing.fixed(32), getCurrentOrigin(), layerList.get(currentLayerIndex))
-                .shortVersion(true)
-                .showLayerInfo(true)
-                .showButtons(
-                        buttonComponent -> {
-                            this.currentLayerIndex = this.currentLayerIndex - 1;
+        return Containers.horizontalFlow(Sizing.content(), Sizing.fixed(26 + 12))
+                .child(
+                        new OriginHeaderComponent(Sizing.fixed(122), Sizing.fixed(32), getCurrentOrigin(), layerList.get(currentLayerIndex))
+                                .shortVersion(true)
+                                .showLayerInfo(true)
+                                .showButtons(
+                                        buttonComponent -> {
+                                            this.currentLayerIndex = this.currentLayerIndex - 1;
 
-                            if(this.currentLayerIndex < 0){
-                                this.currentLayerIndex = this.layerList.size() - 1;
-                            }
+                                            if(this.currentLayerIndex < 0){
+                                                this.currentLayerIndex = this.layerList.size() - 1;
+                                            }
 
-                            setupForSelectedLayer();
+                                            setupForSelectedLayer();
 
-                            if(addonObservable.isAddonOpen(this)){
-                                updateOriginData(rootComponent);
-                            } else {
-                                branchUpdate();
-                            }
-                        },
-                        buttonComponent -> {
-                            this.currentLayerIndex = this.currentLayerIndex + 1;
+                                            if(addonObservable.isAddonOpen(this)){
+                                                updateOriginData(rootComponent);
+                                            } else {
+                                                branchUpdate();
+                                            }
+                                        },
+                                        buttonComponent -> {
+                                            this.currentLayerIndex = this.currentLayerIndex + 1;
 
-                            if(this.currentLayerIndex >= this.layerList.size()){
-                                this.currentLayerIndex = 0;
-                            }
+                                            if(this.currentLayerIndex >= this.layerList.size()){
+                                                this.currentLayerIndex = 0;
+                                            }
 
-                            setupForSelectedLayer();
+                                            setupForSelectedLayer();
 
-                            if(addonObservable.isAddonOpen(this)){
-                                updateOriginData(rootComponent);
-                            } else {
-                                branchUpdate();
-                            }
-                        }
+                                            if(addonObservable.isAddonOpen(this)){
+                                                updateOriginData(rootComponent);
+                                            } else {
+                                                branchUpdate();
+                                            }
+                                        }
+                                )
+                                .rebuildComponent()
+                                .id("addon_component_origin_header")
+                                .margins(Insets.right(2))
                 )
-                .rebuildComponent()
-                .id("addon_component_origin_header");
+                .child(
+                        Components.button(Text.of("✎"), (ButtonComponent component) -> {
+                            addonObservable.pushScreenAddon(this);
+                                })
+                                .sizing(Sizing.fixed(12))
+                                .positioning(Positioning.absolute(PersonalityClient.guiScale4OrAbove() ? 86 : 106, 30))
+                )
+                .allowOverflow(true)
+                //.horizontalAlignment(HorizontalAlignment.CENTER)
+                //.verticalAlignment(VerticalAlignment.CENTER)
+                .margins(Insets.of(4, 0, 4, 4));
     }
 
     @Override
@@ -341,6 +366,16 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
 
         layerList.forEach(originLayer -> {
             Identifier originLayerId = originLayer.getIdentifier();
+
+            OriginLayerHelper helper = originLayerHelpers.get(originLayer);
+
+            if(helper == null){
+                generateLayerData(new ArrayList<>(10), originLayer);
+
+                helper = originLayerHelpers.get(originLayer);
+            }
+
+            if(helper.maxSelection == 0) return;
 
             if(!addonData.containsKey(originLayerId)){
                 addonData.put(originLayerId, new OriginAddon(originLayerHelpers.get(originLayer).defaultOrigin.getIdentifier(), originLayerId));
@@ -384,12 +419,13 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
         public MutableText randomOriginText = null;
 
         public final Origin defaultOrigin;
-
         public final OriginLayer layer;
+        public final int maxSelection;
 
-        public OriginLayerHelper(OriginLayer layer, Origin defaultOrigin){
+        public OriginLayerHelper(OriginLayer layer, Origin defaultOrigin, int maxSelection){
             this.layer = layer;
             this.defaultOrigin = defaultOrigin;
+            this.maxSelection = maxSelection;
         }
 
         public void setRandomInfo(Origin randomOrigin, MutableText randomOriginText){

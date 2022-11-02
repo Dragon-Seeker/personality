@@ -5,6 +5,7 @@ import com.google.common.collect.HashBiMap;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
@@ -16,9 +17,33 @@ import java.util.*;
  */
 public abstract class CharacterManager<P extends PlayerEntity> {
 
-    protected BiMap<String, String> playerIDToCharacterID = HashBiMap.create();
+    private static final Map<String, CharacterManager<?>> MANAGER_REGISTRY = new HashMap<>();
 
+    protected BiMap<String, String> playerIDToCharacterID = HashBiMap.create();
     protected Map<String, Character> characterIDToCharacter = new HashMap<>();
+
+    public CharacterManager(String mangerId){
+        MANAGER_REGISTRY.put(mangerId, this);
+    }
+
+    //-----------------------------------------------------------------------------------------
+
+    @Nullable
+    public static <P extends PlayerEntity> CharacterManager<P> getManger(PlayerEntity entity){
+        return entity.getWorld() != null ? getManger(entity.getWorld()) : null;
+    }
+
+    @Nullable
+    public static <P extends PlayerEntity> CharacterManager<P> getManger(World world){
+        return getManger(world.isClient() ? "client" : "server");
+    }
+
+    @Nullable
+    public static <P extends PlayerEntity> CharacterManager<P> getManger(String managerId){
+        return (CharacterManager<P>) MANAGER_REGISTRY.get(managerId);
+    }
+
+    //-----------------------------------------------------------------------------------------
 
     /**
      * Map that holds the reference of player and character
@@ -129,6 +154,21 @@ public abstract class CharacterManager<P extends PlayerEntity> {
     public void associateCharacterToPlayer(String cUUID, String playerUUID){
         playerToCharacterReferences().inverse().remove(cUUID);
         playerToCharacterReferences().put(playerUUID, cUUID);
+
+        applyAddons(cUUID);
+    }
+
+    public void applyAddons(String characterUUID){
+        Character c = getCharacter(characterUUID);
+        PlayerEntity player = getPlayer(characterUUID);
+
+        if(c != null) {
+            c.characterAddons.forEach((s, baseAddon) -> {
+                if(!baseAddon.getAddonEnvironment().shouldApply(player.getWorld())) return;
+
+                baseAddon.applyAddon(player);
+            });
+        }
     }
 
     /**

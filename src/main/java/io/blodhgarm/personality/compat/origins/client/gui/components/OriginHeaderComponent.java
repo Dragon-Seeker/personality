@@ -1,5 +1,6 @@
 package io.blodhgarm.personality.compat.origins.client.gui.components;
 
+import io.blodhgarm.personality.client.PersonalityClient;
 import io.blodhgarm.personality.client.screens.PersonalityCreationScreen;
 import io.github.apace100.origins.origin.Origin;
 import io.github.apace100.origins.origin.OriginLayer;
@@ -78,7 +79,7 @@ public class OriginHeaderComponent extends VerticalFlowLayout {
 
         int height = 16; //showLayerInfo ? 24 : 16;
 
-        int barSizing = !shortVersion ? 122 : (PersonalityCreationScreen.guiScale4OrAbove() ? 72 : 92);
+        int barSizing = !shortVersion ? 122 : (PersonalityClient.guiScale4OrAbove() ? 72 : 92);
 
         rootComponent.child(
                 Containers.horizontalFlow(Sizing.fixed(25 + barSizing + 3), Sizing.fixed(26))

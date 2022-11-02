@@ -91,24 +91,7 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
         boolean originAddonExists = screenAddons.containsKey(originScreenAddon);
 
         if(originAddonExists) {
-            playerDisplayComponent.child(
-                    Containers.horizontalFlow(Sizing.content(), Sizing.fixed(26 + 12))
-                            .child(
-                                    screenAddons.get(originScreenAddon).addBranchComponent(this, rootComponent)
-                                            .margins(Insets.right(2))
-                            )
-                            .child(
-                                    Components.button(Text.of("✎"), (ButtonComponent component) -> {
-                                                this.pushScreenAddon(screenAddons.get(originScreenAddon));
-                                            })
-                                            .sizing(Sizing.fixed(12))
-                                            .positioning(Positioning.absolute(guiScale4OrAbove() ? 86 : 106, 30))
-                            )
-                            .allowOverflow(true)
-                            //.horizontalAlignment(HorizontalAlignment.CENTER)
-                            //.verticalAlignment(VerticalAlignment.CENTER)
-                            .margins(Insets.of(4, 0, 4, 4))
-            );
+            playerDisplayComponent.child(screenAddons.get(originScreenAddon).addBranchComponent(this, rootComponent));
         }
 
         playerDisplayComponent.child(
@@ -155,28 +138,18 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
                                 )
                                 .verticalAlignment(VerticalAlignment.CENTER)
                                 .margins(Insets.bottom(8))
-                )
-                .child(
-                        Containers.horizontalFlow(Sizing.content(), Sizing.content())
-                                .child(
-                                        Components.label(Text.of("Height: "))
-                                )
-                                .child(
-                                        Components.discreteSlider(Sizing.fixed(108), -0.5f, 0.5f) //128
-                                                .decimalPlaces(1)
-                                                .snap(true)
-                                                .setFromDiscreteValue(0.0)
-                                                .message(s -> {
-                                                    if(!s.startsWith("-") && !s.equals("0.0")){
-                                                        s = "+" + s;
-                                                    }
-                                                    return Text.literal(s);
-                                                })
-                                                .id("height_slider")
-                                )
-                                .verticalAlignment(VerticalAlignment.CENTER)
-                                .margins(Insets.bottom(8))
-                )
+                );
+
+        Identifier pehkuiScreenAddon = new Identifier("pehkui", "scale_selection_addon");
+
+        if(screenAddons.containsKey(pehkuiScreenAddon)) {
+            characterPropertiesContainer
+                    .child(
+                            screenAddons.get(pehkuiScreenAddon).addBranchComponent(this, rootComponent)
+                    );
+        }
+
+        characterPropertiesContainer
                 .child(
                         createGenderComponent()
                 )
@@ -323,6 +296,7 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
                 .id("gender_text_field");
     }
 
+    @Override
     public void pushScreenAddon(PersonalityScreenAddon screenAddon){
         FlowLayout flowLayout = this.uiAdapter.rootComponent.childById(FlowLayout.class, "main_flow_layout");
         FlowLayout addonMainFlow = flowLayout.childById(FlowLayout.class, "current_addon_screen");
@@ -342,6 +316,7 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
         flowLayout.child(addonMainFlow);
     }
 
+    @Override
     public boolean isAddonOpen(PersonalityScreenAddon screenAddon){
         FlowLayout addonMainFlow = (this.uiAdapter.rootComponent
                 .childById(FlowLayout.class, "main_flow_layout"))
@@ -363,13 +338,11 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
 
         String biography = rootComponent.childById(BetterEditBoxWidget.class, "biography_text_box").convertTextBox();
 
-        float heightOffset = (float) rootComponent.childById(DiscreteSliderComponent.class, "height_slider").discreteValue();
-
         int age = (int) rootComponent.childById(DiscreteSliderComponent.class, "age_slider").discreteValue();
 
         int activityOffset = MinecraftClient.getInstance().player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME));
 
-        Character character = new Character(name, gender, description, biography, heightOffset, age, activityOffset);
+        Character character = new Character(name, gender, description, biography, age, activityOffset);
 
         //Addon Data
 
@@ -391,10 +364,6 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
     @Override
     public boolean shouldCloseOnEsc() {
         return false;
-    }
-
-    public static boolean guiScale4OrAbove(){
-        return MinecraftClient.getInstance().options.getGuiScale().getValue() >= 4 || MinecraftClient.getInstance().options.getGuiScale().getValue() == 0;
     }
 
     public enum GenderSelection {

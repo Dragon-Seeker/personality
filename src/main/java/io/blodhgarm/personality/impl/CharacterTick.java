@@ -13,8 +13,6 @@ import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
-import virtuoel.pehkui.api.ScaleData;
-import virtuoel.pehkui.api.ScaleTypes;
 
 import java.util.UUID;
 
@@ -47,16 +45,6 @@ public class CharacterTick implements ServerTickEvents.EndWorldTick {
             else {
                 instance.tryRemoveModifier(NO_STICK_SLOWNESS);
             }
-
-            // Apply Height Offset
-            ScaleData data = ScaleTypes.BASE.getScaleData(player);
-            var modifiersList = data.getBaseValueModifiers();
-
-            float scale = 1 + (c.getHeightOffset()/100);
-            if (c.getHeightOffset() != 0 && data.getScale() != scale)
-                data.setTargetScale(scale);
-            else if (c.getHeightOffset() == 0 && data.getScale() != 1)
-                data.setTargetScale(1F);
         }
     }
 }

@@ -1,8 +1,6 @@
 package io.blodhgarm.personality.api;
 
 import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.impl.ServerCharacters;
@@ -33,8 +31,6 @@ public class Character {
     private String description;
     private String biography;
 
-    private float heightOffset;
-
     private int ageOffset;
     private long created;
 
@@ -48,13 +44,12 @@ public class Character {
 
     public Character() {}
 
-    public Character(String name, String gender, String description, String biography, float heightOffset, int ageOffset, int activityOffset) {
+    public Character(String name, String gender, String description, String biography, int ageOffset, int activityOffset) {
         this.uuid = UUID.randomUUID().toString();
         this.name = name;
         this.gender = gender;
         this.description = description;
         this.biography = biography;
-        this.heightOffset = heightOffset;
         this.ageOffset = ageOffset;
         this.created = System.currentTimeMillis();
         this.playtimeOffset = activityOffset;
@@ -104,14 +99,6 @@ public class Character {
 
     public void setBiography(String biography) {
         this.biography = biography;
-    }
-
-    public float getHeightOffset() {
-        return heightOffset;
-    }
-
-    public void setHeightOffset(float heightOffset) {
-        this.heightOffset = heightOffset;
     }
 
     public int getAge() {
@@ -195,14 +182,19 @@ public class Character {
     }
 
     public String getInfo() {
-        return name + "§r\n"
+        StringBuilder baseInfoText = new StringBuilder();
+
+        baseInfoText.append(name + "§r\n"
                 + "\n§lUUID§r: " + uuid
                 + "\n§lGender§r: " + gender
                 + "\n§lDescription§r: " + description
                 + "\n§lBio§r: " + biography
                 + "\n§lAge§r: " + getAge() + " / " + getMaxAge() + " (" + getStage() + ")"
-                + "\n§lPlaytime§r: " + (getPlaytime()/HOUR_IN_MILLISECONDS)
-                + "\n§lHeight§r: " + (1.8 - heightOffset);
+                + "\n§lPlaytime§r: " + (getPlaytime()/HOUR_IN_MILLISECONDS));
+
+        this.characterAddons.values().forEach((baseAddon) -> baseInfoText.append(baseAddon.getInfo()));
+
+        return baseInfoText.toString();
     }
 
     @Override
@@ -213,7 +205,6 @@ public class Character {
                 ",\n gender=" + gender +
                 ",\n description=" + description +
                 ",\n biography=" + biography +
-                ",\n heightOffset=" + heightOffset +
                 ",\n ageOffset=" + ageOffset +
                 ",\n created=" + created +
                 ",\n activityOffset=" + playtimeOffset +

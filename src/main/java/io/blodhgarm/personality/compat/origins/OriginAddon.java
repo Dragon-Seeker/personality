@@ -1,4 +1,4 @@
-package io.blodhgarm.personality.compat.origins.client;
+package io.blodhgarm.personality.compat.origins;
 
 import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.github.apace100.origins.Origins;
@@ -9,6 +9,7 @@ import io.github.apace100.origins.origin.OriginLayers;
 import io.github.apace100.origins.origin.OriginRegistry;
 import io.github.apace100.origins.registry.ModComponents;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 public class OriginAddon extends BaseAddon {
@@ -62,7 +63,15 @@ public class OriginAddon extends BaseAddon {
     }
 
     @Override
-    public boolean applyOnClient() {
-        return false;
+    public AddonEnvironment getAddonEnvironment() {
+        return AddonEnvironment.SERVER;
+    }
+
+    @Override
+    public String getInfo() {
+        Origin origin = OriginRegistry.get(origin_id);
+        OriginLayer layer = OriginLayers.getLayer(layer_id);
+
+        return "\n§l" + (Text.translatable(layer.getTranslationKey()).getString()) +"§r: " + origin.getName().getString();
     }
 }

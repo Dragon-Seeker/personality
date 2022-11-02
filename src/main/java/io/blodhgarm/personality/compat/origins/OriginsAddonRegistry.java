@@ -2,9 +2,7 @@ package io.blodhgarm.personality.compat.origins;
 
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
-import io.blodhgarm.personality.api.PersonalityEntrypoint;
 import io.blodhgarm.personality.api.addon.BaseAddon;
-import io.blodhgarm.personality.compat.origins.client.OriginAddon;
 import io.blodhgarm.personality.mixin.OriginLayerAccessor;
 import io.github.apace100.origins.origin.Origin;
 import io.github.apace100.origins.origin.OriginLayer;
