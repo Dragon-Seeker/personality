@@ -12,6 +12,10 @@ public class ScaleAddon extends BaseAddon {
         this.heightOffset = heightScale;
     }
 
+    public final float getHeightOffset(){
+        return heightOffset;
+    }
+
     @Override
     public void applyAddon(PlayerEntity player) {
         ScaleData data = PehkuiAddonRegistry.CHARACTER_TYPE.getScaleData(player);

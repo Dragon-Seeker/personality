@@ -1,6 +1,5 @@
 package io.blodhgarm.personality;
 
-import io.blodhgarm.personality.impl.ServerCharacters;
 import io.blodhgarm.personality.packets.*;
 import io.blodhgarm.personality.utils.ServerAccess;
 import io.wispforest.owo.network.OwoNetChannel;
@@ -13,7 +12,7 @@ public class Networking {
 
     public static void registerNetworking(){
         //S2C - Server to Client
-        CHANNEL.registerClientboundDeferred(OpenCharacterCreationScreenS2CPacket.class);
+        CHANNEL.registerClientboundDeferred(OpenPersonalityScreenS2CPacket.class);
 
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.Initial.class);
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.SyncCharacter.class);
@@ -34,7 +33,7 @@ public class Networking {
 
     public static void registerNetworkingClient(){
         //S2C - Server to Client
-        CHANNEL.registerClientbound(OpenCharacterCreationScreenS2CPacket.class, OpenCharacterCreationScreenS2CPacket::openScreen);
+        CHANNEL.registerClientbound(OpenPersonalityScreenS2CPacket.class, OpenPersonalityScreenS2CPacket::openScreen);
 
         CHANNEL.registerClientbound(SyncS2CPackets.Initial.class, SyncS2CPackets.Initial::initialSync);
         CHANNEL.registerClientbound(SyncS2CPackets.SyncCharacter.class, SyncS2CPackets.SyncCharacter::syncCharacter);

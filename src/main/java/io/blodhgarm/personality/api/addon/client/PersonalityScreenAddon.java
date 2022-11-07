@@ -1,26 +1,40 @@
 package io.blodhgarm.personality.api.addon.client;
 
+import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.api.client.AddonObservable;
+import io.blodhgarm.personality.client.screens.CharacterScreenMode;
 import io.blodhgarm.personality.client.screens.PersonalityCreationScreen;
 import io.wispforest.owo.ui.base.BaseParentComponent;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Component;
 import io.wispforest.owo.ui.core.Sizing;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Identifier;
 
+import javax.annotation.Nullable;
 import java.util.Map;
 
 public abstract class PersonalityScreenAddon {
 
-    private final Identifier addonId;
+    public final Identifier addonId;
 
     private PersonalityCreationScreen originScreen = null;
 
+    protected final CharacterScreenMode mode;
+
+    @Nullable protected final Character character;
+    @Nullable protected final PlayerEntity player;
+
     private BaseParentComponent rootBranchComponent = null;
 
-    public PersonalityScreenAddon(Identifier addonId){
+    public PersonalityScreenAddon(CharacterScreenMode mode, @Nullable Character character, @Nullable PlayerEntity player, Identifier addonId){
+        this.mode = mode;
+
+        this.character = character;
+        this.player = player;
+
         this.addonId = addonId;
     }
 

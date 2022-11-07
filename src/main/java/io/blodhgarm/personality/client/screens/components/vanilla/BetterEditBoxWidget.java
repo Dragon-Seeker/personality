@@ -22,6 +22,8 @@ public class BetterEditBoxWidget extends EditBoxWidget implements ComponentStub 
     private Color backgroundColor = Color.BLACK;//Color.ofArgb(0xFF555555);
     private Color outlineColor = Color.ofArgb(0xFFa0a0a0);
 
+    private boolean canEdit = true;
+
     private ScrollBarSide position = ScrollBarSide.LEFT;
 
     public BetterEditBoxWidget(Text placeholder, Text message) {
@@ -30,18 +32,18 @@ public class BetterEditBoxWidget extends EditBoxWidget implements ComponentStub 
         this.setText("");
     }
 
-    public static BetterEditBoxWidget editBox(Sizing horizontalSizing, Sizing verticalSizing, Text placeholder, Text message) {
-        return Components.createWithSizing(
+    public static BetterEditBoxWidget emptyEditBox(Sizing horizontalSizing, Sizing verticalSizing, Text placeholder, Text message) {
+        return editBox(horizontalSizing, verticalSizing, placeholder, message, "");
+    }
+
+    public static BetterEditBoxWidget editBox(Sizing horizontalSizing, Sizing verticalSizing, Text placeholder, Text message, String info){
+        BetterEditBoxWidget widget = Components.createWithSizing(
                 () -> new BetterEditBoxWidget(placeholder, message),
                 horizontalSizing,
                 verticalSizing
         );
-    }
 
-    public static BetterEditBoxWidget ofEmpty(Text placeholder, Text message){
-        BetterEditBoxWidget widget = new BetterEditBoxWidget(placeholder, message);;
-
-        widget.setText("");
+        widget.setText(info);
 
         return widget;
     }
@@ -71,6 +73,22 @@ public class BetterEditBoxWidget extends EditBoxWidget implements ComponentStub 
         this.position = side;
 
         return this;
+    }
+
+    public BetterEditBoxWidget canEdit(boolean value){
+        this.canEdit = value;
+
+        return this;
+    }
+
+    @Override
+    public boolean charTyped(char chr, int modifiers) {
+        return !canEdit || super.charTyped(chr, modifiers);
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        return !canEdit || super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     @Override

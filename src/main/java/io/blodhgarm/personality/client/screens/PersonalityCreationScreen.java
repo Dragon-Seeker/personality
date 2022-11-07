@@ -1,29 +1,30 @@
 package io.blodhgarm.personality.client.screens;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.mojang.logging.LogUtils;
+import io.blodhgarm.personality.Networking;
 import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.Character;
-import io.blodhgarm.personality.Networking;
 import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddon;
 import io.blodhgarm.personality.api.client.AddonObservable;
 import io.blodhgarm.personality.api.client.PersonalityScreenAddonRegistry;
 import io.blodhgarm.personality.client.PersonalityClient;
+import io.blodhgarm.personality.client.screens.components.CustomEntityComponent;
 import io.blodhgarm.personality.client.screens.components.CustomSurfaces;
 import io.blodhgarm.personality.client.screens.components.vanilla.BetterEditBoxWidget;
 import io.blodhgarm.personality.client.screens.components.vanilla.BetterTextFieldWidget;
-import io.blodhgarm.personality.client.screens.components.CustomEntityComponent;
 import io.blodhgarm.personality.packets.SyncC2SPackets;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.base.BaseParentComponent;
 import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.component.DiscreteSliderComponent;
-import io.wispforest.owo.ui.container.*;
+import io.wispforest.owo.ui.container.Containers;
+import io.wispforest.owo.ui.container.FlowLayout;
+import io.wispforest.owo.ui.container.HorizontalFlowLayout;
 import io.wispforest.owo.ui.core.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.stat.Stats;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
@@ -31,43 +32,34 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
+import org.slf4j.Logger;
 
-import java.util.HashMap;
-import java.util.Map;
+import javax.annotation.Nullable;
+import java.util.*;
 
 public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> implements AddonObservable {
+
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     private static final MutableText requiredText = Text.literal("*").formatted(Formatting.BOLD, Formatting.RED);
 
     private final Map<Identifier, PersonalityScreenAddon> screenAddons = new HashMap<>();
 
+    public final CharacterScreenMode currentMode;
+
+    @Nullable public final Character currentCharacter;
+    @Nullable public final PlayerEntity player;
+
     public GenderSelection currentSelection = GenderSelection.MALE;
 
-    public PersonalityCreationScreen(ClientPlayerEntity player) {
+    public PersonalityCreationScreen(CharacterScreenMode currentMode, @Nullable PlayerEntity player, @Nullable Character character) {
+        this.currentMode = currentMode;
+
+        this.player = player;
+        this.currentCharacter = character;
+
         PersonalityScreenAddonRegistry.ALL_SCREEN_ADDONS
-                .forEach((identifier, addonFactory) -> screenAddons.put(identifier, addonFactory.buildAddon().linkAddon(this)));
-    }
-
-    @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if((modifiers & GLFW.GLFW_MOD_CONTROL) == 2 && (modifiers & GLFW.GLFW_MOD_ALT) == 4 && keyCode == GLFW.GLFW_KEY_R){
-            this.uiAdapter = null;
-            this.clearAndInit();
-
-            return true;
-        }
-
-        return super.keyPressed(keyCode, scanCode, modifiers);
-    }
-
-    @Override
-    public void resize(MinecraftClient client, int width, int height) {
-        super.resize(client, width, height);
-    }
-
-    @Override
-    public boolean shouldPause() {
-        return false;
+                .forEach((identifier, addonFactory) -> screenAddons.put(identifier, addonFactory.buildAddon(this.currentMode, this.currentCharacter, this.player).linkAddon(this)));
     }
 
     @Override
@@ -77,6 +69,9 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
 
     @Override
     protected void build(FlowLayout rootComponent) {
+        boolean isModifiable = this.currentMode.isModifiableMode();
+        boolean importCharacterData = this.currentMode.importFromCharacter();
+
         HorizontalFlowLayout mainFlowLayout = (HorizontalFlowLayout) Containers.horizontalFlow(Sizing.content(), Sizing.content()).id("main_flow_layout");
 
         Surface panel = PersonalityClient.isDarkMode() ? Surface.DARK_PANEL : Surface.PANEL;
@@ -95,7 +90,7 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
         }
 
         playerDisplayComponent.child(
-                (new CustomEntityComponent<>(Sizing.fixed(originAddonExists ? 85 : 100), MinecraftClient.getInstance().player))
+                (CustomEntityComponent.playerEntityComponent(Sizing.fixed(originAddonExists ? 85 : 100), player))
                         .scale(originAddonExists ? 0.55F : 0.65F)
                         //.scaleToFit(true)
                         .allowMouseRotation(true)
@@ -107,38 +102,66 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
 
         //----- Character Properties -----
 
+        //-- Name Property --
+        FlowLayout namePropertyLayout = Containers.horizontalFlow(Sizing.content(), Sizing.content());
+
+        {
+            MutableText nameLabel = Text.empty();
+
+            nameLabel.append(isModifiable ? requiredText.copy() : Text.empty())
+                    .append(Text.literal("Name: "))
+                    .append(!isModifiable ? Text.literal(currentCharacter.getName()) : Text.empty());
+
+            namePropertyLayout.child(Components.label(nameLabel));
+
+            if (isModifiable) {
+                namePropertyLayout
+                        .child(
+                                BetterTextFieldWidget.textBox(Sizing.fixed(112), importCharacterData ? currentCharacter.getName() : "") //132
+                                        .bqColor(Color.ofArgb(0xFF555555))
+                                        .id("character_name")
+                        );
+            }
+        }
+        //-------------------
+
+        //-- Age Property --
+        FlowLayout agePropertyLayout = Containers.horizontalFlow(Sizing.content(), Sizing.content());
+
+        {
+            MutableText ageLabel = Text.empty();
+
+            ageLabel.append(Text.literal("Age: "))
+                    .append(isModifiable ? Text.empty() : Text.literal(currentCharacter.getAge() + " Years"));
+
+            agePropertyLayout.child(
+                    Components.label(ageLabel)
+                            .margins(Insets.right(6))
+            );
+
+            if (isModifiable) {
+                agePropertyLayout
+                        .child(
+                                Components.discreteSlider(Sizing.fixed(114), 17, 60) //134
+                                        .setFromDiscreteValue(importCharacterData ? currentCharacter.getAge() : 17)
+                                        .snap(true)
+                                        .id("age_slider")
+                        );
+            }
+        }
+        //------------------
+
         FlowLayout characterPropertiesContainer = Containers.verticalFlow(Sizing.content(), Sizing.content())
-                .child(
-                        Containers.horizontalFlow(Sizing.content(), Sizing.content())
-                                .child(
-                                        Components.label(Text.empty()
-                                                .append(requiredText.copy())
-                                                .append(Text.literal("Name: ")))
-                                        //.margins(Insets.of(6, 5, 0, 0))
-                                )
-                                .child(
-                                        BetterTextFieldWidget.textBox(Sizing.fixed(112), "") //132
-                                                .bqColor(Color.ofArgb(0xFF555555))
-                                                .id("character_name")
-                                )
-                                .horizontalAlignment(HorizontalAlignment.LEFT)
-                                .verticalAlignment(VerticalAlignment.CENTER)
-                                .margins(Insets.bottom(8))
+                .child(namePropertyLayout
+                        .horizontalAlignment(HorizontalAlignment.LEFT)
+                        .verticalAlignment(VerticalAlignment.CENTER)
+                        .margins(Insets.bottom(8))
                 )
-                .child(
-                        Containers.horizontalFlow(Sizing.content(), Sizing.content())
-                                .child(
-                                        Components.label(Text.of("Age: "))
-                                                .margins(Insets.right(6))
-                                )
-                                .child(
-                                        Components.discreteSlider(Sizing.fixed(114), 17, 60) //134
-                                                .snap(true)
-                                                .id("age_slider")
-                                )
-                                .verticalAlignment(VerticalAlignment.CENTER)
-                                .margins(Insets.bottom(8))
+                .child(agePropertyLayout
+                        .verticalAlignment(VerticalAlignment.CENTER)
+                        .margins(Insets.bottom(8))
                 );
+
 
         Identifier pehkuiScreenAddon = new Identifier("pehkui", "scale_selection_addon");
 
@@ -151,7 +174,7 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
 
         characterPropertiesContainer
                 .child(
-                        createGenderComponent()
+                        createGenderComponent(isModifiable, importCharacterData)
                 )
                 .child(
                         Containers.verticalFlow(Sizing.content(), Sizing.content())
@@ -160,9 +183,10 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
                                                 .margins(Insets.of(0, 4, 0, 0))
                                 )
                                 .child(
-                                        BetterEditBoxWidget.editBox(Sizing.fixed(136), Sizing.fixed(60), Text.of(""), Text.of(""))
+                                        BetterEditBoxWidget.editBox(Sizing.fixed(136), Sizing.fixed(60), Text.of(""), Text.of(""), importCharacterData ? currentCharacter.getDescription() : "")
                                                 .textWidth(130)
                                                 .bqColor(Color.ofArgb(0xFF555555))
+                                                .canEdit(isModifiable)
                                                 .id("description_text_box")
                                 )
                                 .margins(Insets.bottom(8))
@@ -174,9 +198,10 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
                                                 .margins(Insets.of(0, 4, 0, 0))
                                 )
                                 .child(
-                                        BetterEditBoxWidget.editBox(Sizing.fixed(136), Sizing.fixed(60), Text.of(""), Text.of(""))
+                                        BetterEditBoxWidget.editBox(Sizing.fixed(136), Sizing.fixed(60), Text.of(""), Text.of(""), importCharacterData ? currentCharacter.getDescription() : "")
                                                 .textWidth(130)
                                                 .bqColor(Color.ofArgb(0xFF555555))
+                                                .canEdit(isModifiable)
                                                 .id("biography_text_box")
                                 )
                 );
@@ -231,7 +256,13 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
                                         .surface(panel)
                         )
                         .child(
-                                Components.button(Text.of("Done"), (ButtonComponent button) -> {
+                                Components.button(Text.of(this.currentMode.isModifiableMode() ? "Done" : "Close"), (ButtonComponent button) -> {
+                                    if(!this.currentMode.isModifiableMode()){
+                                        this.close();
+
+                                        return;
+                                    }
+
                                     if(this.finishCharacterCreation(rootComponent)){
                                         this.close();
                                     } else {
@@ -260,37 +291,47 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
         //---------------------------------- END ----------------------------------
     }
 
-    public Component createGenderComponent(){
+    private Component createGenderComponent(boolean modifiable, boolean importCharacterData){
         FlowLayout horizontalComponent = Containers.horizontalFlow(Sizing.content(), Sizing.content());
 
+        MutableText text = Text.literal("Gender: ");
+
+        if (!modifiable) text.append(Text.of(currentCharacter.getGender()));
+
         horizontalComponent
-                .child(Components.label(Text.of("Gender: ")))
-                .child(Components.button(currentSelection.translation, (ButtonComponent button) -> {
-                            currentSelection = currentSelection.getNextSelection();
+                .child(Components.label(text));
 
-                            button.setMessage(currentSelection.translation);
+        if(modifiable) {
+            if (importCharacterData) currentSelection = GenderSelection.attemptToGetGender(currentCharacter.getGender());
 
-                            if(currentSelection.openTextField()) {
-                                horizontalComponent.child(createGenderTextField());
-                            } else {
-                                BetterTextFieldWidget child = horizontalComponent.childById(BetterTextFieldWidget.class, "gender_text_field");
+            horizontalComponent
+                .child(Components.button(currentSelection.translation(), (ButtonComponent button) -> {
+                                currentSelection = currentSelection.getNextSelection();
 
-                                if(child != null) horizontalComponent.removeChild(child);
-                            }
+                                button.setMessage(currentSelection.translation());
 
-                            button.horizontalSizing(Sizing.fixed(currentSelection.textSizing() + 10));
-                        })
-                        .horizontalSizing(Sizing.fixed(currentSelection.textSizing() + 10)) //fixed(65)
-                        .margins(Insets.of(1, 1, 0,4))
-                ).verticalAlignment(VerticalAlignment.CENTER);
+                                if (currentSelection.openTextField()) {
+                                    horizontalComponent.child(createGenderTextField(importCharacterData));
+                                } else {
+                                    BetterTextFieldWidget child = horizontalComponent.childById(BetterTextFieldWidget.class, "gender_text_field");
 
-        if(currentSelection.openTextField()) horizontalComponent.child(createGenderTextField());
+                                    if (child != null) horizontalComponent.removeChild(child);
+                                }
+
+                                button.horizontalSizing(Sizing.fixed(currentSelection.textSizing() + 10));
+                            })
+                            .horizontalSizing(Sizing.fixed(currentSelection.textSizing() + 10)) //fixed(65)
+                            .margins(Insets.of(1, 1, 0, 4))
+            ).verticalAlignment(VerticalAlignment.CENTER);
+
+            if (currentSelection.openTextField()) horizontalComponent.child(createGenderTextField(importCharacterData));
+        }
 
         return horizontalComponent.margins(Insets.bottom(8));
     }
 
-    public Component createGenderTextField(){
-        return BetterTextFieldWidget.textBox(Sizing.fixed(58), "")
+    private Component createGenderTextField(boolean importCharacterData){
+        return BetterTextFieldWidget.textBox(Sizing.fixed(58), importCharacterData ? currentCharacter.getGender() : "")
                 .setEditAbility(currentSelection.openTextField())
                 .tooltip(Text.of("Required"))
                 .id("gender_text_field");
@@ -331,7 +372,7 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
         if(name.isEmpty()) return false;
 
         String gender = currentSelection != GenderSelection.OTHER
-                ? currentSelection.translation.getString()
+                ? currentSelection.translation().getString()
                 : rootComponent.childById(TextFieldWidget.class, "gender_text_field").getText();
 
         String description = rootComponent.childById(BetterEditBoxWidget.class, "description_text_box").convertTextBox();
@@ -361,21 +402,26 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
         return true;
     }
 
-    @Override
-    public boolean shouldCloseOnEsc() {
-        return false;
-    }
-
     public enum GenderSelection {
-        MALE(Text.translatable("personality.gender.male")),
-        FEMALE(Text.translatable("personality.gender.female")),
-        NON_BINARY(Text.translatable("personality.gender.non_binary")),
-        OTHER(Text.translatable("personality.gender.other"));
+        MALE("male"),
+        FEMALE("female"),
+        NON_BINARY("non binary"),
+        OTHER("other");
 
-        public final Text translation;
+        public final String name;
 
-        GenderSelection(Text text){
-            this.translation = text;
+        GenderSelection(String name){
+            this.name = name;
+        }
+
+        public static GenderSelection attemptToGetGender(String gender){
+            for(GenderSelection selection : GenderSelection.values()){
+                if(Objects.equals(selection.name, gender.toLowerCase(Locale.ROOT))){
+                    return selection;
+                }
+            }
+
+            return OTHER;
         }
 
         public boolean openTextField(){
@@ -388,8 +434,36 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
             return GenderSelection.values()[nextIndex >= GenderSelection.values().length ? 0 : nextIndex];
         }
 
-        public int textSizing(){
-            return MinecraftClient.getInstance().textRenderer.getWidth(this.translation.asOrderedText());
+        public Text translation(){
+            return Text.translatable("personality.gender." + name.replace(" ", "_"));
         }
+
+        public int textSizing(){
+            return MinecraftClient.getInstance().textRenderer.getWidth(this.translation().asOrderedText());
+        }
+    }
+
+    //-------------------------------------------------------
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if((modifiers & GLFW.GLFW_MOD_CONTROL) == 2 && (modifiers & GLFW.GLFW_MOD_ALT) == 4 && keyCode == GLFW.GLFW_KEY_R){
+            this.uiAdapter = null;
+            this.clearAndInit();
+
+            return true;
+        }
+
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
+    public boolean shouldPause() {
+        return false;
+    }
+
+    @Override
+    public boolean shouldCloseOnEsc() {
+        return false;
     }
 }

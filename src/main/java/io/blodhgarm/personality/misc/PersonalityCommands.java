@@ -9,7 +9,9 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.Networking;
-import io.blodhgarm.personality.packets.OpenCharacterCreationScreenS2CPacket;
+import io.blodhgarm.personality.api.CharacterManager;
+import io.blodhgarm.personality.client.screens.CharacterScreenMode;
+import io.blodhgarm.personality.packets.OpenPersonalityScreenS2CPacket;
 import io.blodhgarm.personality.impl.ServerCharacters;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.entity.player.PlayerEntity;
@@ -133,7 +135,19 @@ public class PersonalityCommands {
 
             .then(literal("screen")
                 .then(literal("creation")
-                    .executes(PersonalityCommands::openCreationScreen))
+                    .executes(PersonalityCommands::openCreationScreen)
+                )
+                .then(literal("view")
+                    .then(literal("self")
+                        .executes(PersonalityCommands::openViewScreenSelf)
+                    )
+                    .then(argument("uuid", string())
+                        .executes(PersonalityCommands::openViewScreen)
+                    )
+                    .then(argument("players", players())
+                        .executes(PersonalityCommands::openViewScreen)
+                    )
+                )
             );
     }
 
@@ -379,7 +393,48 @@ public class PersonalityCommands {
     private static int openCreationScreen(CommandContext<ServerCommandSource> context) {
         PlayerEntity player = context.getSource().getPlayer();
         if (player != null) {
-            Networking.CHANNEL.serverHandle(player).send(new OpenCharacterCreationScreenS2CPacket());
+            Networking.CHANNEL.serverHandle(player).send(new OpenPersonalityScreenS2CPacket(CharacterScreenMode.CREATION, "personality$packet_target"));
+
+            return msg(context, "Opening Screen");
+        }
+
+        return msg(context, "");
+    }
+
+    private static int openViewScreenSelf(CommandContext<ServerCommandSource> context){
+        PlayerEntity player = context.getSource().getPlayer();
+        if (player != null) {
+            Networking.CHANNEL.serverHandle(player).send(new OpenPersonalityScreenS2CPacket(CharacterScreenMode.VIEWING, "personality$packet_target"));
+
+            return msg(context, "Opening Screen");
+        }
+
+        return msg(context, "");
+    }
+
+    private static int openViewScreen(CommandContext<ServerCommandSource> context) throws CommandSyntaxException{
+        PlayerEntity player = context.getSource().getPlayer();
+
+        if (player == null) msg(context, "");
+
+        Character character = null;
+
+        try {
+            String uuid = getString(context, "uuid");
+
+            character = CharacterManager.getManger(player).getCharacter(uuid);
+        } catch (IllegalArgumentException ignore) {}
+
+        if(character != null) {
+            try {
+                ServerPlayerEntity targetPlayer = getPlayer(context, "player");
+
+                character = CharacterManager.getManger(player).getCharacter(targetPlayer);
+            } catch (IllegalArgumentException ignore) {}
+        }
+
+        if(character != null) {
+            Networking.CHANNEL.serverHandle(player).send(new OpenPersonalityScreenS2CPacket(CharacterScreenMode.VIEWING, character.getUUID()));
 
             return msg(context, "Opening Screen");
         }

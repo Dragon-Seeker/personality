@@ -3,13 +3,16 @@ package io.blodhgarm.personality.client.screens.components;
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.wispforest.owo.ui.component.EntityComponent;
 import io.wispforest.owo.ui.core.Sizing;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.DiffuseLighting;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3f;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +24,10 @@ public class CustomEntityComponent<E extends Entity> extends EntityComponent<E> 
 
     public CustomEntityComponent(Sizing entitySizing, EntityType<E> type, @Nullable NbtCompound nbt) {
         super(entitySizing, type, nbt);
+    }
+
+    public static <P extends PlayerEntity, E extends Entity> CustomEntityComponent<E> playerEntityComponent(Sizing entitySizing, @Nullable P entity){
+        return new CustomEntityComponent<>(entitySizing, (E) (entity != null ? entity : new CustomTexturedRenderablePlayerEntity()));
     }
 
     @Override
@@ -60,6 +67,26 @@ public class CustomEntityComponent<E extends Entity> extends EntityComponent<E> 
         DiffuseLighting.enableGuiDepthLighting();
 
         matrices.pop();
+    }
+
+    protected static class CustomTexturedRenderablePlayerEntity extends RenderablePlayerEntity {
+
+        //Credit to ObeyTheFist on SkinIndex [Link: https://www.minecraftskins.com/skin/9965036/requests/]
+        public static final Identifier MISSING_SKIN_TEXTURE_ID = new Identifier("personality", "textures/skins/question_mark.png");
+
+        public CustomTexturedRenderablePlayerEntity() {
+            super(MinecraftClient.getInstance().player.getGameProfile());
+        }
+
+        @Override
+        public Identifier getSkinTexture() {
+            return MISSING_SKIN_TEXTURE_ID;
+        }
+
+        @Override
+        public String getModel() {
+            return "default";
+        }
     }
 
 }

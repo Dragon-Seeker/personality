@@ -1,9 +1,13 @@
 package io.blodhgarm.personality.api.client;
 
+import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddon;
+import io.blodhgarm.personality.client.screens.CharacterScreenMode;
 import io.blodhgarm.personality.client.screens.PersonalityCreationScreen;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Identifier;
 
+import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,6 +29,6 @@ public class PersonalityScreenAddonRegistry {
     }
 
     public interface AddonFactory<T extends PersonalityScreenAddon> {
-        T buildAddon();
+        T buildAddon(CharacterScreenMode mode, @Nullable Character character, @Nullable PlayerEntity player);
     }
 }
