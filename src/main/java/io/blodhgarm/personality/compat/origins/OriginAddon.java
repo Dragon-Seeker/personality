@@ -74,4 +74,26 @@ public class OriginAddon extends BaseAddon {
 
         return "\n§l" + (Text.translatable(layer.getTranslationKey()).getString()) +"§r: " + origin.getName().getString();
     }
+
+    @Override
+    public boolean isEqualToPlayer(PlayerEntity player) {
+        OriginComponent component = ModComponents.ORIGIN.get(player);
+
+        OriginLayer layer = OriginLayers.getLayer(this.getOriginLayerId());
+
+        if(component.getOrigins().containsKey(layer)){
+            return component.getOrigin(layer).getIdentifier().equals(this.getOriginId());
+        }
+
+        return false;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof OriginAddon addon){
+            return addon.getOriginId().equals(this.getOriginId()) && addon.getOriginLayerId().equals(this.getOriginLayerId());
+        }
+
+        return false;
+    }
 }

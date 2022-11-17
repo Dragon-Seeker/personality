@@ -9,6 +9,7 @@ import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.api.PersonalityEntrypoint;
 import io.blodhgarm.personality.impl.ServerCharacters;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.resource.LifecycledResourceManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Identifier;
@@ -104,6 +105,14 @@ public class AddonRegistry<A extends BaseAddon> implements ServerLifecycleEvents
         return null;
     }
 
+    public void checkAndDefaultPlayerAddons(PlayerEntity player){
+        this.getDefaultAddons().forEach(a -> {
+            if(!a.isEqualToPlayer(player) && a.getAddonEnvironment().shouldApply(player.getWorld())){
+                a.applyAddon(player);
+            }
+        });
+    }
+
     //--------------------------------------------------------------------------------
 
     @ApiStatus.Internal
@@ -138,7 +147,7 @@ public class AddonRegistry<A extends BaseAddon> implements ServerLifecycleEvents
                 e.printStackTrace();
             }
 
-            c.characterAddons.put(s, addon);
+            c.getAddons().put(s, addon);
         });
 
         return addonData;

@@ -2,6 +2,7 @@ package io.blodhgarm.personality.api;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import io.blodhgarm.personality.api.addon.AddonRegistry;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -163,11 +164,25 @@ public abstract class CharacterManager<P extends PlayerEntity> {
         PlayerEntity player = getPlayer(characterUUID);
 
         if(c != null) {
-            c.characterAddons.forEach((s, baseAddon) -> {
+            c.getAddons().forEach((s, baseAddon) -> {
                 if(!baseAddon.getAddonEnvironment().shouldApply(player.getWorld())) return;
 
                 baseAddon.applyAddon(player);
             });
+        }
+    }
+
+    public void applyAddons(P player){
+        Character c = getCharacter(player);
+
+        if(c != null){
+            c.getAddons().values().forEach(addon -> {
+                if(!addon.isEqualToPlayer(player) && addon.getAddonEnvironment().shouldApply(player.getWorld())){
+                    addon.applyAddon(player);
+                }
+            });
+        } else {
+            AddonRegistry.INSTANCE.checkAndDefaultPlayerAddons(player);
         }
     }
 

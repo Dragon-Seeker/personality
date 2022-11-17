@@ -22,6 +22,8 @@ public class SyncS2CPackets {
         @Environment(EnvType.CLIENT)
         public static void initialSync(Initial message, ClientAccess access) {
             ClientCharacters.INSTANCE.init(message.characters, message.associations);
+
+            ClientCharacters.INSTANCE.applyAddons(access.player());
         }
     }
 
@@ -35,7 +37,7 @@ public class SyncS2CPackets {
                     Class<BaseAddon> addonClass = AddonRegistry.INSTANCE.getAddonClass(addonId);
 
                     if(addonClass != null) {
-                        c.characterAddons.put(addonId, PersonalityMod.GSON.fromJson(s, addonClass));
+                        c.getAddons().put(addonId, PersonalityMod.GSON.fromJson(s, addonClass));
                     } else {
                         LOGGER.warn("[SyncCharacterPacket]: The given Identifier [{}] wasn't found within the AddonRegistry meaning it wasn't able to deserialize the info meaning such will be skipped.", addonId);
                     }
@@ -43,7 +45,7 @@ public class SyncS2CPackets {
             } else {
                 Character oldCharacter = ClientCharacters.INSTANCE.getCharacter(c.getUUID());
 
-                if(oldCharacter != null) c.characterAddons.putAll(oldCharacter.characterAddons);
+                if(oldCharacter != null) c.getAddons().putAll(oldCharacter.getAddons());
             }
 
             ClientCharacters.INSTANCE.characterLookupMap().put(c.getUUID(), c);
@@ -66,7 +68,7 @@ public class SyncS2CPackets {
                 Class<BaseAddon> addonClass = AddonRegistry.INSTANCE.getAddonClass(addonId);
 
                 if(addonClass != null) {
-                    c.characterAddons.put(addonId, PersonalityMod.GSON.fromJson(addonJson, addonClass));
+                    c.getAddons().put(addonId, PersonalityMod.GSON.fromJson(addonJson, addonClass));
                 } else {
                     LOGGER.warn("[SyncAddons]: The given Identifier [{}] wasn't found within the AddonRegistry meaning it wasn't able to deserialize the info meaning such will be skipped.", addonId);
                 }
@@ -92,6 +94,8 @@ public class SyncS2CPackets {
         @Environment(EnvType.CLIENT)
         public static void syncDissociation(Dissociation message, ClientAccess access) {
             ClientCharacters.INSTANCE.dissociateUUID(message.uuid, message.characterUUID);
+
+            AddonRegistry.INSTANCE.checkAndDefaultPlayerAddons(access.player());
         }
     }
 

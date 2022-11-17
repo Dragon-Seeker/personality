@@ -1,12 +1,10 @@
 package io.blodhgarm.personality.packets;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.PersonalityMod;
-import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.Character;
+import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.impl.ServerCharacters;
 import io.wispforest.owo.network.ServerAccess;
@@ -50,7 +48,7 @@ public class SyncC2SPackets {
 
                 addon = AddonRegistry.INSTANCE.validateOrDefault(addonId, addon);
 
-                if(addon != null) c.characterAddons.put(addonId, addon);
+                if(addon != null) c.getAddons().put(addonId, addon);
             });
 
             ServerCharacters.INSTANCE.saveCharacter(c);

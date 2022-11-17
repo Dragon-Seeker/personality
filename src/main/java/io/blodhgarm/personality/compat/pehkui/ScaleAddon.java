@@ -36,4 +36,20 @@ public class ScaleAddon extends BaseAddon {
     public String getInfo() {
         return "\n§lHeight§r: " + (String.format("%.2f", heightOffset + 1.8)) + "m";
     }
+
+    @Override
+    public boolean isEqualToPlayer(PlayerEntity player) {
+        ScaleData data = PehkuiAddonRegistry.CHARACTER_TYPE.getScaleData(player);
+
+        return Math.abs(data.getScale() - (this.heightOffset / player.getHeight())) < 0.00001;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof ScaleAddon addon){
+            return Math.abs(addon.getHeightOffset() - this.getHeightOffset()) < 0.00001;
+        }
+
+        return false;
+    }
 }

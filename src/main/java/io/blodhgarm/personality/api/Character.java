@@ -10,6 +10,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.stat.Stats;
 import net.minecraft.util.Identifier;
+import net.minecraft.world.World;
 
 import java.lang.reflect.Type;
 import java.util.*;
@@ -18,6 +19,8 @@ import static java.lang.Math.*;
 
 public class Character {
 
+    public static final Type REF_MAP_TYPE = new TypeToken<Map<Identifier, BaseAddon>>() {}.getType();
+
     public enum Stage {YOUTH, PRIME, OLD}
     public static final int WEEK_IN_MILLISECONDS = 604_800_000;
     public static final int HOUR_IN_MILLISECONDS =   3_600_000;
@@ -25,7 +28,7 @@ public class Character {
 
     public boolean isDead;
 
-    private String uuid;
+    private final String uuid;
     private String name;
     private String gender;
     private String description;
@@ -36,13 +39,10 @@ public class Character {
 
     private int playtimeOffset;
 
-    public static final Type REF_MAP_TYPE = new TypeToken<Map<Identifier, BaseAddon>>() {}.getType();
-
-    public transient final Map<Identifier, BaseAddon> characterAddons = new HashMap<>();
 
     public Set<String> knowCharacters;
 
-    public Character() {}
+    private transient Map<Identifier, BaseAddon> characterAddons = new HashMap<>();
 
     public Character(String name, String gender, String description, String biography, int ageOffset, int activityOffset) {
         this.uuid = UUID.randomUUID().toString();
@@ -53,7 +53,6 @@ public class Character {
         this.ageOffset = ageOffset;
         this.created = System.currentTimeMillis();
         this.playtimeOffset = activityOffset;
-        this.knowCharacters = new LinkedHashSet<>();
         this.isDead = false;
     }
 
@@ -105,12 +104,12 @@ public class Character {
         return ageOffset + (int)((System.currentTimeMillis()-created)/WEEK_IN_MILLISECONDS);
     }
 
-    public float getPreciseAge() {
-        return ageOffset + ((float)(System.currentTimeMillis()-created)/WEEK_IN_MILLISECONDS);
-    }
-
     public void setAge(int age) {
         ageOffset = age - (int)((System.currentTimeMillis()-created)/WEEK_IN_MILLISECONDS);
+    }
+
+    public float getPreciseAge() {
+        return ageOffset + ((float)(System.currentTimeMillis()-created)/WEEK_IN_MILLISECONDS);
     }
 
     public Stage getStage() {
@@ -169,6 +168,12 @@ public class Character {
         return extraYears;
     }
 
+    public Map<Identifier, BaseAddon> getAddons(){
+        if(this.characterAddons == null) this.characterAddons = new HashMap<>();
+
+        return this.characterAddons;
+    }
+
     public boolean isObscured() {
         ServerPlayerEntity player = ServerCharacters.INSTANCE.getPlayer(uuid);
 
@@ -192,7 +197,7 @@ public class Character {
                 + "\n§lAge§r: " + getAge() + " / " + getMaxAge() + " (" + getStage() + ")"
                 + "\n§lPlaytime§r: " + (getPlaytime()/HOUR_IN_MILLISECONDS));
 
-        this.characterAddons.values().forEach((baseAddon) -> baseInfoText.append(baseAddon.getInfo()));
+        this.getAddons().values().forEach((baseAddon) -> baseInfoText.append(baseAddon.getInfo()));
 
         return baseInfoText.toString();
     }

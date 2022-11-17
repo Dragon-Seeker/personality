@@ -100,7 +100,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
         Networking.sendToAll(new SyncS2CPackets.Dissociation(UUID, isCharacterUUID));
 
-        for (BaseAddon defaultAddon : AddonRegistry.INSTANCE.getDefaultAddons()) defaultAddon.applyAddon(player);
+        AddonRegistry.INSTANCE.checkAndDefaultPlayerAddons(player);
 
         saveCharacterReference();
 
@@ -194,7 +194,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     public void saveAddonsForCharacter(Character c, boolean syncAddons){
         Map<Identifier, String> addonData = new HashMap<>();
 
-        c.characterAddons.keySet().forEach(s -> {
+        c.getAddons().keySet().forEach(s -> {
             String addonJson = saveAddonForCharacter(c, s, false);
 
             if(addonJson != null) addonData.put(s, addonJson);
@@ -205,7 +205,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     }
 
     public String saveAddonForCharacter(Character c, Identifier addonId, boolean syncAddons){
-        BaseAddon addon = c.characterAddons.get(addonId);
+        BaseAddon addon = c.getAddons().get(addonId);
 
         if(addon != null){
 
@@ -302,11 +302,11 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
         Map<String, String> characters = new HashMap<>();
 
         for (Character c : characterLookupMap().values()){
-            characters.put(GSON.toJson(c), GSON.toJson(c.characterAddons));
+            characters.put(GSON.toJson(c), GSON.toJson(c.getAddons()));
         }
 
         Networking.sendS2C(handler.player, new SyncS2CPackets.Initial(characters, playerToCharacterReferences()));
 
-
+        applyAddons(handler.player);
     }
 }

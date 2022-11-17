@@ -36,7 +36,7 @@ public class ClientCharacters extends CharacterManager<AbstractClientPlayerEntit
         for (Map.Entry<String, String> entry : characters.entrySet()) {
             Character c = PersonalityMod.GSON.fromJson(entry.getKey(), Character.class);
 
-            c.characterAddons.putAll(PersonalityMod.GSON.fromJson(entry.getValue(), Character.REF_MAP_TYPE));
+            c.getAddons().putAll(PersonalityMod.GSON.fromJson(entry.getValue(), Character.REF_MAP_TYPE));
 
             characterIDToCharacter.put(c.getUUID(), c);
         }

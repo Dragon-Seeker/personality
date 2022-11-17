@@ -38,4 +38,8 @@ public abstract class BaseAddon {
             return (this == CLIENT && world.isClient()) || (this == SERVER && !world.isClient());
         }
     }
+
+    public abstract boolean isEqualToPlayer(PlayerEntity player);
+
+//    public abstract boolean isDefaultAddon(BaseAddon addon);
 }
