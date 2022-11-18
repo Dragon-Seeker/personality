@@ -6,6 +6,7 @@ import io.blodhgarm.personality.api.client.PersonalityScreenAddonRegistry;
 import io.blodhgarm.personality.compat.origins.client.gui.OriginSelectionDisplayAddon;
 import io.blodhgarm.personality.compat.pehkui.client.PehkuiScaleDisplayAddon;
 import io.blodhgarm.personality.misc.config.PersonalityConfigModel;
+import io.blodhgarm.personality.compat.trinkets.TrinketsGlasses;
 import ladysnake.satin.api.event.ShaderEffectRenderCallback;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -20,6 +21,10 @@ public class PersonalityClient implements ClientModInitializer {
         Networking.registerNetworkingClient();
 		ShaderEffectRenderCallback.EVENT.register(new BlurryVisionShaderEffect());
         ClientTickEvents.END_WORLD_TICK.register(KeyBindings::processKeybindings);
+
+        if(FabricLoader.getInstance().isModLoaded("trinkets")){
+            TrinketsGlasses.init();
+        }
 
         if(FabricLoader.getInstance().isModLoaded("origins")){
             PersonalityScreenAddonRegistry.registerScreenAddon(new Identifier("origins", "origin_selection_addon"), OriginSelectionDisplayAddon::new);

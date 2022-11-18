@@ -1,6 +1,5 @@
 package io.blodhgarm.personality.client;
 
-import dev.emi.trinkets.api.TrinketsApi;
 import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.misc.PersonalityTags;
 import io.blodhgarm.personality.misc.config.ConfigHelper;
@@ -9,7 +8,10 @@ import ladysnake.satin.api.managed.ManagedShaderEffect;
 import ladysnake.satin.api.managed.ShaderEffectManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Identifier;
+
+import java.util.List;
 
 import static io.blodhgarm.personality.PersonalityMod.CONFIG;
 
@@ -17,10 +19,18 @@ public class BlurryVisionShaderEffect implements ShaderEffectRenderCallback {
 
     private static final MinecraftClient client = MinecraftClient.getInstance();
 
+    private static List<GlassesCheck> GLASSES_CHECKERS = List.of(player -> {
+        return client.player.getEquippedStack(EquipmentSlot.HEAD).isIn(PersonalityTags.VISION_GLASSES);
+    });
+
     private final ManagedShaderEffect blur = ShaderEffectManager.getInstance().manage(new Identifier("blur", "shaders/post/fade_in_blur.json"),
             shader -> shader.setUniformValue("Radius", CONFIG.NO_GLASSES_BLURRINESS.END_VALUE()));
 
     private float progress = 0F;
+
+    public static void registerChecker(GlassesCheck checker){
+        GLASSES_CHECKERS.add(checker);
+    }
 
     @Override
     public void renderShaderEffects(float tickDelta) {
@@ -44,12 +54,14 @@ public class BlurryVisionShaderEffect implements ShaderEffectRenderCallback {
     }
 
     private boolean hasGlasses() {
-        if (client.player.getEquippedStack(EquipmentSlot.HEAD).isIn(PersonalityTags.VISION_GLASSES))
-            return true;
+        for(GlassesCheck checker : GLASSES_CHECKERS){
+            if(checker.hasGlasses(client.player)) return true;
+        }
 
-        if (TrinketsApi.getTrinketComponent(client.player).isEmpty())
-            return false;
+        return false;
+    }
 
-        return TrinketsApi.getTrinketComponent(client.player).get().getEquipped(stack -> stack.isIn(PersonalityTags.VISION_GLASSES)).size() > 0;
+    public interface GlassesCheck {
+        boolean hasGlasses(PlayerEntity player);
     }
 }
