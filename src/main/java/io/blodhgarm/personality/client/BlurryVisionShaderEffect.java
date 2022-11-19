@@ -1,5 +1,6 @@
 package io.blodhgarm.personality.client;
 
+import com.google.common.collect.Lists;
 import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.misc.PersonalityTags;
 import io.blodhgarm.personality.misc.config.ConfigHelper;
@@ -19,7 +20,7 @@ public class BlurryVisionShaderEffect implements ShaderEffectRenderCallback {
 
     private static final MinecraftClient client = MinecraftClient.getInstance();
 
-    private static List<GlassesCheck> GLASSES_CHECKERS = List.of(player -> {
+    private static List<GlassesCheck> GLASSES_CHECKERS = Lists.newArrayList(player -> {
         return client.player.getEquippedStack(EquipmentSlot.HEAD).isIn(PersonalityTags.VISION_GLASSES);
     });
 
