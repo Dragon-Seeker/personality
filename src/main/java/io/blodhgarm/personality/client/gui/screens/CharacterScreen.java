@@ -1,4 +1,4 @@
-package io.blodhgarm.personality.client.screens;
+package io.blodhgarm.personality.client.gui.screens;
 
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.Networking;
@@ -7,11 +7,12 @@ import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddon;
 import io.blodhgarm.personality.api.client.AddonObservable;
 import io.blodhgarm.personality.api.client.PersonalityScreenAddonRegistry;
-import io.blodhgarm.personality.client.PersonalityClient;
-import io.blodhgarm.personality.client.screens.components.CustomEntityComponent;
-import io.blodhgarm.personality.client.screens.components.CustomSurfaces;
-import io.blodhgarm.personality.client.screens.components.vanilla.BetterEditBoxWidget;
-import io.blodhgarm.personality.client.screens.components.vanilla.BetterTextFieldWidget;
+import io.blodhgarm.personality.client.ThemeHelper;
+import io.blodhgarm.personality.client.gui.CharacterScreenMode;
+import io.blodhgarm.personality.client.gui.components.CustomEntityComponent;
+import io.blodhgarm.personality.client.gui.components.CustomSurfaces;
+import io.blodhgarm.personality.client.gui.components.vanilla.BetterEditBoxWidget;
+import io.blodhgarm.personality.client.gui.components.vanilla.BetterTextFieldWidget;
 import io.blodhgarm.personality.packets.SyncC2SPackets;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.base.BaseParentComponent;
@@ -24,6 +25,7 @@ import io.wispforest.owo.ui.container.HorizontalFlowLayout;
 import io.wispforest.owo.ui.core.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.input.CursorMovement;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.stat.Stats;
 import net.minecraft.text.MutableText;
@@ -37,7 +39,7 @@ import org.slf4j.Logger;
 import javax.annotation.Nullable;
 import java.util.*;
 
-public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> implements AddonObservable {
+public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonObservable {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -50,9 +52,13 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
     @Nullable public final Character currentCharacter;
     @Nullable public final PlayerEntity player;
 
+    public FlowLayout rootComponent;
+
     public GenderSelection currentSelection = GenderSelection.MALE;
 
-    public PersonalityCreationScreen(CharacterScreenMode currentMode, @Nullable PlayerEntity player, @Nullable Character character) {
+    public boolean buildAsScreen = true;
+
+    public CharacterScreen(CharacterScreenMode currentMode, @Nullable PlayerEntity player, @Nullable Character character) {
         this.currentMode = currentMode;
 
         this.player = player;
@@ -67,14 +73,22 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
         return OwoUIAdapter.create(this, Containers::verticalFlow);
     }
 
+    protected void buildAsChild(FlowLayout rootComponent){
+        this.buildAsScreen = false;
+
+        this.build(rootComponent);
+
+        this.buildAsScreen = true;
+    }
+
     @Override
     protected void build(FlowLayout rootComponent) {
         boolean isModifiable = this.currentMode.isModifiableMode();
         boolean importCharacterData = this.currentMode.importFromCharacter();
 
-        HorizontalFlowLayout mainFlowLayout = (HorizontalFlowLayout) Containers.horizontalFlow(Sizing.content(), Sizing.content()).id("main_flow_layout");
+        this.rootComponent = rootComponent;
 
-        Surface panel = PersonalityClient.isDarkMode() ? Surface.DARK_PANEL : Surface.PANEL;
+        HorizontalFlowLayout mainFlowLayout = (HorizontalFlowLayout) Containers.horizontalFlow(Sizing.content(), Sizing.content()).id("main_flow_layout");
 
         //---------------------------- Character Panel ----------------------------
 
@@ -86,7 +100,7 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
         boolean originAddonExists = screenAddons.containsKey(originScreenAddon);
 
         if(originAddonExists) {
-            playerDisplayComponent.child(screenAddons.get(originScreenAddon).addBranchComponent(this, rootComponent));
+            playerDisplayComponent.child(screenAddons.get(originScreenAddon).addBranchComponent(rootComponent));
         }
 
         playerDisplayComponent.child(
@@ -136,6 +150,7 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
 
             agePropertyLayout.child(
                     Components.label(ageLabel)
+                            .color(ThemeHelper.dynamicColor())
                             .margins(Insets.right(6))
             );
 
@@ -168,7 +183,7 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
         if(screenAddons.containsKey(pehkuiScreenAddon)) {
             characterPropertiesContainer
                     .child(
-                            screenAddons.get(pehkuiScreenAddon).addBranchComponent(this, rootComponent)
+                            screenAddons.get(pehkuiScreenAddon).addBranchComponent(rootComponent)
                     );
         }
 
@@ -180,10 +195,12 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
                         Containers.verticalFlow(Sizing.content(), Sizing.content())
                                 .child(
                                         Components.label(Text.of("Description: "))
+                                                .color(ThemeHelper.dynamicColor())
                                                 .margins(Insets.of(0, 4, 0, 0))
                                 )
                                 .child(
                                         BetterEditBoxWidget.editBox(Sizing.fixed(136), Sizing.fixed(60), Text.of(""), Text.of(""), importCharacterData ? currentCharacter.getDescription() : "")
+                                                .setCursorPosition(CursorMovement.ABSOLUTE, 0)
                                                 .textWidth(130)
                                                 .bqColor(Color.ofArgb(0xFF555555))
                                                 .canEdit(isModifiable)
@@ -195,10 +212,12 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
                         Containers.verticalFlow(Sizing.content(), Sizing.content())
                                 .child(
                                         Components.label(Text.of("Bio: "))
+                                                .color(ThemeHelper.dynamicColor())
                                                 .margins(Insets.of(0, 4, 0, 0))
                                 )
                                 .child(
                                         BetterEditBoxWidget.editBox(Sizing.fixed(136), Sizing.fixed(60), Text.of(""), Text.of(""), importCharacterData ? currentCharacter.getDescription() : "")
+                                                .setCursorPosition(CursorMovement.ABSOLUTE, 0)
                                                 .textWidth(130)
                                                 .bqColor(Color.ofArgb(0xFF555555))
                                                 .canEdit(isModifiable)
@@ -210,7 +229,7 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
                 .stream()
                 .filter(entry -> entry.getKey() == originScreenAddon)
                 .forEach(entry -> characterPropertiesContainer
-                        .child(entry.getValue().addBranchComponent(this, characterPropertiesContainer))
+                        .child(entry.getValue().addBranchComponent(characterPropertiesContainer))
                 );
 
         //--------------------------------
@@ -230,49 +249,66 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
                 )
                 .child(
                         Containers.verticalScroll(Sizing.content(), Sizing.fixed(149), characterPropertiesContainer)
-                                .surface(Surface.DARK_PANEL)
+                                .surface(ThemeHelper.dynamicSurface())
                                 .padding(Insets.of(6))
                 );
 
+        FlowLayout characterPanel = (FlowLayout) Containers.verticalFlow(Sizing.content(), Sizing.fixed(182)) //Sizing.fixed(326)
+                .child(
+                        Components.label(Text.of("Create Your Character"))
+                                .color(ThemeHelper.dynamicColor())
+                                .margins(Insets.of(1, 0, 0,0))
+                )
+                .child(
+                        Components.box(Sizing.fixed(252), Sizing.fixed(1))
+                                .color(Color.ofArgb(0xFFa0a0a0))
+                                .margins(Insets.of(3, 4, 0, 0))
+                )
+                .child(
+                        mainOptionsSection
+                )
+                .horizontalAlignment(HorizontalAlignment.CENTER)
+                .padding(Insets.of(6))
+                .surface(ThemeHelper.dynamicSurface());
+
+        FlowLayout buttonLayout = null;
+
+        if(this.currentMode.isModifiableMode()) {
+            buttonLayout = (FlowLayout) Containers.verticalFlow(Sizing.content(), Sizing.content())
+                    .child(
+                            characterPanel
+                    )
+                    .child(
+                            Components.button(Text.of(this.currentMode.isModifiableMode() ? "Done" : "Close"), (ButtonComponent button) -> {
+                                        if (!this.currentMode.isModifiableMode()) {
+                                            this.close();
+
+                                            return;
+                                        }
+
+                                        if (this.finishCharacterCreation(rootComponent)) {
+                                            this.close();
+                                        } else {
+                                            //TODO: Handle this
+                                        }
+                                    })
+                                    .horizontalSizing(Sizing.fixed(100))
+                                    .margins(Insets.top(6))
+                    )
+                    .horizontalAlignment(HorizontalAlignment.CENTER);
+        } else {
+            if(this.buildAsScreen) {
+                characterPanel.child(
+                        Components.button(Text.of("❌"), (ButtonComponent component) -> this.close())
+                                .renderer(ButtonComponent.Renderer.flat(0, 0, 0))
+                                .sizing(Sizing.fixed(12))
+                                .positioning(Positioning.relative(100, 0))
+                );
+            }
+        }
 
         mainFlowLayout.child(
-                Containers.verticalFlow(Sizing.content(), Sizing.content())
-                        .child(
-                                Containers.verticalFlow(Sizing.content(), Sizing.fixed(182)) //Sizing.fixed(326)
-                                        .child(
-                                                Components.label(Text.of("Create Your Character"))
-                                                        .margins(Insets.of(1, 0, 0,0))
-                                        )
-                                        .child(
-                                                Components.box(Sizing.fixed(252), Sizing.fixed(1))
-                                                        .color(Color.ofArgb(0xFFa0a0a0))
-                                                        .margins(Insets.of(3, 4, 0, 0))
-                                        )
-                                        .child(
-                                                mainOptionsSection
-                                        )
-                                        .horizontalAlignment(HorizontalAlignment.CENTER)
-                                        .padding(Insets.of(6))
-                                        .surface(panel)
-                        )
-                        .child(
-                                Components.button(Text.of(this.currentMode.isModifiableMode() ? "Done" : "Close"), (ButtonComponent button) -> {
-                                    if(!this.currentMode.isModifiableMode()){
-                                        this.close();
-
-                                        return;
-                                    }
-
-                                    if(this.finishCharacterCreation(rootComponent)){
-                                        this.close();
-                                    } else {
-                                        //TODO: Handle this
-                                    }
-                                })
-                                .horizontalSizing(Sizing.fixed(100))
-                                .margins(Insets.top(6))
-                        )
-                        .horizontalAlignment(HorizontalAlignment.CENTER)
+                buttonLayout != null ? buttonLayout : characterPanel
         );
 
         //---------------------------------- END ----------------------------------
@@ -280,13 +316,15 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
 
         //---------------------- Root Component Manipulation ----------------------
 
-        mainFlowLayout.positioning(Positioning.relative(50, -100));
-
-        mainFlowLayout.positioning().animate(2000, Easing.CUBIC, Positioning.relative(50, 50)).forwards();
-
         rootComponent.child(mainFlowLayout);
 
-        rootComponent.surface(Surface.VANILLA_TRANSLUCENT);
+        if(buildAsScreen) {
+            mainFlowLayout.positioning(Positioning.relative(50, -100));
+
+            mainFlowLayout.positioning().animate(2000, Easing.CUBIC, Positioning.relative(50, 50)).forwards();
+
+            rootComponent.surface(Surface.VANILLA_TRANSLUCENT);
+        }
 
         //---------------------------------- END ----------------------------------
     }
@@ -299,7 +337,8 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
         if (!modifiable) text.append(Text.of(currentCharacter.getGender()));
 
         horizontalComponent
-                .child(Components.label(text));
+                .child(Components.label(text)
+                        .color(ThemeHelper.dynamicColor()));
 
         if(modifiable) {
             if (importCharacterData) currentSelection = GenderSelection.attemptToGetGender(currentCharacter.getGender());
@@ -339,7 +378,7 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
 
     @Override
     public void pushScreenAddon(PersonalityScreenAddon screenAddon){
-        FlowLayout flowLayout = this.uiAdapter.rootComponent.childById(FlowLayout.class, "main_flow_layout");
+        FlowLayout flowLayout = this.rootComponent.childById(FlowLayout.class, "main_flow_layout");
         FlowLayout addonMainFlow = flowLayout.childById(FlowLayout.class, "current_addon_screen");
 
         if(addonMainFlow != null){
@@ -351,7 +390,7 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
         if(screenAddon == null) return;
 
         addonMainFlow = (FlowLayout) Containers.verticalFlow(Sizing.content(), Sizing.content())
-                .child(screenAddon.createMainFlowlayout(PersonalityClient.isDarkMode()))
+                .child(screenAddon.createMainFlowlayout(ThemeHelper.isDarkMode()))
                 .id("current_addon_screen");
 
         flowLayout.child(addonMainFlow);
@@ -359,7 +398,7 @@ public class PersonalityCreationScreen extends BaseOwoScreen<FlowLayout> impleme
 
     @Override
     public boolean isAddonOpen(PersonalityScreenAddon screenAddon){
-        FlowLayout addonMainFlow = (this.uiAdapter.rootComponent
+        FlowLayout addonMainFlow = (this.rootComponent
                 .childById(FlowLayout.class, "main_flow_layout"))
                 .childById(FlowLayout.class, "current_addon_screen");
 

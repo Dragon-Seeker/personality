@@ -36,6 +36,7 @@ repositories {
 		}
 	}
 	mavenLocal()
+	mavenCentral()
 }
 
 dependencies {
@@ -61,7 +62,11 @@ dependencies {
 	modCompileOnly "dev.onyxstudios.cardinal-components-api:cardinal-components-base:${project.cc_version}"
 	modCompileOnly "dev.onyxstudios.cardinal-components-api:cardinal-components-entity:${project.cc_version}"
 
+	include 'com.github.Dansoftowner:jSystemThemeDetector:3.8'
 	implementation 'com.github.Dansoftowner:jSystemThemeDetector:3.8'
+
+	include 'org.apache.commons:commons-collections4:4.4'
+	implementation 'org.apache.commons:commons-collections4:4.4'
 }
 
 loom {

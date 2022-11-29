@@ -6,8 +6,10 @@
   "mixins": [
     "HungerManagerMixin",
     "ModPacketsC2SAccessor",
+    "NinePatchRendererAccessor",
     "OriginLayerAccessor",
-    "PlayerEntityMixin"
+    "PlayerEntityMixin",
+    "client.accessor.ScrollContainerAccessor"
   ],
   "client": [
     "client.EntityRendererMixin",

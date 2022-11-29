@@ -3,8 +3,8 @@ package io.blodhgarm.personality.api.addon.client;
 import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.api.client.AddonObservable;
-import io.blodhgarm.personality.client.screens.CharacterScreenMode;
-import io.blodhgarm.personality.client.screens.PersonalityCreationScreen;
+import io.blodhgarm.personality.client.gui.CharacterScreenMode;
+import io.blodhgarm.personality.client.gui.screens.CharacterScreen;
 import io.wispforest.owo.ui.base.BaseParentComponent;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
@@ -20,7 +20,7 @@ public abstract class PersonalityScreenAddon {
 
     public final Identifier addonId;
 
-    private PersonalityCreationScreen originScreen = null;
+    private CharacterScreen originScreen = null;
 
     protected final CharacterScreenMode mode;
 
@@ -48,16 +48,16 @@ public abstract class PersonalityScreenAddon {
                 .id(this.addonId().toString());
     }
 
-    public final PersonalityScreenAddon linkAddon(PersonalityCreationScreen screen){
+    public final PersonalityScreenAddon linkAddon(CharacterScreen screen){
         this.originScreen = screen;
 
         return this;
     }
 
-    public final Component addBranchComponent(AddonObservable addonObservable, BaseParentComponent rootComponent){
+    public final Component addBranchComponent(BaseParentComponent rootComponent){
         this.rootBranchComponent = rootComponent;
 
-        return buildBranchComponent(addonObservable, rootComponent);
+        return buildBranchComponent(rootComponent);
     }
 
     public BaseParentComponent getRootComponent(){
@@ -66,6 +66,10 @@ public abstract class PersonalityScreenAddon {
 
     public final void closeAddon(){
         this.originScreen.pushScreenAddon(this);
+    }
+
+    public final AddonObservable getObserver(){
+        return this.originScreen;
     }
 
     //-------------------------------------------------------------------------------
@@ -86,7 +90,7 @@ public abstract class PersonalityScreenAddon {
     /**
      * Method used to add the component that will toggle the addons side screen
      */
-    protected abstract Component buildBranchComponent(AddonObservable addonObservable, BaseParentComponent rootBranchComponent);
+    protected abstract Component buildBranchComponent(BaseParentComponent rootBranchComponent);
 
     /**
      * Used to update the given branch component

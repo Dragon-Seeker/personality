@@ -1,7 +1,7 @@
 package io.blodhgarm.personality.mixin.client;
 
 import io.blodhgarm.personality.Networking;
-import io.blodhgarm.personality.client.screens.CharacterScreenMode;
+import io.blodhgarm.personality.client.gui.CharacterScreenMode;
 import io.blodhgarm.personality.packets.OpenPersonalityScreenS2CPacket;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.ClientConnection;

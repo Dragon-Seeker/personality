@@ -2,15 +2,14 @@ package io.blodhgarm.personality.compat.origins.client.gui;
 
 import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.api.addon.BaseAddon;
-import io.blodhgarm.personality.client.PersonalityClient;
-import io.blodhgarm.personality.client.screens.CharacterScreenMode;
+import io.blodhgarm.personality.client.ThemeHelper;
+import io.blodhgarm.personality.client.gui.CharacterScreenMode;
 import io.blodhgarm.personality.compat.origins.OriginAddon;
 import io.blodhgarm.personality.compat.origins.client.gui.components.OriginHeaderComponent;
 import io.blodhgarm.personality.compat.origins.client.gui.components.OriginImpactComponent;
 import io.blodhgarm.personality.compat.origins.client.gui.components.OriginInfoContainer;
-import io.blodhgarm.personality.api.client.AddonObservable;
 import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddon;
-import io.blodhgarm.personality.client.screens.components.CustomSurfaces;
+import io.blodhgarm.personality.client.gui.components.CustomSurfaces;
 import io.github.apace100.origins.Origins;
 import io.github.apace100.origins.origin.*;
 import io.github.apace100.origins.registry.ModItems;
@@ -33,12 +32,13 @@ import net.minecraft.util.Identifier;
 
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.function.Consumer;
 
 public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
 
     public static Identifier ORIGINS_GUI_TEXTURE = new Identifier("personality", "textures/gui/origins_gui.png");
 
-    public static NbtKey<String> SKULL_OWNER_KEY = new NbtKey<>("SkullOwner", NbtKey.Type.STRING);
+    public static final NbtKey<String> SKULL_OWNER_KEY = new NbtKey<>("SkullOwner", NbtKey.Type.STRING);
 
     //----------------------------
 
@@ -86,7 +86,7 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
 
         if(this.mode.importFromCharacter()){
             layerList.forEach(layer -> {
-                OriginAddon addon = (OriginAddon) character.characterAddons.get(layer.getIdentifier());
+                OriginAddon addon = (OriginAddon) character.getAddons().get(layer.getIdentifier());
 
                 if(addon != null) selectedOrigins.put(layer, OriginRegistry.get(addon.getOriginId()));
             });
@@ -251,8 +251,48 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
             randomOriginText = originLayerHelpers.get(currentLayer).randomOriginText;
         }
 
-        FlowLayout originLayout = Containers.verticalFlow(Sizing.fixed(176), Sizing.fixed(182))
-                .child(
+        FlowLayout originLayout = Containers.verticalFlow(Sizing.fixed(176), Sizing.content()); //182
+
+        originLayout.child(
+                    Components.button(Text.of("❌"), (ButtonComponent component) -> this.closeAddon())
+                            .renderer(ButtonComponent.Renderer.flat(0,0,0))
+                            .sizing(Sizing.fixed(12))
+                            .positioning(Positioning.absolute(155, -2))
+        );
+
+        originLayout.child(
+                Containers.horizontalFlow(Sizing.content(), Sizing.content())
+                        .child(
+                                Components.button(Text.of("<"), createButtonAction(ButtonVariant.LEFT, rootComponent))
+                                        .sizing(Sizing.fixed(10))
+                        )
+                        .child(
+                                Containers.horizontalFlow(Sizing.fixed(60), Sizing.content())
+                                        .child(
+                                                Components.label(Text.translatable(currentLayer.getTranslationKey()))
+                                                        .color(ThemeHelper.dynamicColor())
+                                                        .id("layer_label")
+                                        )
+                                        .horizontalAlignment(HorizontalAlignment.CENTER)
+                                        .margins(Insets.top(1))
+                        )
+                        .child(
+                                Components.button(Text.of(">"), createButtonAction(ButtonVariant.RIGHT, rootComponent))
+                                        .sizing(Sizing.fixed(10))
+                        )
+                        .horizontalAlignment(HorizontalAlignment.CENTER)
+                        .surface(panel)
+                        .padding(Insets.of(4, 4, 4, 4))
+                        .margins(Insets.bottom(2))
+        );
+
+//        originLayout.child(
+//                Components.box(Sizing.fixed(150), Sizing.fixed(1))
+//                        .color(Color.ofArgb(0xFFa0a0a0))
+//                        .margins(Insets.of(3,4,0,0))
+//        );
+
+        originLayout.child(
                         Containers.verticalFlow(Sizing.fixed(162), Sizing.fixed(143))// y = 168
                                 .child(
                                         new OriginHeaderComponent(Sizing.fixed(150), Sizing.fixed(26), getCurrentOrigin(), layerList.get(currentLayerIndex))
@@ -271,7 +311,7 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
                                         .padding(Insets.of(8, 4, 0,0))
                                         .id("origin_info"))
                                 .surface(CustomSurfaces.INVERSE_PANEL)
-                                .margins(Insets.of(1,0,0,0))
+//                                .margins(Insets.of(1,0,0,0))
                 );
 
         FlowLayout selectionControl = Containers.horizontalFlow(Sizing.content(), Sizing.content());
@@ -296,6 +336,9 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
 
                                 setupForSelectedLayer();
 
+                                rootComponent.childById(LabelComponent.class, "layer_label")
+                                        .text(Text.translatable(layerList.get(currentLayerIndex).getTranslationKey()));
+
                                 updateOriginData(rootComponent);
 
                                 if(selectedOrigins.keySet().containsAll(layerList)) {
@@ -311,7 +354,7 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
                             }).sizing(Sizing.fixed(20))
                     );
         } else {
-            selectionControl.sizing(Sizing.fixed(160), Sizing.fixed(20));
+            selectionControl.sizing(Sizing.content(), Sizing.fixed(2));
         }
 
         originLayout.child(selectionControl
@@ -321,11 +364,42 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
 
         return (FlowLayout) rootComponent
                 .child(originLayout.horizontalAlignment(HorizontalAlignment.CENTER)
-                        .padding(Insets.of(5)) //6
+                        .padding(Insets.of(6)) //6
                         .surface(panel)
                 )
                 .horizontalAlignment(HorizontalAlignment.CENTER)
-                .margins(Insets.left(PersonalityClient.guiScale4OrAbove() ? 6 : 10));
+                .margins(Insets.left(ThemeHelper.guiScale4OrAbove() ? 2 : 10));
+    }
+
+    private enum ButtonVariant { LEFT,RIGHT; }
+
+    private Consumer<ButtonComponent> createButtonAction(ButtonVariant variant, BaseParentComponent rootComponent){
+        return buttonComponent -> {
+            if(variant == ButtonVariant.LEFT) {
+                this.currentLayerIndex = this.currentLayerIndex - 1;
+
+                if (this.currentLayerIndex < 0) {
+                    this.currentLayerIndex = this.layerList.size() - 1;
+                }
+            } else {
+                this.currentLayerIndex = this.currentLayerIndex + 1;
+
+                if(this.currentLayerIndex >= this.layerList.size()){
+                    this.currentLayerIndex = 0;
+                }
+            }
+
+            setupForSelectedLayer();
+
+            if(getObserver().isAddonOpen(this)){
+                rootComponent.childById(LabelComponent.class, "layer_label")
+                        .text(Text.translatable(layerList.get(currentLayerIndex).getTranslationKey()));
+
+                updateOriginData(rootComponent);
+            } else {
+                branchUpdate();
+            }
+        };
     }
 
     @Override
@@ -336,59 +410,31 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
     }
 
     @Override
-    public Component buildBranchComponent(AddonObservable addonObservable, BaseParentComponent rootComponent) {
+    public Component buildBranchComponent(BaseParentComponent rootComponent) {
         return Containers.horizontalFlow(Sizing.content(), Sizing.fixed(26 + 12))
                 .child(
                         new OriginHeaderComponent(Sizing.fixed(122), Sizing.fixed(32), getCurrentOrigin(), layerList.get(currentLayerIndex))
                                 .shortVersion(true)
                                 .showLayerInfo(true)
                                 .showButtons(
-                                        buttonComponent -> {
-                                            this.currentLayerIndex = this.currentLayerIndex - 1;
-
-                                            if(this.currentLayerIndex < 0){
-                                                this.currentLayerIndex = this.layerList.size() - 1;
-                                            }
-
-                                            setupForSelectedLayer();
-
-                                            if(addonObservable.isAddonOpen(this)){
-                                                updateOriginData(rootComponent);
-                                            } else {
-                                                branchUpdate();
-                                            }
-                                        },
-                                        buttonComponent -> {
-                                            this.currentLayerIndex = this.currentLayerIndex + 1;
-
-                                            if(this.currentLayerIndex >= this.layerList.size()){
-                                                this.currentLayerIndex = 0;
-                                            }
-
-                                            setupForSelectedLayer();
-
-                                            if(addonObservable.isAddonOpen(this)){
-                                                updateOriginData(rootComponent);
-                                            } else {
-                                                branchUpdate();
-                                            }
-                                        }
+                                        createButtonAction(ButtonVariant.LEFT, rootComponent),
+                                        createButtonAction(ButtonVariant.RIGHT, rootComponent)
                                 )
                                 .rebuildComponent()
                                 .id("addon_component_origin_header")
-                                .margins(Insets.right(2))
+//                                .margins(Insets.right(2))
                 )
                 .child(
                         Components.button(Text.of(this.mode.isModifiableMode() ? "✎" : "☉"),
-                                        (ButtonComponent component) -> addonObservable.pushScreenAddon(this)
+                                        (ButtonComponent component) -> getObserver().pushScreenAddon(this)
                                 )
                                 .sizing(Sizing.fixed(12))
-                                .positioning(Positioning.absolute(PersonalityClient.guiScale4OrAbove() ? 86 : 106, 30))
+                                .positioning(Positioning.absolute(ThemeHelper.guiScale4OrAbove() ? 86 : 106, 30))
                 )
                 .allowOverflow(true)
                 //.horizontalAlignment(HorizontalAlignment.CENTER)
                 //.verticalAlignment(VerticalAlignment.CENTER)
-                .margins(Insets.of(4, 0, 4, 4));
+                .margins(Insets.of(2, 0, 3, 0));
     }
 
     @Override

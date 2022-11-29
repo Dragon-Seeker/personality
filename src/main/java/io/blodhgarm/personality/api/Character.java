@@ -39,8 +39,7 @@ public class Character {
 
     private int playtimeOffset;
 
-
-    public Set<String> knowCharacters;
+    public final Map<String, KnownCharacter> knowCharacters = new HashMap<>();
 
     private transient Map<Identifier, BaseAddon> characterAddons = new HashMap<>();
 
@@ -217,5 +216,30 @@ public class Character {
                 "\n}";
     }
 
+    public static class KnownCharacter {
+        public static final String EMPTY_NICKNAME = "none";
 
+        public final String characterUUID;
+        private String nickName = EMPTY_NICKNAME;
+
+        public KnownCharacter(String characterUUID){
+            this.characterUUID = characterUUID;
+        }
+
+        public void setNickName(String nickName){
+            this.nickName = nickName;
+        }
+
+        public String getNickName(){
+            return this.nickName;
+        }
+
+        public boolean hasNickName(){
+            return Objects.equals(this.nickName, EMPTY_NICKNAME);
+        }
+
+        public Character getCharacter(World world){
+            return CharacterManager.getManger(world).getCharacter(characterUUID);
+        }
+    }
 }

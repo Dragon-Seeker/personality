@@ -1,4 +1,4 @@
-package io.blodhgarm.personality.client.screens.components;
+package io.blodhgarm.personality.client.gui.components;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.wispforest.owo.ui.base.BaseComponent;
@@ -6,12 +6,8 @@ import io.wispforest.owo.ui.core.AnimatableProperty;
 import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawableHelper;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
-
-import java.util.function.Supplier;
 
 public class FaceComponent extends BaseComponent {
 

@@ -1,11 +1,10 @@
 package io.blodhgarm.personality.compat.pehkui.client;
 
 import io.blodhgarm.personality.api.Character;
-import io.blodhgarm.personality.api.CharacterManager;
 import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddon;
-import io.blodhgarm.personality.api.client.AddonObservable;
-import io.blodhgarm.personality.client.screens.CharacterScreenMode;
+import io.blodhgarm.personality.client.ThemeHelper;
+import io.blodhgarm.personality.client.gui.CharacterScreenMode;
 import io.blodhgarm.personality.compat.pehkui.PehkuiAddonRegistry;
 import io.blodhgarm.personality.compat.pehkui.ScaleAddon;
 import io.wispforest.owo.ui.base.BaseParentComponent;
@@ -34,7 +33,7 @@ public class PehkuiScaleDisplayAddon extends PersonalityScreenAddon {
         super(mode, character, player, new Identifier("pehkui", "scale_selection_addon"));
 
         if(mode.importFromCharacter()){
-            ScaleAddon addon = (ScaleAddon) character.characterAddons.get(PehkuiAddonRegistry.addonId);
+            ScaleAddon addon = (ScaleAddon) character.getAddons().get(PehkuiAddonRegistry.addonId);
 
             if(addon != null) startingValue = addon.getHeightOffset();
         }
@@ -47,7 +46,7 @@ public class PehkuiScaleDisplayAddon extends PersonalityScreenAddon {
     public FlowLayout build(boolean darkMode) {return Containers.verticalFlow(Sizing.content(), Sizing.content()); }
 
     @Override
-    public Component buildBranchComponent(AddonObservable addonObservable, BaseParentComponent rootBranchComponent) {
+    public Component buildBranchComponent(BaseParentComponent rootBranchComponent) {
         boolean modifiable = this.mode.isModifiableMode();
 
         MutableText text = Text.literal("Height: ");
@@ -55,7 +54,10 @@ public class PehkuiScaleDisplayAddon extends PersonalityScreenAddon {
         if(!modifiable) text.append(Text.literal(String.format("%.2fm", this.startingValue + 1.8)));
 
         FlowLayout layout = Containers.horizontalFlow(Sizing.content(), Sizing.content())
-                .child(Components.label(text));
+                .child(
+                        Components.label(text)
+                                .color(ThemeHelper.dynamicColor())
+                );
 
         if(modifiable) {
             layout.child(

@@ -1,4 +1,4 @@
-package io.blodhgarm.personality.client.screens.components.vanilla;
+package io.blodhgarm.personality.client.gui.components.vanilla;
 
 import io.blodhgarm.personality.mixin.client.accessor.TextFieldWidgetAccessor;
 import io.wispforest.owo.ui.component.Components;

@@ -3,8 +3,8 @@ package io.blodhgarm.personality.packets;
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.api.CharacterManager;
-import io.blodhgarm.personality.client.screens.CharacterScreenMode;
-import io.blodhgarm.personality.client.screens.PersonalityCreationScreen;
+import io.blodhgarm.personality.client.gui.CharacterScreenMode;
+import io.blodhgarm.personality.client.gui.screens.CharacterScreen;
 import io.wispforest.owo.network.ClientAccess;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -44,6 +44,6 @@ public record OpenPersonalityScreenS2CPacket(CharacterScreenMode mode, String ch
             if(errorHasOccured) return;
         }
 
-        MinecraftClient.getInstance().setScreen(new PersonalityCreationScreen(message.mode, access.player(), character));
+        MinecraftClient.getInstance().setScreen(new CharacterScreen(message.mode, access.player(), character));
     }
 }

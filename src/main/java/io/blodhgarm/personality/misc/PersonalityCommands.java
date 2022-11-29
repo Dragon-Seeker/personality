@@ -10,7 +10,7 @@ import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.Networking;
 import io.blodhgarm.personality.api.CharacterManager;
-import io.blodhgarm.personality.client.screens.CharacterScreenMode;
+import io.blodhgarm.personality.client.gui.CharacterScreenMode;
 import io.blodhgarm.personality.packets.OpenPersonalityScreenS2CPacket;
 import io.blodhgarm.personality.impl.ServerCharacters;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -24,6 +24,7 @@ import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import org.slf4j.Logger;
 
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -248,14 +249,16 @@ public class PersonalityCommands {
 
             if(c == null) return errorNoCharacterMsg(context, context.getSource().getPlayer());
 
-            for (String uuid : c.knowCharacters) {
-                Character pc = ServerCharacters.INSTANCE.getCharacter(uuid);
+            for (Map.Entry<String, Character.KnownCharacter> entry : c.knowCharacters.entrySet()) {
+                String characterUUID = entry.getKey();
+
+                Character pc = ServerCharacters.INSTANCE.getCharacter(characterUUID);
 
                 if(pc != null) {
                     text.append(Text.literal(pc.getName() + "\n").setStyle(Style.EMPTY.withHoverEvent(
                             new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("§n" + pc.getInfo())))));
                 } else {
-                    LOGGER.error("A known Character of [{}] wasn't found by the character manager: [UUID: {}]", player, uuid);
+                    LOGGER.error("A known Character of [{}] wasn't found by the character manager: [UUID: {}]", player, characterUUID);
                 }
             }
 
@@ -299,7 +302,7 @@ public class PersonalityCommands {
             Character pCharacter = ServerCharacters.INSTANCE.getCharacter(p);
 
             if(pCharacter != null) {
-                c.knowCharacters.add(pCharacter.getUUID());
+                c.knowCharacters.put(pCharacter.getUUID(), new Character.KnownCharacter(pCharacter.getUUID()));
             } else {
                 LOGGER.error("Could not add a known Character to [{}] as it wasn't found by the character manager: [Player: {}]", player, p);
             }
@@ -314,7 +317,9 @@ public class PersonalityCommands {
 
         if(c == null) return errorNoCharacterMsg(context, context.getSource().getPlayer());
 
-        c.knowCharacters.add(getString(context, "uuid"));
+        String characterUUID = getString(context, "uuid");
+
+        c.knowCharacters.put(characterUUID, new Character.KnownCharacter(characterUUID));
         ServerCharacters.INSTANCE.saveCharacter(c);
 
         return msg(context, "Character Added");

@@ -1,4 +1,4 @@
-package io.blodhgarm.personality.client.screens.components;
+package io.blodhgarm.personality.client.gui.components;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.wispforest.owo.ui.component.EntityComponent;
@@ -80,7 +80,7 @@ public class CustomEntityComponent<E extends Entity> extends EntityComponent<E> 
 
         @Override
         public Identifier getSkinTexture() {
-            return MISSING_SKIN_TEXTURE_ID;
+            return new Identifier("personality", "textures/skins/question_mark_2.png");
         }
 
         @Override

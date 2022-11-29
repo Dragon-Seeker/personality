@@ -158,8 +158,8 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
         if (revealedToCharacter == null || revealedCharacterUUID == null) return;
 
-        if (!revealedToCharacter.knowCharacters.contains(revealedCharacterUUID)) {
-            revealedToCharacter.knowCharacters.add(revealedCharacterUUID);
+        if (!revealedToCharacter.knowCharacters.containsKey(revealedCharacterUUID)) {
+            revealedToCharacter.knowCharacters.put(revealedCharacterUUID, new Character.KnownCharacter(revealedCharacterUUID));
 
             saveCharacter(revealedToCharacter);
 

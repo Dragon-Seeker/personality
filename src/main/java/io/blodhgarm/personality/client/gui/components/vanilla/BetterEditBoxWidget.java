@@ -1,4 +1,4 @@
-package io.blodhgarm.personality.client.screens.components.vanilla;
+package io.blodhgarm.personality.client.gui.components.vanilla;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.blodhgarm.personality.mixin.client.accessor.EditBoxAccessor;
@@ -13,6 +13,7 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.EditBox;
 import net.minecraft.client.gui.widget.EditBoxWidget;
+import net.minecraft.client.input.CursorMovement;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
@@ -77,6 +78,12 @@ public class BetterEditBoxWidget extends EditBoxWidget implements ComponentStub 
 
     public BetterEditBoxWidget canEdit(boolean value){
         this.canEdit = value;
+
+        return this;
+    }
+
+    public BetterEditBoxWidget setCursorPosition(CursorMovement movement, int amount){
+        this.editBox.moveCursor(movement, amount);
 
         return this;
     }

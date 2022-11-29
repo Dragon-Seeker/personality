@@ -1,15 +1,12 @@
-package io.blodhgarm.personality.client.screens;
+package io.blodhgarm.personality.client.gui.screens;
 
 import io.blodhgarm.personality.Networking;
-import io.blodhgarm.personality.client.screens.components.FaceComponent;
 import io.blodhgarm.personality.packets.RevealCharacterC2SPacket;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.component.Components;
-import io.wispforest.owo.ui.component.EntityComponent;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.*;
-import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
