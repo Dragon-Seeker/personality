@@ -87,9 +87,23 @@ loom {
 					.iterator().forEachRemaining {vmArg "-javaagent:\"${(project.configurations.compileClasspath.files(it).iterator().next().getPath())}\"" }
 			}
 
+			vmArg "-Dowo.renderdocPath=C:\\Program Files\\RenderDoc\\renderdoc.dll"
+
 			vmArg "-Dlog4j.configurationFile=${file(".gradle/loom-cache/log4j.xml").toString()}"
 			vmArg "-Dfabric.log.disableAnsi=false"
 			vmArg "-Dmixin.debug.export=true"
+
+			ideConfigGenerated = true
+		}
+
+		clientRenderDoc {
+			client()
+			name "Minecraft Client [RenderDoc]"
+//			vmArg "-Dfabric.dli.config=${file(".gradle/loom-cache/launch.cfg").toString()}"
+//			vmArg "-Dfabric.dli.env=client"
+//			vmArg "-Dfabric.dli.main=net.fabricmc.loader.impl.launch.knot.KnotClient"
+
+			vmArg "-Dowo.renderdocPath=\"C:\\Program Files\\RenderDoc\\renderdoc.dll\""
 
 			ideConfigGenerated = true
 		}
