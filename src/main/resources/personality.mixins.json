@@ -7,8 +7,7 @@
     "HungerManagerMixin",
     "ModPacketsC2SAccessor",
     "OriginLayerAccessor",
-    "PlayerEntityMixin",
-    "client.accessor.ScrollContainerAccessor"
+    "PlayerEntityMixin"
   ],
   "client": [
     "client.EntityRendererMixin",
@@ -16,8 +15,17 @@
     "client.accessor.EditBoxAccessor",
     "client.accessor.EditBoxWidgetAccessor",
     "client.accessor.TextFieldWidgetAccessor",
-    "client.origins.ModPacketsS2CMixin"
+    "client.origins.ModPacketsS2CMixin",
+    "client.accessor.ScrollContainerAccessor",
     "client.owo.NinePatchRendererAccessor",
+    "client.owo.GridLayoutMixin",
+    "client.owo.OwoUIAdapterMixin",
+    "client.owo.DrawerMixin",
+    "client.owo.DrawerMixin$DebugDrawerMixin",
+    "client.owo.ParentComponentMixin",
+    "client.owo.ComponentMixin",
+    "client.owo.FlowLayoutMixin",
+    "client.owo.BaseComponentMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -67,6 +67,9 @@ dependencies {
 
 	include 'org.apache.commons:commons-collections4:4.4'
 	implementation 'org.apache.commons:commons-collections4:4.4'
+
+	include 'io.github.earcut4j:earcut4j:2.2.2'
+	implementation 'io.github.earcut4j:earcut4j:2.2.2'
 }
 
 loom {

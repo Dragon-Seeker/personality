@@ -1,21 +1,38 @@
 package io.blodhgarm.personality.client.gui.screens;
 
-import io.blodhgarm.personality.Networking;
-import io.blodhgarm.personality.packets.RevealCharacterC2SPacket;
+import com.mojang.logging.LogUtils;
+import io.blodhgarm.personality.api.reveal.InfoRevealLevel;
+import io.blodhgarm.personality.client.gui.builders.SimpleRadialLayoutBuilder;
+import io.blodhgarm.personality.impl.RevelCharacterInfo;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
+import io.wispforest.owo.ui.base.BaseParentComponent;
 import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.*;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.lwjgl.glfw.GLFW;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class RevealIdentityScreen extends BaseOwoScreen<FlowLayout> {
+
+    private static final Logger LOGGER = LogUtils.getLogger();
+
+    private SimpleRadialLayoutBuilder revealLevel;
+    private SimpleRadialLayoutBuilder revealRange;
+
+    @Nullable
+    private InfoRevealLevel selectedRevealLevel = null;
+
+    @Nullable
+    private RevelCharacterInfo.RevealRange selectedRevealRange = null;
 
     @Override
     protected @NotNull OwoUIAdapter<FlowLayout> createAdapter() {
@@ -24,89 +41,115 @@ public class RevealIdentityScreen extends BaseOwoScreen<FlowLayout> {
 
     @Override
     protected void build(FlowLayout root) {
-        root.alignment(HorizontalAlignment.RIGHT, VerticalAlignment.BOTTOM);
 
-        root.child(
-                Containers.verticalScroll(Sizing.fixed(108), Sizing.fill(60),
-                                Containers.verticalFlow(Sizing.fixed(108), Sizing.content())
-                                        .child(entry("Short Range", 7).margins(Insets.top(4)))
-                                        .child(entry("Long Range", 5))
-                                        .child(Components.box(Sizing.fixed(72), Sizing.fixed(1))
-                                                .color(new Color(0.776F,0.776F,0.776F))
-                                                .margins(Insets.of(3,3,10,0)))
-                                        .children(getPlayerComponents())
-                        )
-                        .padding(Insets.of(4,5,8,4))
-                        .surface(Surface.DARK_PANEL)
-                        .alignment(HorizontalAlignment.CENTER, VerticalAlignment.CENTER)
-                        .margins(Insets.of(0,3, 0, 2))
-        );
-    }
+//        for(int i = 0; i < 5; i++){
+//            components.add(Components.box(Sizing.fixed(20), Sizing.fixed(20))
+//                    .color(Color.GREEN)
+//            );
+//        }
 
-    private Component entry(String text, int range) {
+//        components.add(Containers.verticalFlow(Sizing.fixed(0), Sizing.fixed(0)));
 
-//        Component p = Components.button(Text.literal(text), 92,20, button -> {
-//            client.setScreen(null);
-//            Networking.sendC2S(new RevealCharacterC2SPacket.InRange(range));
-//        });
+        revealLevel = new SimpleRadialLayoutBuilder().adjustRadi(0, 15, 140, 80)
+                .addComponents(
+                        Arrays.stream(InfoRevealLevel.values())
+                                .map(level -> {
+                                    return Containers.verticalFlow(Sizing.fixed(50), Sizing.fixed(50))
+                                            .child(
+                                                    Components.label(level.getTranslation())
+                                            )
+                                            .verticalAlignment(VerticalAlignment.CENTER)
+                                            .horizontalAlignment(HorizontalAlignment.CENTER)
+                                            .id(level.toString());
+                                }).toList()
+                )
+                .setComponentId("REVEAL_LEVEL")
+                .onSelection(component -> {
+                    if (component instanceof BaseParentComponent baseParentComponent) {
+                        String id = baseParentComponent.children().get(0).id();
 
-        ParentComponent c = Containers.horizontalFlow(Sizing.fixed(100-8), Sizing.fixed(24))
-                .child(Components.label(Text.literal(text)).color(new Color(0.1F,0.1F,0.1F))
-                        .margins(Insets.left(19)))
-                .margins(Insets.bottom(1))
-                .alignment(HorizontalAlignment.LEFT, VerticalAlignment.CENTER)
-                .surface(Surface.PANEL);
+                        if (id != null) {
+                            try {
+                                this.selectedRevealLevel = InfoRevealLevel.valueOf(id);
 
-        c.mouseDown().subscribe((mouseX, mouseY, button) -> {
-            System.out.println(button);
+                                Component mainFlowLayout = this.uiAdapter.rootComponent.childById(Component.class, "REVEAL_LEVEL");
 
-            if (button == 1) {
-                Networking.sendC2S(new RevealCharacterC2SPacket.InRange(range));
+                                this.uiAdapter.rootComponent.removeChild(mainFlowLayout);
+
+                                this.uiAdapter.rootComponent.child(revealRange.getComponent(this.uiAdapter.rootComponent));
+
+                                return true;
+                            } catch (IllegalArgumentException e) {
+                                LOGGER.warn(e.getMessage());
+                            }
+                        }
+                    }
+
+                    return false;
+                });
+
+        List<Component> components = Arrays.stream(RevelCharacterInfo.RevealRange.values())
+                .map(range -> {
+                    return Containers.verticalFlow(Sizing.fixed(50), Sizing.fixed(50))
+                            .child(
+                                    Components.label(range.getTranslation())
+                            )
+                            .verticalAlignment(VerticalAlignment.CENTER)
+                            .horizontalAlignment(HorizontalAlignment.CENTER)
+                            .id(range.toString());
+                })
+                .collect(Collectors.toList());
+
+        components.add(Containers.verticalFlow(Sizing.fixed(0), Sizing.fixed(0)));
+
+        revealRange = new SimpleRadialLayoutBuilder().adjustRadi(0, 15, 140, 80)
+                .addComponents(components)
+                .setComponentId("REVEAL_RANGE")
+                .onSelection(component -> {
+                    if (component instanceof BaseParentComponent baseParentComponent) {
+                        String id = baseParentComponent.children().get(0).id();
+
+                        if (id != null) {
+                            try {
+                                this.selectedRevealRange = RevelCharacterInfo.RevealRange.valueOf(id);
+
+                                Component mainFlowLayout = this.uiAdapter.rootComponent.childById(Component.class, "REVEAl_RANGE");
+
+                                this.uiAdapter.rootComponent.removeChild(mainFlowLayout);
+
+                                return true;
+                            } catch (IllegalArgumentException e) {
+                                LOGGER.warn(e.getMessage());
+                            }
+                        }
+                    }
+
+                    return false;
+                });
+
+        root.child(revealLevel.getComponent(root));
+
+        root.mouseUp().subscribe((mouseX, mouseY, button) -> {
+            Component component = root.childAt(Math.round((float) mouseX), Math.round((float) mouseY));
+
+            if(component != null
+                    && (!Objects.equals(component.id(), revealLevel.mainComponentID) && !Objects.equals(component.id(), revealRange.mainComponentID))) return false;
+
+            if((button | GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_MOUSE_BUTTON_LEFT){
+                this.close();
+
                 return true;
             }
+
             return false;
         });
 
-        return c;
+        uiAdapter.enableInspector = false;
+        uiAdapter.globalInspector = false;
     }
 
-    private List<Component> getPlayerComponents() {
-        List<Component> components = new ArrayList<>();
-
-        List<AbstractClientPlayerEntity> playersSortedByDistance = client.world.getPlayers().stream()
-                .filter(p -> client.player != p && p.distanceTo(client.player) < 15)
-                .sorted((o1, o2) -> (int) (o1.distanceTo(client.player) - o2.distanceTo(client.player))).toList();
-
-        for (PlayerEntity player : playersSortedByDistance) {
-
-
-            Component p = Components.button(player.getDisplayName(), 92,20, button -> {
-                client.setScreen(null);
-                Networking.sendC2S(new RevealCharacterC2SPacket.ToPlayer(player.getUuidAsString()));
-            });
-
-//            ParentComponent c = Containers.horizontalFlow(Sizing.fixed(100-8), Sizing.fixed(24))
-//                    .child( new FaceComponent(player.getUuidAsString()))
-//                    .child( Components.label(player.getDisplayName()).color(new Color(0.1F,0.1F,0.1F)) )
-//                    .margins(Insets.bottom(1))
-//                    .alignment(HorizontalAlignment.LEFT, VerticalAlignment.CENTER)
-//                    .surface(Surface.PANEL);
-//
-//            c.mouseUp().subscribe((mouseX, mouseY, button) -> {
-//                System.out.println("CLICKED");
-//                if (button == 0) {
-//                    System.out.println("CLICKED WITH 0");
-//                    Networking.sendC2S(new RevealCharacterC2SPacket.ToPlayer(player.getUuidAsString()));
-//                    return true;
-//                }
-//                return false;
-//            });
-
-            components.add(p);
-
-        }
-
-        return components;
+    @Override
+    public boolean shouldPause() {
+        return false;
     }
-
 }
