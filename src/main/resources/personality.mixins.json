@@ -6,7 +6,6 @@
   "mixins": [
     "HungerManagerMixin",
     "ModPacketsC2SAccessor",
-    "NinePatchRendererAccessor",
     "OriginLayerAccessor",
     "PlayerEntityMixin",
     "client.accessor.ScrollContainerAccessor"
@@ -18,6 +17,7 @@
     "client.accessor.EditBoxWidgetAccessor",
     "client.accessor.TextFieldWidgetAccessor",
     "client.origins.ModPacketsS2CMixin"
+    "client.owo.NinePatchRendererAccessor",
   ],
   "injectors": {
     "defaultRequire": 1
