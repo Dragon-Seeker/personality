@@ -1,7 +1,7 @@
 package io.blodhgarm.personality.client.gui.components;
 
 import io.blodhgarm.personality.PersonalityMod;
-import io.blodhgarm.personality.client.gui.VariantsNinePatchRender;
+import io.blodhgarm.personality.client.gui.utils.VariantsNinePatchRender;
 import io.wispforest.owo.ui.container.HorizontalFlowLayout;
 import io.wispforest.owo.ui.core.Size;
 import io.wispforest.owo.ui.core.Sizing;

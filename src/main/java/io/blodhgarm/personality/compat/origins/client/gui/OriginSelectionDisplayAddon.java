@@ -9,7 +9,7 @@ import io.blodhgarm.personality.compat.origins.client.gui.components.OriginHeade
 import io.blodhgarm.personality.compat.origins.client.gui.components.OriginImpactComponent;
 import io.blodhgarm.personality.compat.origins.client.gui.components.OriginInfoContainer;
 import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddon;
-import io.blodhgarm.personality.client.gui.components.CustomSurfaces;
+import io.blodhgarm.personality.client.gui.utils.CustomSurfaces;
 import io.github.apace100.origins.Origins;
 import io.github.apace100.origins.origin.*;
 import io.github.apace100.origins.registry.ModItems;

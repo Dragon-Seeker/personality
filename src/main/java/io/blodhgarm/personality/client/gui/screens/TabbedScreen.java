@@ -1,8 +1,9 @@
-package io.blodhgarm.personality.client.gui;
+package io.blodhgarm.personality.client.gui.screens;
 
 import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.client.ThemeHelper;
 import io.blodhgarm.personality.client.gui.components.ButtonFlowLayout;
+import io.blodhgarm.personality.client.gui.utils.VariantsNinePatchRender;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.base.BaseParentComponent;
 import io.wispforest.owo.ui.component.ButtonComponent;
@@ -17,7 +18,6 @@ import org.apache.commons.collections4.map.LinkedMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 public abstract class TabbedScreen extends BaseOwoScreen<FlowLayout> {

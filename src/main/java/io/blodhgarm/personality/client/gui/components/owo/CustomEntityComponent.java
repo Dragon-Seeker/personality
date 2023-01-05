@@ -1,4 +1,4 @@
-package io.blodhgarm.personality.client.gui.components;
+package io.blodhgarm.personality.client.gui.components.owo;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.wispforest.owo.ui.component.EntityComponent;
@@ -8,10 +8,8 @@ import net.minecraft.client.render.DiffuseLighting;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3f;
 import org.jetbrains.annotations.Nullable;
@@ -20,10 +18,6 @@ public class CustomEntityComponent<E extends Entity> extends EntityComponent<E> 
 
     public CustomEntityComponent(Sizing entitySizing, E entity) {
         super(entitySizing, entity);
-    }
-
-    public CustomEntityComponent(Sizing entitySizing, EntityType<E> type, @Nullable NbtCompound nbt) {
-        super(entitySizing, type, nbt);
     }
 
     public static <P extends PlayerEntity, E extends Entity> CustomEntityComponent<E> playerEntityComponent(Sizing entitySizing, @Nullable P entity){

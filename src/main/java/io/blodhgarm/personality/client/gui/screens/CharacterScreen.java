@@ -3,14 +3,15 @@ package io.blodhgarm.personality.client.gui.screens;
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.Networking;
 import io.blodhgarm.personality.PersonalityMod;
+import io.blodhgarm.personality.api.BaseCharacter;
 import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddon;
 import io.blodhgarm.personality.api.client.AddonObservable;
 import io.blodhgarm.personality.api.client.PersonalityScreenAddonRegistry;
 import io.blodhgarm.personality.client.ThemeHelper;
 import io.blodhgarm.personality.client.gui.CharacterScreenMode;
-import io.blodhgarm.personality.client.gui.components.CustomEntityComponent;
-import io.blodhgarm.personality.client.gui.components.CustomSurfaces;
+import io.blodhgarm.personality.client.gui.components.owo.CustomEntityComponent;
+import io.blodhgarm.personality.client.gui.utils.CustomSurfaces;
 import io.blodhgarm.personality.client.gui.components.vanilla.BetterEditBoxWidget;
 import io.blodhgarm.personality.client.gui.components.vanilla.BetterTextFieldWidget;
 import io.blodhgarm.personality.packets.SyncC2SPackets;
@@ -24,6 +25,7 @@ import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.container.HorizontalFlowLayout;
 import io.wispforest.owo.ui.core.*;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.input.CursorMovement;
 import net.minecraft.entity.player.PlayerEntity;
@@ -45,20 +47,31 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
 
     private static final MutableText requiredText = Text.literal("*").formatted(Formatting.BOLD, Formatting.RED);
 
+    //------------------------
+
     private final Map<Identifier, PersonalityScreenAddon> screenAddons = new HashMap<>();
-
-    public final CharacterScreenMode currentMode;
-
-    @Nullable public final Character currentCharacter;
-    @Nullable public final PlayerEntity player;
 
     public FlowLayout rootComponent;
 
     public GenderSelection currentSelection = GenderSelection.MALE;
 
+    //------------------------
+
+    public final CharacterScreenMode currentMode;
+
+    @Nullable public final BaseCharacter currentCharacter;
+    @Nullable public final PlayerEntity player;
+
+    //------------------------
+
     public boolean buildAsScreen = true;
 
-    public CharacterScreen(CharacterScreenMode currentMode, @Nullable PlayerEntity player, @Nullable Character character) {
+    @Nullable
+    public Screen originScreen = null;
+
+    //------------------------
+
+    public CharacterScreen(CharacterScreenMode currentMode, @Nullable PlayerEntity player, @Nullable BaseCharacter character) {
         this.currentMode = currentMode;
 
         this.player = player;
@@ -124,7 +137,7 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
 
             nameLabel.append(isModifiable ? requiredText.copy() : Text.empty())
                     .append(Text.literal("Name: "))
-                    .append(!isModifiable ? Text.literal(currentCharacter.getName()) : Text.empty());
+                    .append(!isModifiable ? currentCharacter.getFormattedName() : Text.empty());
 
             namePropertyLayout.child(Components.label(nameLabel));
 
@@ -143,10 +156,14 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
         FlowLayout agePropertyLayout = Containers.horizontalFlow(Sizing.content(), Sizing.content());
 
         {
-            MutableText ageLabel = Text.empty();
+            MutableText ageLabel = Text.empty()
+                    .append(Text.literal("Age: "));
 
-            ageLabel.append(Text.literal("Age: "))
-                    .append(isModifiable ? Text.empty() : Text.literal(currentCharacter.getAge() + " Years"));
+            if(!isModifiable){
+                int age = currentCharacter.getAge();
+
+                ageLabel.append(Text.literal(age > 0 ? age + " Years" : "Unknown"));
+            }
 
             agePropertyLayout.child(
                     Components.label(ageLabel)
@@ -154,7 +171,7 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
                             .margins(Insets.right(6))
             );
 
-            if (isModifiable) {
+            if(isModifiable){
                 agePropertyLayout
                         .child(
                                 Components.discreteSlider(Sizing.fixed(114), 17, 60) //134
@@ -216,7 +233,7 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
                                                 .margins(Insets.of(0, 4, 0, 0))
                                 )
                                 .child(
-                                        BetterEditBoxWidget.editBox(Sizing.fixed(136), Sizing.fixed(60), Text.of(""), Text.of(""), importCharacterData ? currentCharacter.getDescription() : "")
+                                        BetterEditBoxWidget.editBox(Sizing.fixed(136), Sizing.fixed(60), Text.of(""), Text.of(""), importCharacterData ? currentCharacter.getBiography() : "")
                                                 .setCursorPosition(CursorMovement.ABSOLUTE, 0)
                                                 .textWidth(130)
                                                 .bqColor(Color.ofArgb(0xFF555555))
@@ -329,12 +346,23 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
         //---------------------------------- END ----------------------------------
     }
 
+    @Override
+    public void close() {
+        if (this.originScreen != null) {
+            this.client.setScreen(this.originScreen);
+        } else {
+            super.close();
+        }
+    }
+
     private Component createGenderComponent(boolean modifiable, boolean importCharacterData){
         FlowLayout horizontalComponent = Containers.horizontalFlow(Sizing.content(), Sizing.content());
 
         MutableText text = Text.literal("Gender: ");
 
-        if (!modifiable) text.append(Text.of(currentCharacter.getGender()));
+        if (!modifiable) {
+            text.append(Text.of(currentCharacter.getGender().replace("_", " ")));
+        }
 
         horizontalComponent
                 .child(Components.label(text)
@@ -444,7 +472,7 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
     public enum GenderSelection {
         MALE("male"),
         FEMALE("female"),
-        NON_BINARY("non binary"),
+        NON_BINARY("non-binary"),
         OTHER("other");
 
         public final String name;
@@ -474,8 +502,13 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
         }
 
         public Text translation(){
-            return Text.translatable("personality.gender." + name.replace(" ", "_"));
+            return Text.translatable("personality.gender." + name.replace(" ", "_").toLowerCase(Locale.ROOT));
         }
+
+        public String translatedString(){
+            return translation().getString();
+        }
+
 
         public int textSizing(){
             return MinecraftClient.getInstance().textRenderer.getWidth(this.translation().asOrderedText());

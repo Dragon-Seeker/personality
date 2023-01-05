@@ -1,20 +1,20 @@
 package io.blodhgarm.personality.client.gui.screens;
 
 import io.blodhgarm.personality.PersonalityMod;
+import io.blodhgarm.personality.api.BaseCharacter;
 import io.blodhgarm.personality.api.Character;
+import io.blodhgarm.personality.api.reveal.KnownCharacter;
 import io.blodhgarm.personality.client.ClientCharacters;
 import io.blodhgarm.personality.client.ThemeHelper;
 import io.blodhgarm.personality.client.gui.CharacterScreenMode;
-import io.blodhgarm.personality.client.gui.TabbedScreen;
-import io.blodhgarm.personality.client.gui.components.CustomSurfaces;
-import io.blodhgarm.personality.client.gui.components.ListedCharactersComponentBuilder;
+import io.blodhgarm.personality.client.gui.utils.CustomSurfaces;
+import io.blodhgarm.personality.client.gui.builders.ListedCharactersView;
 import io.blodhgarm.personality.utils.DebugCharacters;
 import io.wispforest.owo.ui.base.BaseParentComponent;
 import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.container.ScrollContainer;
-import io.wispforest.owo.ui.container.VerticalFlowLayout;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.client.MinecraftClient;
@@ -63,25 +63,18 @@ public class CharacterInfoScreen extends TabbedScreen {
 
         this.currentCharacter = ClientCharacters.INSTANCE.getCharacter(MinecraftClient.getInstance().player);
 
-        if(this.currentCharacter == null) this.currentCharacter = DebugCharacters.DEBUG_5;
+        if(this.currentCharacter == null) this.currentCharacter = DebugCharacters.REVEAL_TEST;
 
-        List<Character> knownCharacters = new ArrayList<>();
+        List<BaseCharacter> knownCharacters = new ArrayList<>(this.currentCharacter.getKnownCharacters().values());
 
-        this.currentCharacter.knowCharacters.forEach((s, knownCharacter) -> {
-            Character character = ClientCharacters.INSTANCE.getCharacter(knownCharacter.characterUUID);
+        if(knownCharacters.isEmpty() && !DebugCharacters.KNOWN_CHARACTERS.isEmpty()) knownCharacters.addAll(DebugCharacters.KNOWN_CHARACTERS);
 
-            if(character != null){
-                knownCharacters.add(character);
-            }
-        });
-
-        if(knownCharacters.isEmpty()) knownCharacters.addAll(DebugCharacters.DEBUG_CHARACTERS);
-
-        FlowLayout knownCharacterLayout = Containers.verticalFlow(Sizing.fixed(140), Sizing.content());
+        FlowLayout knownCharacterLayout = Containers.verticalFlow(Sizing.content(), Sizing.content()); //140
 
         ScrollContainer<FlowLayout> knownCharacterContainer = Containers.verticalScroll(Sizing.content(), Sizing.fill(100), knownCharacterLayout);
 
-        new ListedCharactersComponentBuilder(() -> knownCharacters)
+        new ListedCharactersView(this, () -> knownCharacters)
+                .addComponent(Text.of("Friendliness"), (baseCharacter, mode, isParentVertical) -> Components.label(((KnownCharacter) baseCharacter).level.getTranslation()))
                 .buildLayout(knownCharacterLayout, knownCharacterContainer);
 
         mainLayout.child(

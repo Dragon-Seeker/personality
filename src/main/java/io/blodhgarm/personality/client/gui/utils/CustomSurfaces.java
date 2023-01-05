@@ -1,4 +1,4 @@
-package io.blodhgarm.personality.client.gui.components;
+package io.blodhgarm.personality.client.gui.utils;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.wispforest.owo.ui.core.Surface;

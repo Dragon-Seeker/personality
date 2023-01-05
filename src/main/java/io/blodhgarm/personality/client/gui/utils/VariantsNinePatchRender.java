@@ -1,6 +1,6 @@
-package io.blodhgarm.personality.client.gui;
+package io.blodhgarm.personality.client.gui.utils;
 
-import io.blodhgarm.personality.mixin.NinePatchRendererAccessor;
+import io.blodhgarm.personality.mixin.client.owo.NinePatchRendererAccessor;
 import io.wispforest.owo.ui.core.Component;
 import io.wispforest.owo.ui.core.ParentComponent;
 import io.wispforest.owo.ui.core.Size;
