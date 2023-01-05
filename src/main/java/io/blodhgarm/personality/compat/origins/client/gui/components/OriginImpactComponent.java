@@ -33,10 +33,14 @@ public class OriginImpactComponent extends BaseComponent {
     }
 
     @Override
-    protected void applyHorizontalContentSizing(Sizing sizing) {}
+    protected int determineHorizontalContentSize(Sizing sizing) {
+        return 0;
+    }
 
     @Override
-    protected void applyVerticalContentSizing(Sizing sizing) {}
+    protected int determineVerticalContentSize(Sizing sizing) {
+        return 0;
+    }
 
     @Override
     public void draw(MatrixStack matrices, int mouseX, int mouseY, float partialTicks, float delta) {

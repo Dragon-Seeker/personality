@@ -1,23 +1,30 @@
 package io.blodhgarm.personality.api;
 
 import com.google.common.reflect.TypeToken;
+import com.google.gson.annotations.Expose;
 import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.addon.BaseAddon;
+import io.blodhgarm.personality.api.reveal.KnownCharacter;
 import io.blodhgarm.personality.impl.ServerCharacters;
 import io.blodhgarm.personality.misc.PersonalityTags;
 import io.blodhgarm.personality.misc.config.PersonalityConfig;
+import io.blodhgarm.personality.utils.DebugCharacters;
+import net.fabricmc.loader.impl.util.StringUtil;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.stat.Stats;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
-import net.minecraft.world.World;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Type;
 import java.util.*;
 
 import static java.lang.Math.*;
 
-public class Character {
+public class Character implements BaseCharacter{
 
     public static final Type REF_MAP_TYPE = new TypeToken<Map<Identifier, BaseAddon>>() {}.getType();
 
@@ -29,7 +36,10 @@ public class Character {
     public boolean isDead;
 
     private final String uuid;
+
     private String name;
+    @Nullable private String alias = null;
+
     private String gender;
     private String description;
     private String biography;
@@ -39,12 +49,16 @@ public class Character {
 
     private int playtimeOffset;
 
-    public final Map<String, KnownCharacter> knowCharacters = new HashMap<>();
+    private Map<String, KnownCharacter> knownCharacters = new HashMap<>();
 
     private transient Map<Identifier, BaseAddon> characterAddons = new HashMap<>();
 
     public Character(String name, String gender, String description, String biography, int ageOffset, int activityOffset) {
-        this.uuid = UUID.randomUUID().toString();
+        this(UUID.randomUUID().toString(), name, gender, description, biography, ageOffset, activityOffset);
+    }
+
+    public Character(String uuid, String name, String gender, String description, String biography, int ageOffset, int activityOffset) {
+        this.uuid = uuid;
         this.name = name;
         this.gender = gender;
         this.description = description;
@@ -55,18 +69,35 @@ public class Character {
         this.isDead = false;
     }
 
-    public boolean isDead() {
-        return isDead;
+    @Override
+    public void beforeSaving() {
+        knownCharacters.values().forEach(KnownCharacter::beforeSaving);
     }
 
-    public void setIsDead(boolean isDead) {
-        this.isDead = isDead;
+    //---------------------------
+
+    @Override
+    public Map<Identifier, BaseAddon> getAddons(){
+        if(this.characterAddons == null) this.characterAddons = new HashMap<>();
+
+        return this.characterAddons;
     }
 
+    @Override
+    public Map<String, KnownCharacter> getKnownCharacters(){
+        if(this.knownCharacters == null) this.knownCharacters = new HashMap<>();
+
+        return this.knownCharacters;
+    }
+
+    @Override
     public String getUUID() {
         return uuid;
     }
 
+    //---------------------------
+
+    @Override
     public String getName() {
         return name;
     }
@@ -75,6 +106,35 @@ public class Character {
         this.name = name;
     }
 
+    //---------------------------
+
+    @Override
+    @Nullable
+    public String getAlias() {
+        return this.alias;
+    }
+
+    public Character setAlias(String alias) {
+        this.alias = alias;
+
+        return this;
+    }
+
+    @Override
+    public Text getFormattedName() {
+        MutableText name = Text.literal(getName());
+
+        if(getAlias() != null){
+            name.append(Text.of(" : "));
+            name.append(Text.literal(getAlias()).formatted(Formatting.ITALIC));
+        }
+
+        return name;
+    }
+
+    //---------------------------
+
+    @Override
     public String getGender() {
         return gender;
     }
@@ -82,6 +142,8 @@ public class Character {
     public void setGender(String gender) {
         this.gender = gender;
     }
+
+    //---------------------------
 
     public String getDescription() {
         return description;
@@ -91,6 +153,8 @@ public class Character {
         this.description = description;
     }
 
+    //---------------------------
+
     public String getBiography() {
         return biography;
     }
@@ -99,25 +163,37 @@ public class Character {
         this.biography = biography;
     }
 
-    public int getAge() {
-        return ageOffset + (int)((System.currentTimeMillis()-created)/WEEK_IN_MILLISECONDS);
+    //---------------------------
+
+    public boolean isDead() {
+        return isDead;
     }
 
-    public void setAge(int age) {
-        ageOffset = age - (int)((System.currentTimeMillis()-created)/WEEK_IN_MILLISECONDS);
+    public void setIsDead(boolean isDead) {
+        this.isDead = isDead;
+    }
+
+    //---------------------------
+
+    public long getCreatedAt() {
+        return created;
+    }
+
+    public int getAge() {
+        return ageOffset + (int)((System.currentTimeMillis() - getCreatedAt()) / WEEK_IN_MILLISECONDS);
     }
 
     public float getPreciseAge() {
-        return ageOffset + ((float)(System.currentTimeMillis()-created)/WEEK_IN_MILLISECONDS);
+        return ageOffset + ((float)(System.currentTimeMillis() - getCreatedAt())/WEEK_IN_MILLISECONDS);
+    }
+
+    public void setAge(int age) {
+        ageOffset = age - (int)((System.currentTimeMillis() - getCreatedAt()) / WEEK_IN_MILLISECONDS);
     }
 
     public Stage getStage() {
         int age = getAge();
         return age < 25 ? Stage.YOUTH : age < 60 ? Stage.PRIME : Stage.OLD;
-    }
-
-    public long getCreatedAt() {
-        return created;
     }
 
     public int getPlaytime() {
@@ -137,6 +213,8 @@ public class Character {
 
         return false;
     }
+
+    //---------------------------
 
     public int getMaxAge() {
         return PersonalityMod.CONFIG.BASE_MAXIMUM_AGE() + Math.min(PersonalityMod.CONFIG.MAX_EXTRA_YEARS_OF_LIFE(), getExtraAge());
@@ -167,12 +245,6 @@ public class Character {
         return extraYears;
     }
 
-    public Map<Identifier, BaseAddon> getAddons(){
-        if(this.characterAddons == null) this.characterAddons = new HashMap<>();
-
-        return this.characterAddons;
-    }
-
     public boolean isObscured() {
         ServerPlayerEntity player = ServerCharacters.INSTANCE.getPlayer(uuid);
 
@@ -184,6 +256,11 @@ public class Character {
 
         return false;
     }
+
+    public boolean isError(){
+        return DebugCharacters.ERROR == this;
+    }
+
 
     public String getInfo() {
         StringBuilder baseInfoText = new StringBuilder();
@@ -212,34 +289,8 @@ public class Character {
                 ",\n ageOffset=" + ageOffset +
                 ",\n created=" + created +
                 ",\n activityOffset=" + playtimeOffset +
-                ",\n knowCharacters=" + knowCharacters +
+                ",\n knowCharacters=" + knownCharacters +
                 "\n}";
     }
 
-    public static class KnownCharacter {
-        public static final String EMPTY_NICKNAME = "none";
-
-        public final String characterUUID;
-        private String nickName = EMPTY_NICKNAME;
-
-        public KnownCharacter(String characterUUID){
-            this.characterUUID = characterUUID;
-        }
-
-        public void setNickName(String nickName){
-            this.nickName = nickName;
-        }
-
-        public String getNickName(){
-            return this.nickName;
-        }
-
-        public boolean hasNickName(){
-            return Objects.equals(this.nickName, EMPTY_NICKNAME);
-        }
-
-        public Character getCharacter(World world){
-            return CharacterManager.getManger(world).getCharacter(characterUUID);
-        }
-    }
 }

@@ -1,5 +1,6 @@
 package io.blodhgarm.personality.api.addon.client;
 
+import io.blodhgarm.personality.api.BaseCharacter;
 import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.api.client.AddonObservable;
@@ -24,12 +25,12 @@ public abstract class PersonalityScreenAddon {
 
     protected final CharacterScreenMode mode;
 
-    @Nullable protected final Character character;
+    @Nullable protected final BaseCharacter character;
     @Nullable protected final PlayerEntity player;
 
     private BaseParentComponent rootBranchComponent = null;
 
-    public PersonalityScreenAddon(CharacterScreenMode mode, @Nullable Character character, @Nullable PlayerEntity player, Identifier addonId){
+    public PersonalityScreenAddon(CharacterScreenMode mode, @Nullable BaseCharacter character, @Nullable PlayerEntity player, Identifier addonId){
         this.mode = mode;
 
         this.character = character;

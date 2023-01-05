@@ -1,5 +1,6 @@
 package io.blodhgarm.personality.compat.pehkui.client;
 
+import io.blodhgarm.personality.api.BaseCharacter;
 import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddon;
@@ -29,21 +30,27 @@ public class PehkuiScaleDisplayAddon extends PersonalityScreenAddon {
 
     private double startingValue = 0.0;
 
-    public PehkuiScaleDisplayAddon(CharacterScreenMode mode, @Nullable Character character, @Nullable PlayerEntity player) {
+    @Nullable private ScaleAddon scaleAddon = null;
+
+    public PehkuiScaleDisplayAddon(CharacterScreenMode mode, @Nullable BaseCharacter character, @Nullable PlayerEntity player) {
         super(mode, character, player, new Identifier("pehkui", "scale_selection_addon"));
 
         if(mode.importFromCharacter()){
-            ScaleAddon addon = (ScaleAddon) character.getAddons().get(PehkuiAddonRegistry.addonId);
+            scaleAddon = (ScaleAddon) character.getAddon(PehkuiAddonRegistry.addonId);
 
-            if(addon != null) startingValue = addon.getHeightOffset();
+            if(scaleAddon != null) startingValue = scaleAddon.getHeightOffset();
         }
     }
 
     @Override
-    public boolean hasSideScreenComponent() {return false;}
+    public boolean hasSideScreenComponent() {
+        return false;
+    }
 
     @Override
-    public FlowLayout build(boolean darkMode) {return Containers.verticalFlow(Sizing.content(), Sizing.content()); }
+    public FlowLayout build(boolean darkMode) {
+        return Containers.verticalFlow(Sizing.content(), Sizing.content());
+    }
 
     @Override
     public Component buildBranchComponent(BaseParentComponent rootBranchComponent) {
@@ -51,7 +58,14 @@ public class PehkuiScaleDisplayAddon extends PersonalityScreenAddon {
 
         MutableText text = Text.literal("Height: ");
 
-        if(!modifiable) text.append(Text.literal(String.format("%.2fm", this.startingValue + 1.8)));
+        if(!modifiable && scaleAddon != null) {
+            //TODO: TRANSLATIONS!
+            text.append(
+                    Text.literal(scaleAddon.shouldShowHeight()
+                            ? String.format("%.2fm", scaleAddon.getHeightOffset() + 1.8)
+                            : "Unknown")
+            );
+        }
 
         FlowLayout layout = Containers.horizontalFlow(Sizing.content(), Sizing.content())
                 .child(

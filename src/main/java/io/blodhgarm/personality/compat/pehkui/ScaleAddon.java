@@ -6,14 +6,12 @@ import virtuoel.pehkui.api.ScaleData;
 
 public class ScaleAddon extends BaseAddon {
 
+    private boolean shouldShowHeight = true;
+
     private final float heightOffset;
 
     public ScaleAddon(float heightScale){
         this.heightOffset = heightScale;
-    }
-
-    public final float getHeightOffset(){
-        return heightOffset;
     }
 
     @Override
@@ -35,6 +33,20 @@ public class ScaleAddon extends BaseAddon {
     @Override
     public String getInfo() {
         return "\n§lHeight§r: " + (String.format("%.2f", heightOffset + 1.8)) + "m";
+    }
+
+    public final float getHeightOffset(){
+        return heightOffset;
+    }
+
+    public ScaleAddon shouldShowHeight(boolean value){
+        this.shouldShowHeight = value;
+
+        return this;
+    }
+
+    public boolean shouldShowHeight(){
+        return this.shouldShowHeight;
     }
 
     @Override

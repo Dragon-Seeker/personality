@@ -1,5 +1,6 @@
 package io.blodhgarm.personality.api.client;
 
+import io.blodhgarm.personality.api.BaseCharacter;
 import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddon;
 import io.blodhgarm.personality.client.gui.CharacterScreenMode;
@@ -29,6 +30,6 @@ public class PersonalityScreenAddonRegistry {
     }
 
     public interface AddonFactory<T extends PersonalityScreenAddon> {
-        T buildAddon(CharacterScreenMode mode, @Nullable Character character, @Nullable PlayerEntity player);
+        T buildAddon(CharacterScreenMode mode, @Nullable BaseCharacter character, @Nullable PlayerEntity player);
     }
 }

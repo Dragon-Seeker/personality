@@ -1,6 +1,6 @@
 package io.blodhgarm.personality.compat.origins.client.gui;
 
-import io.blodhgarm.personality.api.Character;
+import io.blodhgarm.personality.api.BaseCharacter;
 import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.client.ThemeHelper;
 import io.blodhgarm.personality.client.gui.CharacterScreenMode;
@@ -67,11 +67,11 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
 
     //----------------------------
 
-    public OriginSelectionDisplayAddon(CharacterScreenMode mode, @Nullable Character character, @Nullable PlayerEntity player){
+    public OriginSelectionDisplayAddon(CharacterScreenMode mode, @Nullable BaseCharacter character, @Nullable PlayerEntity player){
         this(mode, character, player, 0);
     }
 
-    public OriginSelectionDisplayAddon(CharacterScreenMode mode, @Nullable Character character, @Nullable PlayerEntity player, int currentLayerIndex) {
+    public OriginSelectionDisplayAddon(CharacterScreenMode mode, @Nullable BaseCharacter character, @Nullable PlayerEntity player, int currentLayerIndex) {
         super(mode, character, player, new Identifier("origins", "origin_selection_addon"));
 
         this.layerList = new ArrayList<>();
@@ -86,9 +86,14 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
 
         if(this.mode.importFromCharacter()){
             layerList.forEach(layer -> {
-                OriginAddon addon = (OriginAddon) character.getAddons().get(layer.getIdentifier());
+                OriginAddon addon = (OriginAddon) character.getAddon(layer.getIdentifier());
 
-                if(addon != null) selectedOrigins.put(layer, OriginRegistry.get(addon.getOriginId()));
+                try {
+                    if (addon != null) selectedOrigins.put(layer, OriginRegistry.get(addon.getOriginId()));
+                } catch (IllegalArgumentException e){
+                    System.out.println("Oh No");
+                    System.out.println(e.getMessage());
+                }
             });
         }
 

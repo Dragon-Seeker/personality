@@ -249,7 +249,7 @@ public class PersonalityCommands {
 
             if(c == null) return errorNoCharacterMsg(context, context.getSource().getPlayer());
 
-            for (Map.Entry<String, Character.KnownCharacter> entry : c.knowCharacters.entrySet()) {
+            for (Map.Entry<String, KnownCharacter> entry : c.getKnownCharacters().entrySet()) {
                 String characterUUID = entry.getKey();
 
                 Character pc = ServerCharacters.INSTANCE.getCharacter(characterUUID);
@@ -302,7 +302,7 @@ public class PersonalityCommands {
             Character pCharacter = ServerCharacters.INSTANCE.getCharacter(p);
 
             if(pCharacter != null) {
-                c.knowCharacters.put(pCharacter.getUUID(), new Character.KnownCharacter(pCharacter.getUUID()));
+                c.getKnownCharacters().put(pCharacter.getUUID(), new KnownCharacter(pCharacter.getUUID()));
             } else {
                 LOGGER.error("Could not add a known Character to [{}] as it wasn't found by the character manager: [Player: {}]", player, p);
             }
@@ -319,7 +319,7 @@ public class PersonalityCommands {
 
         String characterUUID = getString(context, "uuid");
 
-        c.knowCharacters.put(characterUUID, new Character.KnownCharacter(characterUUID));
+        c.getKnownCharacters().put(characterUUID, new KnownCharacter(characterUUID));
         ServerCharacters.INSTANCE.saveCharacter(c);
 
         return msg(context, "Character Added");
@@ -335,7 +335,7 @@ public class PersonalityCommands {
             Character pCharacter = ServerCharacters.INSTANCE.getCharacter(p);
 
             if(pCharacter != null) {
-                c.knowCharacters.remove(pCharacter.getUUID());
+                c.getKnownCharacters().remove(pCharacter.getUUID());
             } else {
                 LOGGER.error("Could not remove a known Character of [{}] as it wasn't found by the character manager: [Player: {}]", player, p);
             }
@@ -351,7 +351,7 @@ public class PersonalityCommands {
         if(c == null)
             return errorNoCharacterMsg(context, context.getSource().getPlayer());
 
-        c.knowCharacters.remove( getString(context, "uuid") );
+        c.getKnownCharacters().remove( getString(context, "uuid") );
         ServerCharacters.INSTANCE.saveCharacter(c);
 
         return msg(context, "Character Removed");

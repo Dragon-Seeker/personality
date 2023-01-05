@@ -56,9 +56,9 @@ public class PersonalityMod implements ModInitializer, PersonalityEntrypoint{
 
     @Override
     public <T extends BaseAddon> void addonRegistry(AddonRegistry<T> registry) {
-        if(FabricLoader.getInstance().isModLoaded("origins")){
-            OriginsAddonRegistry.addonRegistry(registry);
-        }
+        if(FabricLoader.getInstance().isModLoaded("origins")) OriginsAddonRegistry.INSTANCE.addonRegistry(registry);
+        if(FabricLoader.getInstance().isModLoaded("pehkui")) PehkuiAddonRegistry.INSTANCE.addonRegistry(registry);
+    }
 
         if(FabricLoader.getInstance().isModLoaded("pehkui")){
             PehkuiAddonRegistry.addonRegistry(registry);

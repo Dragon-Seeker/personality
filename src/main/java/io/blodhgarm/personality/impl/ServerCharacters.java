@@ -174,6 +174,8 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     }
 
     public void saveCharacter(Character character, boolean syncCharacter) {
+        character.beforeSaving();
+
         String characterJson = GSON.toJson(character);
 
         if(syncCharacter) Networking.sendToAll(new SyncS2CPackets.SyncCharacter(characterJson, Map.of()));
@@ -276,6 +278,10 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
                 e.printStackTrace();
             }
         }
+
+        if(FabricLoader.getInstance().isDevelopmentEnvironment()){
+            DebugCharacters.loadDebugCharacters(this);
+        }
     }
 
     public void saveCharacterReference() {
@@ -299,6 +305,8 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
     @Override
     public void onPlayReady(ServerPlayNetworkHandler handler, PacketSender sender, MinecraftServer server) {
+        applyAddons(handler.player);
+
         Map<String, String> characters = new HashMap<>();
 
         for (Character c : characterLookupMap().values()){

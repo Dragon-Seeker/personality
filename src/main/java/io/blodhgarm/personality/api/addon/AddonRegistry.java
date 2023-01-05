@@ -7,6 +7,7 @@ import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.api.PersonalityEntrypoint;
+import io.blodhgarm.personality.api.core.DelayedRegistry;
 import io.blodhgarm.personality.impl.ServerCharacters;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.entity.player.PlayerEntity;
@@ -28,7 +29,7 @@ import java.util.function.Supplier;
 /**
  * AddonRegistry is used internally to read and validate addons on both client and server
  */
-public class AddonRegistry<A extends BaseAddon> implements ServerLifecycleEvents.EndDataPackReload, ServerLifecycleEvents.ServerStarted {
+public class AddonRegistry<A extends BaseAddon> extends DelayedRegistry {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -80,8 +81,12 @@ public class AddonRegistry<A extends BaseAddon> implements ServerLifecycleEvents
         return loader.map(AddonLoader::addonClass).orElse(null);
     }
 
-    public List<A> getDefaultAddons(){
-        return LOADERS.values().stream().map(loaderStorage -> loaderStorage.defaultAddon.get()).toList();
+    public Map<Identifier, A> getDefaultAddons(){
+        Map<Identifier, A> defaultAddonsMap = new HashMap<>();
+
+        LOADERS.forEach((identifier, loaderStorage) -> defaultAddonsMap.put(identifier, loaderStorage.defaultAddon.get()));
+
+        return defaultAddonsMap;
     }
 
     @Nullable
@@ -106,9 +111,9 @@ public class AddonRegistry<A extends BaseAddon> implements ServerLifecycleEvents
     }
 
     public void checkAndDefaultPlayerAddons(PlayerEntity player){
-        this.getDefaultAddons().forEach(a -> {
-            if(!a.isEqualToPlayer(player) && a.getAddonEnvironment().shouldApply(player.getWorld())){
-                a.applyAddon(player);
+        this.getDefaultAddons().forEach((identifier, addon) -> {
+            if(!addon.isEqualToPlayer(player) && addon.getAddonEnvironment().shouldApply(player.getWorld())){
+                addon.applyAddon(player);
             }
         });
     }
@@ -153,17 +158,12 @@ public class AddonRegistry<A extends BaseAddon> implements ServerLifecycleEvents
         return addonData;
     }
 
-    @Override
-    public void endDataPackReload(MinecraftServer server, LifecycledResourceManager resourceManager, boolean success) {
-        DELAYED_REGISTERY.forEach(addonRegistryConsumer -> addonRegistryConsumer.accept(this));
-    }
-
-    @Override
-    public void onServerStarted(MinecraftServer server) {
-        DELAYED_REGISTERY.forEach(addonRegistryConsumer -> addonRegistryConsumer.accept(this));
-    }
-
     //--------------------------------------------------------------------------------
+
+    @Override
+    public void runDelayedRegistration(){
+        DELAYED_REGISTERY.forEach(addonRegistryConsumer -> addonRegistryConsumer.accept(this));
+    }
 
     public static record AddonLoader<A extends BaseAddon>(Identifier addonId, Class<A> addonClass, Supplier<A> defaultAddon, Predicate<A> addonValidator){ }
 }

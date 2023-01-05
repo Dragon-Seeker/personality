@@ -1,12 +1,17 @@
 package io.blodhgarm.personality.compat.pehkui;
 
 import io.blodhgarm.personality.PersonalityMod;
+import io.blodhgarm.personality.api.PersonalityEntrypoint;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.addon.BaseAddon;
+import io.blodhgarm.personality.api.reveal.InfoRevealLevel;
+import io.blodhgarm.personality.api.reveal.InfoRevealRegistry;
 import net.minecraft.util.Identifier;
 import virtuoel.pehkui.api.*;
 
-public class PehkuiAddonRegistry {
+public class PehkuiAddonRegistry implements PersonalityEntrypoint {
+
+    public static PehkuiAddonRegistry INSTANCE = new PehkuiAddonRegistry();
 
     public static final ScaleModifier CHARACTER_MODIFIER = ScaleRegistries.register(
             ScaleRegistries.SCALE_MODIFIERS,
@@ -53,7 +58,7 @@ public class PehkuiAddonRegistry {
 
     public static final Identifier addonId = new Identifier("pehkui", "height_modifier");
 
-    public static <T extends BaseAddon> void addonRegistry(AddonRegistry<T> registry) {
+    public <T extends BaseAddon> void addonRegistry(AddonRegistry<T> registry) {
         registry.registerAddon(addonId, (Class<T>) ScaleAddon.class, () -> (T) new ScaleAddon(0f), t -> true);
     }
 }
