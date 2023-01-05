@@ -10,7 +10,9 @@ import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.Networking;
 import io.blodhgarm.personality.api.CharacterManager;
+import io.blodhgarm.personality.api.reveal.KnownCharacter;
 import io.blodhgarm.personality.client.gui.CharacterScreenMode;
+import io.blodhgarm.personality.api.reveal.InfoRevealLevel;
 import io.blodhgarm.personality.packets.OpenPersonalityScreenS2CPacket;
 import io.blodhgarm.personality.impl.ServerCharacters;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -228,7 +230,7 @@ public class PersonalityCommands {
 
     private static int revealRange(CommandContext<ServerCommandSource> context, int range) {
         try {
-            ServerCharacters.INSTANCE.revealToPlayersInRange(context.getSource().getPlayer(), range);
+            ServerCharacters.INSTANCE.revealCharacterInfo(context.getSource().getPlayer(), range, InfoRevealLevel.GENERAL);
         }
         catch (Exception e) {
             e.printStackTrace();

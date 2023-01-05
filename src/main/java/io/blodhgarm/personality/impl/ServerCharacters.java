@@ -7,17 +7,20 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.Networking;
+import io.blodhgarm.personality.api.reveal.KnownCharacter;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.api.CharacterManager;
 import io.blodhgarm.personality.api.addon.BaseAddon;
+import io.blodhgarm.personality.api.reveal.InfoRevealLevel;
 import io.blodhgarm.personality.packets.IntroductionPacket;
 import io.blodhgarm.personality.packets.SyncS2CPackets;
+import io.blodhgarm.personality.utils.DebugCharacters;
 import io.blodhgarm.personality.utils.ServerAccess;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.minecraft.entity.player.PlayerEntity;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -146,24 +149,29 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
     //----------------------------------------------------
 
-    public void revealToPlayersInRange(ServerPlayerEntity player, int range) {
-        for (ServerPlayerEntity otherPlayer : player.getWorld().getPlayers()) {
-            if (player.getPos().distanceTo(otherPlayer.getPos()) <= range) revealToPlayer(player, otherPlayer);
+    @Override
+    public void revealCharacterInfo(Character source, ServerPlayerEntity target, Character targetCharacter, InfoRevealLevel level) {
+        if (!targetCharacter.getKnownCharacters().containsKey(source.getUUID())) {
+            targetCharacter.getKnownCharacters().put(source.getUUID(), new KnownCharacter(source.getUUID()));
+
+            saveCharacter(targetCharacter);
+
+            Networking.sendS2C(target, new IntroductionPacket(source.getUUID()));
         }
     }
 
-    public void revealToPlayer(ServerPlayerEntity revealed, ServerPlayerEntity revealedTo) {
-        String revealedCharacterUUID = getCharacterUUID(revealed);
-        Character revealedToCharacter = getCharacter(revealedTo);
+    @Override
+    public void revealCharacterInfo(ServerPlayerEntity source, int range, InfoRevealLevel level) {
+        Character sourceCharacter = this.getCharacter(source);
 
-        if (revealedToCharacter == null || revealedCharacterUUID == null) return;
+        if(sourceCharacter == null) return;
 
-        if (!revealedToCharacter.knowCharacters.containsKey(revealedCharacterUUID)) {
-            revealedToCharacter.knowCharacters.put(revealedCharacterUUID, new Character.KnownCharacter(revealedCharacterUUID));
+        for (ServerPlayerEntity otherPlayer : source.getWorld().getPlayers()) {
+            if (source.getPos().distanceTo(otherPlayer.getPos()) <= range) {
+                Character targetCharacter = this.getCharacter(otherPlayer);
 
-            saveCharacter(revealedToCharacter);
-
-            Networking.sendS2C(revealedTo, new IntroductionPacket(revealedCharacterUUID));
+                if(targetCharacter != null) revealCharacterInfo(sourceCharacter, otherPlayer, targetCharacter, level);
+            }
         }
     }
 
@@ -314,7 +322,5 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
         }
 
         Networking.sendS2C(handler.player, new SyncS2CPackets.Initial(characters, playerToCharacterReferences()));
-
-        applyAddons(handler.player);
     }
 }

@@ -61,4 +61,9 @@ public class PehkuiAddonRegistry implements PersonalityEntrypoint {
     public <T extends BaseAddon> void addonRegistry(AddonRegistry<T> registry) {
         registry.registerAddon(addonId, (Class<T>) ScaleAddon.class, () -> (T) new ScaleAddon(0f), t -> true);
     }
+
+    @Override
+    public void infoRevealRegistry(InfoRevealRegistry registry) {
+        registry.registerValueForRevealing(InfoRevealLevel.GENERAL, addonId, () -> new ScaleAddon(-1).shouldShowHeight(false));
+    }
 }

@@ -1,11 +1,12 @@
 package io.blodhgarm.personality.client;
 
 import com.google.common.collect.HashBiMap;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.api.CharacterManager;
+import io.blodhgarm.personality.api.reveal.InfoRevealLevel;
+import io.blodhgarm.personality.utils.DebugCharacters;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +42,18 @@ public class ClientCharacters extends CharacterManager<AbstractClientPlayerEntit
             characterIDToCharacter.put(c.getUUID(), c);
         }
 
+        if(FabricLoader.getInstance().isDevelopmentEnvironment()){
+            DebugCharacters.loadDebugCharacters(this);
+        }
     }
 
+    @Override
+    public void revealCharacterInfo(Character source, AbstractClientPlayerEntity target, Character targetCharacter, InfoRevealLevel level) {
+
+    }
+
+    @Override
+    public void revealCharacterInfo(AbstractClientPlayerEntity source, int range, InfoRevealLevel level) {
+
+    }
 }

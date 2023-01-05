@@ -6,6 +6,8 @@ import com.jthemedetecor.OsThemeDetector;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.PersonalityEntrypoint;
 import io.blodhgarm.personality.api.addon.BaseAddon;
+import io.blodhgarm.personality.api.reveal.InfoRevealLevel;
+import io.blodhgarm.personality.api.reveal.InfoRevealRegistry;
 import io.blodhgarm.personality.compat.origins.OriginsAddonRegistry;
 import io.blodhgarm.personality.compat.pehkui.PehkuiAddonRegistry;
 import io.blodhgarm.personality.impl.CharacterTick;
@@ -51,6 +53,7 @@ public class PersonalityMod implements ModInitializer, PersonalityEntrypoint{
 
         FabricLoader.getInstance().getEntrypoints("personality", PersonalityEntrypoint.class).forEach(personalityEntrypoint -> {
             personalityEntrypoint.addonRegistry(AddonRegistry.INSTANCE);
+            personalityEntrypoint.infoRevealRegistry(InfoRevealRegistry.INSTANCE);
         });
     }
 
@@ -60,8 +63,19 @@ public class PersonalityMod implements ModInitializer, PersonalityEntrypoint{
         if(FabricLoader.getInstance().isModLoaded("pehkui")) PehkuiAddonRegistry.INSTANCE.addonRegistry(registry);
     }
 
-        if(FabricLoader.getInstance().isModLoaded("pehkui")){
-            PehkuiAddonRegistry.addonRegistry(registry);
-        }
+    @Override
+    public void infoRevealRegistry(InfoRevealRegistry registry) {
+        registry.registerValueForRevealing(InfoRevealLevel.GENERAL, PersonalityMod.id("description"), () -> "Unknown");
+        registry.registerValueForRevealing(InfoRevealLevel.GENERAL, PersonalityMod.id("alias"), () -> "Unknown");
+
+        registry.registerValueForRevealing(InfoRevealLevel.ASSOCIATE, PersonalityMod.id("gender"), () -> "Unknown");
+        registry.registerValueForRevealing(InfoRevealLevel.ASSOCIATE, PersonalityMod.id("age"), () -> -1);
+
+        registry.registerValueForRevealing(InfoRevealLevel.TRUSTED, PersonalityMod.id("biography"), () -> "Unknown");
+
+        registry.registerValueForRevealing(InfoRevealLevel.CONFIDANT, PersonalityMod.id("name"), () -> "Unknown");
+
+        if(FabricLoader.getInstance().isModLoaded("origins")) OriginsAddonRegistry.INSTANCE.infoRevealRegistry(registry);
+        if(FabricLoader.getInstance().isModLoaded("pehkui")) PehkuiAddonRegistry.INSTANCE.infoRevealRegistry(registry);
     }
 }

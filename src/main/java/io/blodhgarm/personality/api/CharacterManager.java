@@ -3,6 +3,7 @@ package io.blodhgarm.personality.api;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
+import io.blodhgarm.personality.impl.RevelCharacterInfo;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -16,7 +17,7 @@ import java.util.*;
  * Base interface for storing and managing Character data
  * @param <P> Is a version of player either {@link ClientPlayerEntity} or {@link ServerPlayerEntity}
  */
-public abstract class CharacterManager<P extends PlayerEntity> {
+public abstract class CharacterManager<P extends PlayerEntity> implements RevelCharacterInfo<P> {
 
     private static final Map<String, CharacterManager<?>> MANAGER_REGISTRY = new HashMap<>();
 
@@ -180,6 +181,10 @@ public abstract class CharacterManager<P extends PlayerEntity> {
                 if(!addon.isEqualToPlayer(player) && addon.getAddonEnvironment().shouldApply(player.getWorld())){
                     addon.applyAddon(player);
                 }
+            });
+
+            c.getKnownCharacters().forEach((s, knownCharacter) -> {
+                knownCharacter.setParentCharacter(this);
             });
         } else {
             AddonRegistry.INSTANCE.checkAndDefaultPlayerAddons(player);

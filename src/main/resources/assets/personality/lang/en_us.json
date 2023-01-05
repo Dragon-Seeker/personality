@@ -1,11 +1,22 @@
 {
   "personality.gender.male": "Male",
   "personality.gender.female": "Female",
-  "personality.gender.non_binary": "Non Binary",
+  "personality.gender.non-binary": "Non-Binary",
   "personality.gender.other": "Other",
+  "personality.info.none": "None",
+  "personality.info.general": "General",
+  "personality.info.associate": "Associate",
+  "personality.info.trusted": "Trusted",
+  "personality.info.confidant": "Confidant",
+  "personality.reveal_range.directed": "Directed",
+  "personality.reveal_range.small": "Small",
+  "personality.reveal_range.medium": "Medium",
+  "personality.reveal_range.large": "Large",
   "text.config.personality.option.THEME_MODE": "UI Theme Mode",
   "text.config.personality.option.THEME_MODE.tooltip": "Change this setting if your want either the light mode or dark mode version of the Personality UI",
   "text.config.personality.option.THEME_MODE.value.light_mode": "Light Mode",
   "text.config.personality.option.THEME_MODE.value.dark_mode": "Dark Mode",
-  "text.config.personality.option.THEME_MODE.value.system": "System"
+  "text.config.personality.option.THEME_MODE.value.system": "System",
+  "origin.personality.unknown.name": "Unknown",
+  "origin.personality.unknown.description": "Currently Unknown to you, you can ask them or wait until they tell you?"
 }

@@ -136,6 +136,26 @@ public class OriginsAddonRegistry implements PersonalityEntrypoint {
         });
     }
 
+    @Override
+    public void infoRevealRegistry(InfoRevealRegistry registry) {
+        registry.registerDelayedInfoRevealing(revealRegistry -> {
+            OriginRegistry.register(UNKNOWN);
+
+            OriginLayers.getLayers().forEach(layer -> {
+                Identifier layerId = layer.getIdentifier();
+                InfoRevealLevel level = InfoRevealLevel.TRUSTED;
+
+                if(layerId.equals(new Identifier("origins-classes", "class"))) {
+                    level = InfoRevealLevel.GENERAL;
+                } else if(layerId.equals(new Identifier("origins", "origin"))) {
+                    level = InfoRevealLevel.ASSOCIATE;
+                }
+
+                revealRegistry.registerValueForRevealing(level, layerId, () -> new OriginAddon(UNKNOWN.getIdentifier(), layerId));
+            });
+        });
+    }
+
     public static List<Origin> getChoosableSortedOrigins(OriginLayer currentLayer) {
         return getChoosableSortedOrigins(currentLayer, true);
     }
