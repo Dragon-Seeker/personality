@@ -16,5 +16,5 @@ public interface LineManageable<T extends Component> {
 
     List<LineComponent> getLines();
 
-    List<LineEvent> getEvents();
+    List<LineEvent> getLineEvents();
 }

@@ -3,17 +3,30 @@ package io.blodhgarm.personality.impl;
 import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.api.reveal.InfoRevealLevel;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 
-public interface RevelCharacterInfo<P extends PlayerEntity> {
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Supplier;
 
-    void revealCharacterInfo(Character source, P target, Character targetCharacter, InfoRevealLevel level);
+public interface RevelCharacterInfo<P extends PlayerEntity> {
 
     default void revealCharacterInfo(P source, RevealRange range, InfoRevealLevel level){
         this.revealCharacterInfo(source, range.range, level);
     }
 
-    void revealCharacterInfo(P source, int range, InfoRevealLevel level);
+    default void revealCharacterInfo(P source, int range, InfoRevealLevel level){
+        List<P> players = (List<P>) source.getWorld().getPlayers().stream()
+                .filter(player -> source.getPos().distanceTo(player.getPos()) <= range)
+                .toList();
+
+        revealCharacterInfo(source, players, level);
+    }
+
+    void revealCharacterInfo(P source, List<P> targets, InfoRevealLevel level);
+
+    SuccessfulRevealReturn<P> revealCharacterInfo(Character source, Character targetCharacter, InfoRevealLevel level);
 
     enum RevealRange {
         LARGE("large", 15),
@@ -33,4 +46,6 @@ public interface RevelCharacterInfo<P extends PlayerEntity> {
             return Text.translatable("personality.reveal_range." + this.name);
         }
     }
+
+    interface SuccessfulRevealReturn<P> { void finishEvent(P target); }
 }

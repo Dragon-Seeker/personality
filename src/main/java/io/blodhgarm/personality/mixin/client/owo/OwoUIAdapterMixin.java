@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(OwoUIAdapter.class)
-public class OwoUIAdapterMixin {
+public abstract class OwoUIAdapterMixin {
 
     @Inject(method = "keyPressed", at = @At(value = "HEAD"))
     private void test(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir){

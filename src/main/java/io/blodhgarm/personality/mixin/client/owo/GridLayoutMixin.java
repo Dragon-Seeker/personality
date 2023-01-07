@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(GridLayout.class)
 @Pseudo
-public class GridLayoutMixin implements GridLayoutDuck {
+public abstract class GridLayoutMixin implements GridLayoutDuck {
 
     @Shadow @Mutable @Final protected int columns;
     @Shadow @Mutable @Final protected int rows;

@@ -5,6 +5,8 @@ import io.blodhgarm.personality.api.client.PersonalityScreenAddonRegistry;
 import io.blodhgarm.personality.compat.origins.client.gui.OriginSelectionDisplayAddon;
 import io.blodhgarm.personality.compat.pehkui.client.PehkuiScaleDisplayAddon;
 import io.blodhgarm.personality.compat.trinkets.TrinketsGlasses;
+import io.blodhgarm.personality.mixin.client.owo.PositioningMixin;
+import io.wispforest.owo.ui.core.Positioning;
 import ladysnake.satin.api.event.ShaderEffectRenderCallback;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -12,6 +14,8 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.Identifier;
 
 public class PersonalityClient implements ClientModInitializer {
+
+    public static Positioning.Type RELATIVE_WITHOUT_CHILD;
 
     @Override
     public void onInitializeClient() {
@@ -34,4 +38,8 @@ public class PersonalityClient implements ClientModInitializer {
         }
     }
 
+
+    public static Positioning customRelative(int xPercent, int yPercent){
+        return PositioningMixin.personality$invokeNewPosition(xPercent, yPercent, RELATIVE_WITHOUT_CHILD);
+    }
 }

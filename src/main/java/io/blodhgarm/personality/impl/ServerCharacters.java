@@ -13,7 +13,7 @@ import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.api.CharacterManager;
 import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.api.reveal.InfoRevealLevel;
-import io.blodhgarm.personality.packets.IntroductionPacket;
+import io.blodhgarm.personality.packets.IntroductionPackets;
 import io.blodhgarm.personality.packets.SyncS2CPackets;
 import io.blodhgarm.personality.utils.DebugCharacters;
 import io.blodhgarm.personality.utils.ServerAccess;
@@ -37,7 +37,9 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public class ServerCharacters extends CharacterManager<ServerPlayerEntity> implements ServerPlayConnectionEvents.Join, ServerWorldEvents.Load {
 
@@ -150,29 +152,37 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     //----------------------------------------------------
 
     @Override
-    public void revealCharacterInfo(Character source, ServerPlayerEntity target, Character targetCharacter, InfoRevealLevel level) {
-        if (!targetCharacter.getKnownCharacters().containsKey(source.getUUID())) {
-            targetCharacter.getKnownCharacters().put(source.getUUID(), new KnownCharacter(source.getUUID()));
+    public void revealCharacterInfo(ServerPlayerEntity source, List<ServerPlayerEntity> targets, InfoRevealLevel level) {
+        Character sourceCharacter = this.getCharacter(source);
 
-            saveCharacter(targetCharacter);
+        if (sourceCharacter == null) return;
 
-            Networking.sendS2C(target, new IntroductionPacket(source.getUUID()));
+        for (ServerPlayerEntity otherPlayer : targets) {
+            Character targetCharacter = this.getCharacter(otherPlayer);
+
+            if(targetCharacter != null) revealCharacterInfo(sourceCharacter, targetCharacter, level).finishEvent(otherPlayer);
         }
     }
 
     @Override
-    public void revealCharacterInfo(ServerPlayerEntity source, int range, InfoRevealLevel level) {
-        Character sourceCharacter = this.getCharacter(source);
+    public SuccessfulRevealReturn<ServerPlayerEntity> revealCharacterInfo(Character sourceC, Character targetC, InfoRevealLevel level) {
+        if (!targetC.getKnownCharacters().containsKey(sourceC.getUUID())) {
+            targetC.getKnownCharacters().put(sourceC.getUUID(), new KnownCharacter(sourceC.getUUID()));
 
-        if(sourceCharacter == null) return;
+            saveCharacter(targetC);
 
-        for (ServerPlayerEntity otherPlayer : source.getWorld().getPlayers()) {
-            if (source.getPos().distanceTo(otherPlayer.getPos()) <= range) {
-                Character targetCharacter = this.getCharacter(otherPlayer);
+            return player -> Networking.sendS2C(player, new IntroductionPackets.UnknownIntroduction(sourceC.getUUID()));
+        } else {
+            KnownCharacter sourceKnownCharacter = targetC.getKnownCharacters().get(sourceC.getUUID());
 
-                if(targetCharacter != null) revealCharacterInfo(sourceCharacter, otherPlayer, targetCharacter, level);
+            if(sourceKnownCharacter.level.shouldUpdateLevel(level)){
+                sourceKnownCharacter.updateInfoLevel(level);
+
+                return player -> Networking.sendS2C(player, new IntroductionPackets.UpdatedKnowledge(sourceC.getUUID()));
             }
         }
+
+        return target -> {};
     }
 
     //----------------------------------------------------

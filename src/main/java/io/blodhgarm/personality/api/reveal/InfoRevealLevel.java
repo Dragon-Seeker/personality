@@ -19,4 +19,8 @@ public enum InfoRevealLevel {
         return Text.translatable("personality.info." + this.name);
     }
 
+    public boolean shouldUpdateLevel(InfoRevealLevel level){
+        return this.ordinal() < level.ordinal();
+    }
+
 }

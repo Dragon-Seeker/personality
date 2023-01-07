@@ -6,7 +6,6 @@ import io.blodhgarm.personality.misc.owo.LineEvent;
 import io.blodhgarm.personality.misc.pond.owo.*;
 import io.wispforest.owo.ui.base.BaseParentComponent;
 import io.wispforest.owo.ui.container.FlowLayout;
-import io.wispforest.owo.ui.core.Component;
 import io.wispforest.owo.ui.core.Sizing;
 import io.wispforest.owo.util.EventSource;
 import io.wispforest.owo.util.EventStream;
@@ -17,19 +16,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Mixin(FlowLayout.class)
-public abstract class FlowLayoutMixin extends BaseParentComponent implements ExcludableBoundingArea<FlowLayout>, RefinedBoundingArea<FlowLayout>, LineManageable<FlowLayout>, FocusCheckable {
+public abstract class FlowLayoutMixin extends BaseParentComponent implements ExcludableBoundingArea<FlowLayout>, RefinedBoundingArea<FlowLayout>, LineManageable<FlowLayout>, FocusCheckable, CustomFocusHighlighting<FlowLayout> {
 
     private final List<AbstractPolygon> exclusionZones = new ArrayList<>();
 
-    private AbstractPolygon refinedBoundingArea = null;
+    @Nullable private AbstractPolygon refinedBoundingArea = null;
 
     private final List<LineComponent> lines = new ArrayList<>();
 
-    private final List<LineEvent> events = new ArrayList<>();
+    private final List<LineEvent> lineEvents = new ArrayList<>();
 
     private boolean setupInteractionEvents = false;
 
-    private EventStream<FocusCheck> allowFocusEvents = FocusCheck.newStream();
+    private final EventStream<FocusCheck> allowFocusEvents = FocusCheck.newStream();
+
+    @Nullable private HighlightRenderEvent highlightRenderEvent = null;
 
     protected FlowLayoutMixin(Sizing horizontalSizing, Sizing verticalSizing) {
         super(horizontalSizing, verticalSizing);
@@ -90,23 +91,23 @@ public abstract class FlowLayoutMixin extends BaseParentComponent implements Exc
 
     @Override
     public FlowLayout addLineEvent(LineEvent event) {
-        this.events.add(event);
+        this.lineEvents.add(event);
 
         if(!setupInteractionEvents){
             this.focusGained().subscribe(source -> {
-                this.events.forEach(event1 -> event1.action(this, "focus_gained"));
+                this.lineEvents.forEach(event1 -> event1.action(this, "focus_gained"));
             });
 
             this.focusLost().subscribe(() -> {
-                this.events.forEach(event1 -> event1.action(this, "focus_lost"));
+                this.lineEvents.forEach(event1 -> event1.action(this, "focus_lost"));
             });
 
             this.mouseEnter().subscribe(() -> {
-                this.events.forEach(event1 -> event1.action(this, "mouse_enter"));
+                this.lineEvents.forEach(event1 -> event1.action(this, "mouse_enter"));
             });
 
             this.mouseLeave().subscribe(() -> {
-                this.events.forEach(event1 -> event1.action(this, "mouse_leave"));
+                this.lineEvents.forEach(event1 -> event1.action(this, "mouse_leave"));
             });
 
             setupInteractionEvents = true;
@@ -121,8 +122,8 @@ public abstract class FlowLayoutMixin extends BaseParentComponent implements Exc
     }
 
     @Override
-    public List<LineEvent> getEvents() {
-        return events;
+    public List<LineEvent> getLineEvents() {
+        return lineEvents;
     }
 
     //----------------------------
@@ -135,5 +136,20 @@ public abstract class FlowLayoutMixin extends BaseParentComponent implements Exc
     @Override
     public EventSource<FocusCheck> focusCheck() {
         return allowFocusEvents.source();
+    }
+
+    //----------------------------
+
+    @Override
+    public FlowLayout addCustomFocusRendering(HighlightRenderEvent event) {
+        this.highlightRenderEvent = event;
+
+        return (FlowLayout) (Object) this;
+    }
+
+    @Override
+    @Nullable
+    public HighlightRenderEvent getEvent() {
+        return this.highlightRenderEvent;
     }
 }

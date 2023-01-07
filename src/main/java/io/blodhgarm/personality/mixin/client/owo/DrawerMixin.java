@@ -23,10 +23,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 @Mixin(Drawer.class)
-public class DrawerMixin {
+public abstract class DrawerMixin {
 
     @Mixin(Drawer.DebugDrawer.class)
-    public static class DebugDrawerMixin implements UnimportantToggleHelper {
+    public static abstract class DebugDrawerMixin implements UnimportantToggleHelper {
 
         @Unique private boolean toggleUnimportantComp = true;
         @Unique private static boolean shouldFilterUnimportantComponents = false;

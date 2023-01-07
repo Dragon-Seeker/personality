@@ -9,6 +9,5 @@ public interface RefinedBoundingArea<T extends Component> {
 
     <P extends AbstractPolygon> T setRefinedBound(P polygon);
 
-    @Nullable
-    AbstractPolygon getRefinedBound();
+    @Nullable AbstractPolygon getRefinedBound();
 }

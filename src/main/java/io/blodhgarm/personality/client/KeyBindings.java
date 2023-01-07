@@ -1,14 +1,18 @@
 package io.blodhgarm.personality.client;
 
 import io.blodhgarm.personality.PersonalityMod;
+import io.blodhgarm.personality.api.Character;
+import io.blodhgarm.personality.api.CharacterManager;
 import io.blodhgarm.personality.client.gui.screens.PersonalitySubScreen;
 import io.blodhgarm.personality.client.gui.screens.RevealIdentityScreen;
 import io.github.apace100.origins.Origins;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
 public class KeyBindings {
@@ -25,8 +29,17 @@ public class KeyBindings {
     }
 
     public static void processKeybindings(ClientWorld world) {
-        while (REVEAL_KEYBIND.wasPressed())
-            client.setScreen(new RevealIdentityScreen());
+        while (REVEAL_KEYBIND.wasPressed()) {
+            if(client.player != null || FabricLoader.getInstance().isDevelopmentEnvironment()) {
+                Character character = CharacterManager.getManger(world).getCharacter(client.player);
+
+                if(character != null) {
+                    client.setScreen(new RevealIdentityScreen());
+                } else {
+                    client.player.sendMessage(Text.of("Character Reveal Menu requires a characters before being able to be used."));
+                }
+            }
+        }
 
         while (OPEN_SUB_SCREEN_KEYBIND.wasPressed())
             client.setScreen(new PersonalitySubScreen());

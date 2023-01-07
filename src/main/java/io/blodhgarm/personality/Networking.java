@@ -20,15 +20,15 @@ public class Networking {
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.Association.class);
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.Dissociation.class);
 
-        CHANNEL.registerClientboundDeferred(IntroductionPacket.class);
+        CHANNEL.registerClientboundDeferred(IntroductionPackets.UnknownIntroduction.class);
+        CHANNEL.registerClientboundDeferred(IntroductionPackets.UpdatedKnowledge.class);
 
         //C2S - Client to Server
         CHANNEL.registerServerbound(SyncC2SPackets.ModifyCharacter.class, SyncC2SPackets.ModifyCharacter::modifyCharacter);
         CHANNEL.registerServerbound(SyncC2SPackets.NewCharacter.class, SyncC2SPackets.NewCharacter::newCharacter);
         CHANNEL.registerServerbound(SyncC2SPackets.AssociatePlayerToCharacter.class, SyncC2SPackets.AssociatePlayerToCharacter::associate);
 
-        CHANNEL.registerServerbound(RevealCharacterC2SPacket.ToPlayer.class, RevealCharacterC2SPacket.ToPlayer::revealToPlayer);
-        CHANNEL.registerServerbound(RevealCharacterC2SPacket.InRange.class, RevealCharacterC2SPacket.InRange::revealToPlayersInRange);
+        CHANNEL.registerServerbound(RevealCharacterC2SPacket.class, RevealCharacterC2SPacket::revealInformationToPlayers);
     }
 
     public static void registerNetworkingClient(){
@@ -42,7 +42,8 @@ public class Networking {
         CHANNEL.registerClientbound(SyncS2CPackets.Association.class, SyncS2CPackets.Association::syncAssociation);
         CHANNEL.registerClientbound(SyncS2CPackets.Dissociation.class, SyncS2CPackets.Dissociation::syncDissociation);
 
-        CHANNEL.registerClientbound(IntroductionPacket.class, IntroductionPacket::beenIntroduced);
+        CHANNEL.registerClientbound(IntroductionPackets.UnknownIntroduction.class, IntroductionPackets.UnknownIntroduction::unknownIntroduced);
+        CHANNEL.registerClientbound(IntroductionPackets.UpdatedKnowledge.class, IntroductionPackets.UpdatedKnowledge::updatedKnowledge);
     }
 
     public static <R extends Record> void sendC2S(R packet) {

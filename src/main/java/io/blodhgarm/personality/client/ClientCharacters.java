@@ -11,6 +11,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -48,12 +49,8 @@ public class ClientCharacters extends CharacterManager<AbstractClientPlayerEntit
     }
 
     @Override
-    public void revealCharacterInfo(Character source, AbstractClientPlayerEntity target, Character targetCharacter, InfoRevealLevel level) {
-
-    }
+    public void revealCharacterInfo(AbstractClientPlayerEntity source, List<AbstractClientPlayerEntity> targets, InfoRevealLevel level) {}
 
     @Override
-    public void revealCharacterInfo(AbstractClientPlayerEntity source, int range, InfoRevealLevel level) {
-
-    }
+    public SuccessfulRevealReturn<AbstractClientPlayerEntity> revealCharacterInfo(Character source, Character targetCharacter, InfoRevealLevel level) { return target -> {}; }
 }

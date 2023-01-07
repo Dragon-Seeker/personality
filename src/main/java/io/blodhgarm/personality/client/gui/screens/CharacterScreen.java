@@ -336,9 +336,9 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
         rootComponent.child(mainFlowLayout);
 
         if(buildAsScreen) {
-            mainFlowLayout.positioning(Positioning.relative(50, -100));
+            mainFlowLayout.positioning(Positioning.relative(50, -175));
 
-            mainFlowLayout.positioning().animate(2000, Easing.CUBIC, Positioning.relative(50, 50)).forwards();
+            mainFlowLayout.positioning().animate(1000, Easing.CUBIC, Positioning.relative(50, 50)).forwards();
 
             rootComponent.surface(Surface.VANILLA_TRANSLUCENT);
         }

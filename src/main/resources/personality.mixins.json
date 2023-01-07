@@ -25,7 +25,11 @@
     "client.owo.ParentComponentMixin",
     "client.owo.ComponentMixin",
     "client.owo.FlowLayoutMixin",
-    "client.owo.BaseComponentMixin"
+    "client.owo.BaseComponentMixin",
+    "client.owo.AnimationMixin",
+    "client.owo.PositioningMixin",
+    "client.owo.PositioningMixin$TypeMixin",
+    "client.owo.BaseParentComponentMixin"
   ],
   "injectors": {
     "defaultRequire": 1

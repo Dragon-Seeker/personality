@@ -4,9 +4,7 @@ import earcut4j.Earcut;
 import io.blodhgarm.personality.client.gui.components.LineComponent;
 import io.blodhgarm.personality.client.gui.utils.polygons.Triangle;
 import io.blodhgarm.personality.client.gui.utils.polygons.TriangleBasedPolygon;
-import io.blodhgarm.personality.misc.pond.owo.FocusCheckable;
-import io.blodhgarm.personality.misc.pond.owo.LineManageable;
-import io.blodhgarm.personality.misc.pond.owo.RefinedBoundingArea;
+import io.blodhgarm.personality.misc.pond.owo.*;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.*;
@@ -37,6 +35,8 @@ public class SimpleRadialLayoutBuilder {
 
     @Nullable public String mainComponentID = null;
 
+    private double angleOffset = (Math.PI / 2);
+
     //-------------------------------------
 
     @Nullable private FlowLayout mainLayout = null;
@@ -50,6 +50,12 @@ public class SimpleRadialLayoutBuilder {
         this.rOuterLine = rOuterLine;
 
         this.rOuterEntry = rOuterEntry;
+
+        return this;
+    }
+
+    public SimpleRadialLayoutBuilder changeRadialStartOffset(double angleOffset){
+        this.angleOffset = angleOffset;
 
         return this;
     }
@@ -112,7 +118,7 @@ public class SimpleRadialLayoutBuilder {
         for (int i = 0; i < entries; i++) {
             Component entryComponent = components.get(i);
 
-            double baseAngle = (angleStep * i) - (Math.PI / 2);
+            double baseAngle = (angleStep * i) - angleOffset;
 
             double lineAngle1 = baseAngle + (angleStep / 2);
             double lineAngle2 = baseAngle - (angleStep / 2);
@@ -210,31 +216,31 @@ public class SimpleRadialLayoutBuilder {
                             .subscribe(() -> {
                                 onSelectedAdded(component);
 
-                                System.out.println("Mouse: Entered Component: [" + component.toString() + "]");
+//                                System.out.println("Mouse: Entered Component: [" + component.toString() + "]");
                             });
 
                     component.mouseLeave()
                             .subscribe(() -> {
                                 onSelectedRemoved(component);
 
-                                System.out.println("Mouse: Left Component: [" + component.toString() + "]");
+//                                System.out.println("Mouse: Left Component: [" + component.toString() + "]");
                             });
 
                     component.focusGained()
                             .subscribe(source -> {
                                 onSelectedAdded(component);
 
-                                System.out.println("Focus: Gained on Component: [" + component.toString() + "]");
+//                                System.out.println("Focus: Gained on Component: [" + component.toString() + "]");
                             });
 
                     component.focusLost()
                             .subscribe(() -> {
                                 onSelectedRemoved(component);
 
-                                System.out.println("Focus: Lost on Component: [" + component.toString() + "]");
+//                                System.out.println("Focus: Lost on Component: [" + component.toString() + "]");
                             });
 
-                    component.mouseUp()
+                    component.mouseDown()
                             .subscribe((mouseX, mouseY, button) -> {
                                 return button == 0
                                         ? this.onSelectionEvent.apply(this.getSelectedComponent())
@@ -307,17 +313,24 @@ public class SimpleRadialLayoutBuilder {
                                     return Easing.LINEAR.apply(x);
                                 };
 
-                                if(component.startColor().animation() != null){
-                                    component.startColor().animation().forwards(); //.update(1000);
-                                } else {
-                                    component.startColor().animate(100, linearWrapped, new Color(1.0f, 1.0f, 1.0f)).forwards();
-                                }
+                                Animation<Color> startColor = component.startColor().animation();
 
-                                if(component.endColor().animation() != null){
-                                    component.endColor().animation().forwards(); //.update(1000);
-                                } else {
-                                    component.endColor().animate(100, linearWrapped, new Color(1.0f, 1.0f, 1.0f)).forwards();
-                                }
+                                if(startColor == null) startColor = component.startColor().animate(100, Easing.LINEAR, new Color(1.0f, 1.0f, 1.0f));
+
+                                ((AnimationExtension<Color, ?>) startColor)
+                                        .setOnCompletionEvent(animation -> {
+                                            if(animation.direction() == Animation.Direction.BACKWARDS) component.zIndex(0);
+                                        }).forwards();
+
+                                Animation<Color> endColor = component.endColor().animation();
+
+                                if(endColor == null) endColor = component.endColor().animate(100, Easing.LINEAR, new Color(1.0f, 1.0f, 1.0f));
+
+                                ((AnimationExtension<Color, ?>) endColor)
+                                        .setOnCompletionEvent(animation -> {
+                                            if(animation.direction() == Animation.Direction.BACKWARDS) component.zIndex(0);
+                                        }).forwards();
+
                             });
                         } else if(Objects.equals(eventType, "deselected")){
                             manager.getLines().forEach(component -> {
@@ -328,7 +341,16 @@ public class SimpleRadialLayoutBuilder {
 
                         return true;
                     });
+
+            //------------------------------------------------------------------------------------------------------------------
+
+            ((CustomFocusHighlighting<FlowLayout>) entryLayout)
+                    .addCustomFocusRendering((matrices, mouseX, mouseY, partialTicks, delta) -> {
+                        return true;
+                    });
         }
+
+
 
         return this;
     }
@@ -341,17 +363,22 @@ public class SimpleRadialLayoutBuilder {
         return this.mainLayout;
     }
 
+    @Nullable
+    public Component getComponent(){
+        return this.mainLayout;
+    }
+
     public void onSelectedRemoved(Component component){
         this.selectedComponents.remove(component);
 
         Component component1 = this.selectedComponents.peek();
 
         if(component instanceof LineManageable<?> manager){
-            manager.getEvents().forEach(event -> event.action(manager, "deselected"));
+            manager.getLineEvents().forEach(event -> event.action(manager, "deselected"));
         }
 
         if(component1 instanceof LineManageable<?> manager){
-            manager.getEvents().forEach(event -> event.action(manager, "selected"));
+            manager.getLineEvents().forEach(event -> event.action(manager, "selected"));
         }
     }
 
@@ -363,7 +390,7 @@ public class SimpleRadialLayoutBuilder {
         Component component1 = this.selectedComponents.peek();
 
         if(component.equals(component1) && component instanceof LineManageable<?> manager){
-            manager.getEvents().forEach(event -> event.action(manager, "selected"));
+            manager.getLineEvents().forEach(event -> event.action(manager, "selected"));
         }
     }
 
