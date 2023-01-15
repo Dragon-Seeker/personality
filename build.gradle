@@ -27,6 +27,8 @@ repositories {
 	maven { url "https://jitpack.io" }
 	maven { url "https://maven.shedaniel.me/" }
 
+	maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+
 	maven {
 		name = 'Ladysnake Mods'
 		url = 'https://ladysnake.jfrog.io/artifactory/mods'
@@ -49,20 +51,26 @@ dependencies {
 	include "io.wispforest:owo-sentinel:${project.owo_version}"
 	annotationProcessor modImplementation("io.wispforest:owo-lib:${project.owo_version}")
 
-	modApi("com.github.Virtuoel:Pehkui:${pehkui_version}", {
-		exclude group: "net.fabricmc.fabric-api"
-	})
+	modApi("com.github.Virtuoel:Pehkui:${pehkui_version}", { exclude group: "net.fabricmc.fabric-api" })
 
 	modLocalRuntime modCompileOnly("com.terraformersmc:modmenu:${project.modmenu_version}")
 	modImplementation "com.github.apace100:origins-fabric:${project.origin_version}"
-	modImplementation "io.github.ladysnake:satin:${satin_version}"
 	modImplementation "dev.emi:trinkets:${trinkets_version}"
+
 	include "io.github.ladysnake:satin:${satin_version}"
+	modImplementation "io.github.ladysnake:satin:${satin_version}"
 
 	modCompileOnly "dev.onyxstudios.cardinal-components-api:cardinal-components-base:${project.cc_version}"
 	modCompileOnly "dev.onyxstudios.cardinal-components-api:cardinal-components-entity:${project.cc_version}"
 
+	modLocalRuntime "io.wispforest:gadget:${project.gadget_version}"
+
+	//
 	include 'com.github.Dansoftowner:jSystemThemeDetector:3.8'
+
+	include 'io.github.g00fy2:versioncompare:1.4.1'
+	//
+
 	implementation 'com.github.Dansoftowner:jSystemThemeDetector:3.8'
 
 	include 'org.apache.commons:commons-collections4:4.4'
@@ -76,27 +84,39 @@ loom {
 	accessWidenerPath = file("src/main/resources/personality.accesswidener")
 
 	runs {
-		clientMixinDebug {
-			client()
-			name "Minecraft Client [Mixin Debug]"
-			vmArg "-Dfabric.dli.config=${file(".gradle/loom-cache/launch.cfg").toString()}"
-			vmArg "-Dfabric.dli.env=client"
-			vmArg "-Dfabric.dli.main=net.fabricmc.loader.impl.launch.knot.KnotClient"
 
-			afterEvaluate {
-				project.configurations.compileClasspath
-					.getAllDependencies()
-					.findAll { Dependency test -> test.getName() == "sponge-mixin" }
-					.iterator().forEachRemaining {vmArg "-javaagent:\"${(project.configurations.compileClasspath.files(it).iterator().next().getPath())}\"" }
-			}
+		Integer numberOfRuns = 1;
 
-			vmArg "-Dowo.renderdocPath=C:\\Program Files\\RenderDoc\\renderdoc.dll"
+		try {
+			numberOfRuns = Integer.valueOf(project.setsOfRunConfigs);
+		} catch(NumberFormatException ignored){}
 
-			vmArg "-Dlog4j.configurationFile=${file(".gradle/loom-cache/log4j.xml").toString()}"
-			vmArg "-Dfabric.log.disableAnsi=false"
-			vmArg "-Dmixin.debug.export=true"
+		for(int i = 1; i <= numberOfRuns; i++) {
+			it.create("clientMixinDebug_${i}", {
+				client()
+				runDir "run_${i}"
+				name "Minecraft Client ${i} [Mixin Debug]"
+				vmArg "-Dfabric.dli.config=${file(".gradle/loom-cache/launch.cfg").toString()}"
+				vmArg "-Dfabric.dli.env=client"
+				vmArg "-Dfabric.dli.main=net.fabricmc.loader.impl.launch.knot.KnotClient"
 
-			ideConfigGenerated = true
+				Object runConfig = it
+
+				project.afterEvaluate {
+					project.configurations.compileClasspath
+							.getAllDependencies()
+							.findAll { Dependency test -> test.getName() == "sponge-mixin" }
+							.iterator().forEachRemaining {runConfig.vmArg "-javaagent:\"${(project.configurations.compileClasspath.files(it).iterator().next().getPath())}\"" }
+				}
+
+				vmArg "-Dowo.renderdocPath=C:\\Program Files\\RenderDoc\\renderdoc.dll"
+
+				vmArg "-Dlog4j.configurationFile=${file(".gradle/loom-cache/log4j.xml").toString()}"
+				vmArg "-Dfabric.log.disableAnsi=false"
+				vmArg "-Dmixin.debug.export=true"
+
+				ideConfigGenerated = true
+			})
 		}
 
 		clientRenderDoc {
