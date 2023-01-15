@@ -23,8 +23,9 @@ public class InfoRevealRegistry extends DelayedRegistry {
     private final Map<Identifier, ObfuscatedReplacement<?>> OBFUSCATED_REPLACEMENT = new HashMap<>();
 
     public InfoRevealRegistry(){
-        Arrays.stream(InfoRevealLevel.values())
-                .forEach(level -> REGISTRY.put(level, new ArrayList<>()));
+        super();
+
+        Arrays.stream(InfoRevealLevel.values()).forEach(level -> REGISTRY.put(level, new ArrayList<>()));
     }
 
     public InfoRevealRegistry registerValueForRevealing(InfoRevealLevel level, Identifier valueId, ObfuscatedReplacement<?> replacementInfo){
@@ -74,11 +75,11 @@ public class InfoRevealRegistry extends DelayedRegistry {
         ObfuscatedReplacement<T> replacement = getReplacement(identifier);
 
         if(replacement == null) {
-            LOGGER.error("[InfoRevealRegistry]: It seems that a Character Info needed to Obfuscated but the Replacement was not found, meaning default info is shown!");
+            LOGGER.error("[InfoRevealRegistry]: It seems that a Character Info [Id: {}] needed to Obfuscated but the Replacement was not found, meaning default info is shown!", identifier);
 
-            return new InfoRevealResult<T>(false, defaultValue);
+            return new InfoRevealResult<>(false, defaultValue);
         } else {
-            return new InfoRevealResult<T>(true, replacement.getReplacement());
+            return new InfoRevealResult<>(true, replacement.getReplacement());
         }
     }
 
@@ -91,4 +92,17 @@ public class InfoRevealRegistry extends DelayedRegistry {
         T getReplacement();
     }
 
+    @Override
+    public Identifier getRegistryId() {
+        return new Identifier(PersonalityMod.MODID, "info_reveal_registry");
+    }
+
+    @Override
+    public List<Identifier> getRegisteredIds() {
+        List<Identifier> registeredIds = new ArrayList<>();
+
+        REGISTRY.forEach((level, identifiers) -> registeredIds.addAll(identifiers));
+
+        return registeredIds;
+    }
 }

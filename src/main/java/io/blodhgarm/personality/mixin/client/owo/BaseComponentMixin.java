@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-@Mixin(BaseComponent.class)
+@Mixin(value = BaseComponent.class, remap = false)
 public abstract class BaseComponentMixin {
 
     @Shadow protected int x;

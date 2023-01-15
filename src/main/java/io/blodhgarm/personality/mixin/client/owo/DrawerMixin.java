@@ -22,10 +22,10 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-@Mixin(Drawer.class)
+@Mixin(value = Drawer.class, remap = false)
 public abstract class DrawerMixin {
 
-    @Mixin(Drawer.DebugDrawer.class)
+    @Mixin(value = Drawer.DebugDrawer.class, remap = false)
     public static abstract class DebugDrawerMixin implements UnimportantToggleHelper {
 
         @Unique private boolean toggleUnimportantComp = true;

@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(Positioning.class)
+@Mixin(value = Positioning.class, remap = false)
 public interface PositioningMixin {
 
     @Invoker("<init>")
@@ -20,7 +20,7 @@ public interface PositioningMixin {
         throw new IllegalStateException("How did this mixin stub get called conc");
     }
 
-    @Mixin(Positioning.Type.class)
+    @Mixin(value = Positioning.Type.class, remap = false)
     public static abstract class TypeMixin {
 
         @Invoker("<init>")

@@ -7,6 +7,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.Networking;
+import io.blodhgarm.personality.api.PlayerAccess;
+import io.blodhgarm.personality.api.events.FinalizedPlayerConnectionEvent;
 import io.blodhgarm.personality.api.reveal.KnownCharacter;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.Character;
@@ -19,7 +21,6 @@ import io.blodhgarm.personality.utils.DebugCharacters;
 import io.blodhgarm.personality.utils.ServerAccess;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
@@ -39,9 +40,8 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
-public class ServerCharacters extends CharacterManager<ServerPlayerEntity> implements ServerPlayConnectionEvents.Join, ServerWorldEvents.Load {
+public class ServerCharacters extends CharacterManager<ServerPlayerEntity> implements FinalizedPlayerConnectionEvent.Finish, ServerWorldEvents.Load {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -92,6 +92,8 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
     @Override
     public void associateCharacterToPlayer(String characterUUID, String playerUUID){
+        if(playerToCharacterReferences().containsKey(playerUUID)) this.dissociateUUID(playerUUID, false);
+
         super.associateCharacterToPlayer(characterUUID, playerUUID);
 
         Networking.sendToAll(new SyncS2CPackets.Association(characterUUID, playerUUID));
@@ -322,13 +324,13 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     }
 
     @Override
-    public void onPlayReady(ServerPlayNetworkHandler handler, PacketSender sender, MinecraftServer server) {
+    public void onFinalize(ServerPlayNetworkHandler handler, PacketSender sender, MinecraftServer server) {
         applyAddons(handler.player);
 
-        Map<String, String> characters = new HashMap<>();
+        Map<String, Map<Identifier, String>> characters = new HashMap<>();
 
         for (Character c : characterLookupMap().values()){
-            characters.put(GSON.toJson(c), GSON.toJson(c.getAddons()));
+            characters.put(GSON.toJson(c), AddonRegistry.INSTANCE.loadAddonsForCharacter(c)); //GSON.toJson(c.getAddons())
         }
 
         Networking.sendS2C(handler.player, new SyncS2CPackets.Initial(characters, playerToCharacterReferences()));

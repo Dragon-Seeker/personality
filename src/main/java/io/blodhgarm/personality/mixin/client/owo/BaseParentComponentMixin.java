@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.function.Consumer;
 
-@Mixin(BaseParentComponent.class)
+@Mixin(value = BaseParentComponent.class, remap = false)
 public abstract class BaseParentComponentMixin extends BaseComponent implements ParentComponent {
 
     @Inject(method = "mountChild", at = @At("TAIL"), locals = LocalCapture.CAPTURE_FAILHARD)

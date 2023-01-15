@@ -19,7 +19,7 @@ import java.util.ArrayList;
 @Pseudo
 public abstract class ModPacketsS2CMixin {
 
-    @Inject(method = "lambda$openOriginScreen$3(Lnet/minecraft/client/MinecraftClient;Z)V", at = @At(value = "TAIL"), locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true)
+    @Inject(method = "lambda$openOriginScreen$3(Lnet/minecraft/class_310;Z)V", at = @At(value = "TAIL"), locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true)
     private static void personality$cancelOpeningOriginScreen(MinecraftClient minecraftClient, boolean showDirtBackground, CallbackInfo ci, ArrayList<OriginLayer> layers, OriginComponent component){
         if(showDirtBackground){
             minecraftClient.setScreen(new CharacterScreen(CharacterScreenMode.CREATION, minecraftClient.player, null));

@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import java.util.ArrayList;
 import java.util.List;
 
-@Mixin(FlowLayout.class)
+@Mixin(value = FlowLayout.class, remap = false)
 public abstract class FlowLayoutMixin extends BaseParentComponent implements ExcludableBoundingArea<FlowLayout>, RefinedBoundingArea<FlowLayout>, LineManageable<FlowLayout>, FocusCheckable, CustomFocusHighlighting<FlowLayout> {
 
     private final List<AbstractPolygon> exclusionZones = new ArrayList<>();

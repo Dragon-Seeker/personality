@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(GridLayout.class)
+@Mixin(value = GridLayout.class, remap = false)
 @Pseudo
 public abstract class GridLayoutMixin implements GridLayoutDuck {
 

@@ -16,6 +16,7 @@ public class Networking {
 
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.Initial.class);
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.SyncCharacter.class);
+        CHANNEL.registerClientboundDeferred(SyncS2CPackets.SyncAddonData.class);
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.RemoveCharacter.class);
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.Association.class);
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.Dissociation.class);
@@ -23,10 +24,13 @@ public class Networking {
         CHANNEL.registerClientboundDeferred(IntroductionPackets.UnknownIntroduction.class);
         CHANNEL.registerClientboundDeferred(IntroductionPackets.UpdatedKnowledge.class);
 
+        CHANNEL.registerClientboundDeferred(UpdateDelayedRegistry.class);
+
         //C2S - Client to Server
         CHANNEL.registerServerbound(SyncC2SPackets.ModifyCharacter.class, SyncC2SPackets.ModifyCharacter::modifyCharacter);
         CHANNEL.registerServerbound(SyncC2SPackets.NewCharacter.class, SyncC2SPackets.NewCharacter::newCharacter);
         CHANNEL.registerServerbound(SyncC2SPackets.AssociatePlayerToCharacter.class, SyncC2SPackets.AssociatePlayerToCharacter::associate);
+        CHANNEL.registerServerbound(SyncC2SPackets.RegistrySync.class, SyncC2SPackets.RegistrySync::registrySync);
 
         CHANNEL.registerServerbound(RevealCharacterC2SPacket.class, RevealCharacterC2SPacket::revealInformationToPlayers);
     }
@@ -44,6 +48,8 @@ public class Networking {
 
         CHANNEL.registerClientbound(IntroductionPackets.UnknownIntroduction.class, IntroductionPackets.UnknownIntroduction::unknownIntroduced);
         CHANNEL.registerClientbound(IntroductionPackets.UpdatedKnowledge.class, IntroductionPackets.UpdatedKnowledge::updatedKnowledge);
+
+        CHANNEL.registerClientbound(UpdateDelayedRegistry.class, UpdateDelayedRegistry::update);
     }
 
     public static <R extends Record> void sendC2S(R packet) {

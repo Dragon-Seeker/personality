@@ -32,13 +32,13 @@ public class ClientCharacters extends CharacterManager<AbstractClientPlayerEntit
                 .orElse(null);
     }
 
-    public void init(Map<String, String> characters, Map<String, String> associations) {
+    public void init(List<SyncS2CPackets.CharacterData> characters, Map<String, String> associations) {
         playerIDToCharacterID = HashBiMap.create(associations);
         characterIDToCharacter.clear();
-        for (Map.Entry<String, String> entry : characters.entrySet()) {
-            Character c = PersonalityMod.GSON.fromJson(entry.getKey(), Character.class);
+        for (SyncS2CPackets.CharacterData entry : characters) {
+            Character c = PersonalityMod.GSON.fromJson(entry.characterData(), Character.class);
 
-            c.getAddons().putAll(PersonalityMod.GSON.fromJson(entry.getValue(), Character.REF_MAP_TYPE));
+            AddonRegistry.INSTANCE.deserializesAddons(c, entry.addonData());
 
             characterIDToCharacter.put(c.getUUID(), c);
         }

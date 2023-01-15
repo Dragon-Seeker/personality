@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
-@Mixin(Animation.class)
+@Mixin(value = Animation.class, remap = false)
 public abstract class AnimationMixin<A extends Animatable<A>> implements AnimationExtension<A, Animation<A>> {
 
     @Unique

@@ -1,7 +1,5 @@
 package io.blodhgarm.personality.api.addon;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.PersonalityMod;
@@ -9,9 +7,7 @@ import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.api.PersonalityEntrypoint;
 import io.blodhgarm.personality.api.core.DelayedRegistry;
 import io.blodhgarm.personality.impl.ServerCharacters;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.resource.LifecycledResourceManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.ApiStatus;
@@ -38,6 +34,9 @@ public class AddonRegistry<A extends BaseAddon> extends DelayedRegistry {
     private final Map<Identifier, AddonLoader<A>> LOADERS = new HashMap<>();
 
     //--------------------------------------------------------------------------------
+
+
+    public AddonRegistry() { super(); }
 
     /**
      * The current Instant of the Addon Registry used for registering your addon within the {@link PersonalityEntrypoint}
@@ -120,6 +119,11 @@ public class AddonRegistry<A extends BaseAddon> extends DelayedRegistry {
 
     //--------------------------------------------------------------------------------
 
+    @Override
+    public List<Identifier> getRegisteredIds(){
+        return List.copyOf(this.LOADERS.keySet());
+    }
+
     @ApiStatus.Internal
     public Map<Identifier, String> loadAddonsForCharacter(Character c){
         Path characterFolder = ServerCharacters.getSpecificCharacterPath(c.getUUID());
@@ -156,6 +160,58 @@ public class AddonRegistry<A extends BaseAddon> extends DelayedRegistry {
         });
 
         return addonData;
+    }
+
+    public void deserializesAddons(Character c, Map<Identifier, String> addonData){
+        Map<Identifier, BaseAddon> addons = new HashMap<>();
+
+        addonData.forEach((addonId, s2) -> {
+            AddonLoader<A> registryHelper = LOADERS.get(addonId);
+
+            if(addonId == null){
+                LOGGER.error("[AddonLoading] {} addon id was found to be invalid, ignoring addon", addonId);
+
+                return;
+            }
+
+            if(registryHelper == null){
+                LOGGER.error("[AddonLoading] {} addon for [Name: {}, UUID: {}] was unable to be found, ignoring addon", addonId, c.getName(), c.getUUID());
+
+                return;
+            }
+
+            A addon;
+
+            try {
+                addon = PersonalityMod.GSON.fromJson(s2, registryHelper.addonClass());
+            } catch (JsonSyntaxException e){
+                LOGGER.error("[AddonLoading] {} addon for [Name: {}, UUID: {}] was unable to be serialized, setting such to default.", addonId, c.getName(), c.getUUID());
+
+                addon = registryHelper.defaultAddon.get();
+                addon.improperLoad();
+
+                e.printStackTrace();
+            }
+
+            addons.put(addonId, addon);
+        });
+
+        c.getAddons().putAll(addons);
+    }
+
+    public Map<Identifier, String> serializesAddons(Character c){
+        Map<Identifier, String> addonData = new HashMap<>();
+
+        c.getAddons().forEach((identifier, addon) -> {
+            addonData.put(identifier, PersonalityMod.GSON.toJson(addon));
+        });
+
+        return addonData;
+    }
+
+    @Override
+    public Identifier getRegistryId() {
+        return new Identifier(PersonalityMod.MODID, "addon_registry");
     }
 
     //--------------------------------------------------------------------------------

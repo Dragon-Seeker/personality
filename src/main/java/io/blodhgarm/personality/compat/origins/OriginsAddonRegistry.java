@@ -139,7 +139,7 @@ public class OriginsAddonRegistry implements PersonalityEntrypoint {
     @Override
     public void infoRevealRegistry(InfoRevealRegistry registry) {
         registry.registerDelayedInfoRevealing(revealRegistry -> {
-            OriginRegistry.register(UNKNOWN);
+            if(!OriginRegistry.contains(UNKNOWN)) OriginRegistry.register(UNKNOWN);
 
             OriginLayers.getLayers().forEach(layer -> {
                 Identifier layerId = layer.getIdentifier();
