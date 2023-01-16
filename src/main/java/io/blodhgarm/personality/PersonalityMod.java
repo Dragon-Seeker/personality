@@ -15,6 +15,7 @@ import io.blodhgarm.personality.impl.CharacterTick;
 import io.blodhgarm.personality.impl.ServerCharacters;
 import io.blodhgarm.personality.misc.PersonalityCommands;
 import io.blodhgarm.personality.misc.config.PersonalityConfig;
+import io.blodhgarm.personality.utils.DebugCharacters;
 import io.blodhgarm.personality.utils.ServerAccess;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -38,6 +39,8 @@ public class PersonalityMod implements ModInitializer, PersonalityEntrypoint{
 
     @Override
     public void onInitialize() {
+        DebugCharacters.init();
+
         PersonalityCommands.register();
         Networking.registerNetworking();
 

@@ -11,9 +11,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.entity.player.PlayerEntity;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class DebugCharacters {
 
@@ -88,7 +86,7 @@ public class DebugCharacters {
     );
 
     public static <T extends PlayerEntity> void loadDebugCharacters(CharacterManager<T> manager){
-        DEBUG_CHARACTERS.forEach(character -> {
+        DEBUG_CHARACTERS_LIST.forEach(character -> {
             character.getAddons().putAll(AddonRegistry.INSTANCE.getDefaultAddons());
 
             //manager.characterLookupMap().put(character.getUUID(), character);
@@ -97,7 +95,7 @@ public class DebugCharacters {
 
     public static final List<BaseCharacter> KNOWN_CHARACTERS = new ArrayList<>();
 
-    public static final List<Character> DEBUG_CHARACTERS = List.of(
+    public static final List<Character> DEBUG_CHARACTERS_LIST = List.of(
             DEBUG_1,
             DEBUG_2,
             DEBUG_3,
@@ -105,16 +103,22 @@ public class DebugCharacters {
             DEBUG_5
     );
 
-    static {
+    public static final Map<String, Character> DEBUG_CHARACTERS_MAP = new HashMap<>();
+
+    public static void init() {
         if(FabricLoader.getInstance().isDevelopmentEnvironment()) {
             for(int i = 0; i < 5; i++) {
-                KnownCharacter character = new KnownCharacter(DEBUG_CHARACTERS.get(i));
+                Character character = DEBUG_CHARACTERS_LIST.get(i);
 
-                character.updateInfoLevel(InfoRevealLevel.values()[i]);
+                DEBUG_CHARACTERS_MAP.put(character.getUUID(), character);
 
-                REVEAL_TEST.getKnownCharacters().put(character.getUUID(), character);
+                KnownCharacter wrappedCharacter = new KnownCharacter(DEBUG_CHARACTERS_LIST.get(i));
 
-                KNOWN_CHARACTERS.add(character);
+                wrappedCharacter.updateInfoLevel(InfoRevealLevel.VALID_VALUES[i]);
+
+                REVEAL_TEST.getKnownCharacters().put(character.getUUID(), wrappedCharacter);
+
+                KNOWN_CHARACTERS.add(wrappedCharacter);
             }
         }
     }
