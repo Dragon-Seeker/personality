@@ -1,15 +1,12 @@
 package io.blodhgarm.personality.api;
 
 import com.google.common.reflect.TypeToken;
-import com.google.gson.annotations.Expose;
-import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.api.reveal.KnownCharacter;
 import io.blodhgarm.personality.impl.ServerCharacters;
 import io.blodhgarm.personality.misc.PersonalityTags;
-import io.blodhgarm.personality.misc.config.PersonalityConfig;
+import io.blodhgarm.personality.utils.Constants;
 import io.blodhgarm.personality.utils.DebugCharacters;
-import net.fabricmc.loader.impl.util.StringUtil;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.stat.Stats;
@@ -22,22 +19,18 @@ import javax.annotation.Nullable;
 import java.lang.reflect.Type;
 import java.util.*;
 
-import static java.lang.Math.*;
-
-public class Character implements BaseCharacter{
+public class Character implements BaseCharacter {
 
     public static final Type REF_MAP_TYPE = new TypeToken<Map<Identifier, BaseAddon>>() {}.getType();
-
-    public enum Stage {YOUTH, PRIME, OLD}
-    public static final int WEEK_IN_MILLISECONDS = 604_800_000;
-    public static final int HOUR_IN_MILLISECONDS =   3_600_000;
-    public final int format = 1;
 
     public boolean isDead;
 
     private final String uuid;
 
     private String name;
+
+    private List<String> aliases = new ArrayList<>();
+
     @Nullable private String alias = null;
 
     private String gender;
@@ -180,33 +173,31 @@ public class Character implements BaseCharacter{
     }
 
     public int getAge() {
-        return ageOffset + (int)((System.currentTimeMillis() - getCreatedAt()) / WEEK_IN_MILLISECONDS);
+        return ageOffset + (int)((System.currentTimeMillis() - getCreatedAt()) / Constants.WEEK_IN_MILLISECONDS);
     }
 
     public float getPreciseAge() {
-        return ageOffset + ((float)(System.currentTimeMillis() - getCreatedAt())/WEEK_IN_MILLISECONDS);
+        return ageOffset + ((float)(System.currentTimeMillis() - getCreatedAt()) / Constants.WEEK_IN_MILLISECONDS);
     }
 
     public void setAge(int age) {
-        ageOffset = age - (int)((System.currentTimeMillis() - getCreatedAt()) / WEEK_IN_MILLISECONDS);
+        ageOffset = age - (int)((System.currentTimeMillis() - getCreatedAt()) / Constants.WEEK_IN_MILLISECONDS);
     }
 
-    public Stage getStage() {
-        int age = getAge();
-        return age < 25 ? Stage.YOUTH : age < 60 ? Stage.PRIME : Stage.OLD;
-    }
-
+    @Override
     public int getPlaytime() {
-        ServerPlayerEntity player = ServerCharacters.INSTANCE.getPlayer(uuid);
+        PlayerAccess<ServerPlayerEntity> player = ServerCharacters.INSTANCE.getPlayer(uuid);
 
-        return player != null ? player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME)) - playtimeOffset : 0;
+        return player.valid() && player.player() != null
+                ? player.player().getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME)) - playtimeOffset
+                : 0;
     }
 
     public boolean setPlaytime(int playtime) {
-        ServerPlayerEntity player = ServerCharacters.INSTANCE.getPlayer(uuid);
+        PlayerAccess<ServerPlayerEntity> player = ServerCharacters.INSTANCE.getPlayer(uuid);
 
-        if (player != null) {
-            playtimeOffset = playtime - player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME));
+        if (player.valid() && player.player() != null) {
+            playtimeOffset = playtime - player.player().getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME));
 
             return true;
         }
@@ -216,40 +207,11 @@ public class Character implements BaseCharacter{
 
     //---------------------------
 
-    public int getMaxAge() {
-        return PersonalityMod.CONFIG.BASE_MAXIMUM_AGE() + Math.min(PersonalityMod.CONFIG.MAX_EXTRA_YEARS_OF_LIFE(), getExtraAge());
-    }
-
-    public int getExtraAge() {
-        PersonalityConfig.ExtraLife config = PersonalityMod.CONFIG.EXTRA_LIFE;
-        double hoursPlayed = (float) getPlaytime() / HOUR_IN_MILLISECONDS;
-        int extraYears = 0;
-
-        if (hoursPlayed > config.START_HOURS_PER_EXTRA_LIFE() && getAge() > config.MIN_AGE()) {
-            for (int i = 1; ; i++) {
-                double hoursNeeded = config.START_HOURS_PER_EXTRA_LIFE() + config.CURVE_MULTIPLIER() * switch (config.CURVE()) {
-                    case NONE -> 0;
-                    case LINEAR -> i - 1;
-                    case QUADRATIC -> pow(i, 2) - 1;
-                    case SQRT -> sqrt(i) - 1;
-                    case EXPONENTIAL, EXPONENTIAL_EXTREME -> pow(E, i - 1) - 1;
-                    case LOGARITHMIC, LOGARITHMIC_EXTREME -> log(i);
-                };
-
-                if (hoursPlayed < hoursNeeded) break;
-
-                hoursPlayed -= hoursNeeded;
-            }
-        }
-
-        return extraYears;
-    }
-
     public boolean isObscured() {
-        ServerPlayerEntity player = ServerCharacters.INSTANCE.getPlayer(uuid);
+        PlayerAccess<ServerPlayerEntity> player = ServerCharacters.INSTANCE.getPlayer(uuid);
 
-        if (player != null) {
-            for (ItemStack stack : player.getItemsEquipped()) {
+        if (player.valid() && player.player() != null) {
+            for (ItemStack stack : player.player().getItemsEquipped()) {
                 if (stack.isIn(PersonalityTags.OBSCURES_IDENTITY)) return true;
             }
         }
@@ -261,22 +223,6 @@ public class Character implements BaseCharacter{
         return DebugCharacters.ERROR == this;
     }
 
-
-    public String getInfo() {
-        StringBuilder baseInfoText = new StringBuilder();
-
-        baseInfoText.append(name + "§r\n"
-                + "\n§lUUID§r: " + uuid
-                + "\n§lGender§r: " + gender
-                + "\n§lDescription§r: " + description
-                + "\n§lBio§r: " + biography
-                + "\n§lAge§r: " + getAge() + " / " + getMaxAge() + " (" + getStage() + ")"
-                + "\n§lPlaytime§r: " + (getPlaytime()/HOUR_IN_MILLISECONDS));
-
-        this.getAddons().values().forEach((baseAddon) -> baseInfoText.append(baseAddon.getInfo()));
-
-        return baseInfoText.toString();
-    }
 
     @Override
     public String toString() {
@@ -292,5 +238,4 @@ public class Character implements BaseCharacter{
                 ",\n knowCharacters=" + knownCharacters +
                 "\n}";
     }
-
 }

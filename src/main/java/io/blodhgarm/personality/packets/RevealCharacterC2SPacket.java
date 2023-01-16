@@ -25,7 +25,7 @@ public record RevealCharacterC2SPacket(InfoRevealLevel level, RevelCharacterInfo
 
         if(sourceCharacter == null) return;
 
-        if(message.range != RevelCharacterInfo.RevealRange.DIRECTED){
+        if(message.range == RevelCharacterInfo.RevealRange.DIRECTED){
             ServerPlayerEntity target = access.runtime().getPlayerManager().getPlayer(UUID.fromString(message.uuid));
 
             if(target == null) return;

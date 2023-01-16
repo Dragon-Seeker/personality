@@ -39,10 +39,6 @@ public class SyncC2SPackets {
             ServerCharacters.INSTANCE.saveAddonsForCharacter(c, true);
 
             if(message.immediateAssociation){
-                if(ServerCharacters.INSTANCE.getCharacterUUID(access.player()) != null){
-                    ServerCharacters.INSTANCE.dissociateUUID(access.player().getUuidAsString(), false);
-                }
-
                 ServerCharacters.INSTANCE.associateCharacterToPlayer(c.getUUID(), access.player().getUuidAsString());
             }
 

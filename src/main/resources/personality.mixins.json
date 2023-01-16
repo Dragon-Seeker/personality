@@ -5,12 +5,17 @@
   "compatibilityLevel": "JAVA_17",
   "mixins": [
     "HungerManagerMixin",
+    "MinecraftServerMixin",
     "OriginLayerAccessor",
-    "PlayerEntityMixin"
+    "PlayerEntityMixin",
+    "ServerLoginNetworkHandlerMixin"
   ],
   "client": [
     "client.EntityRendererMixin",
     "client.TextFieldWidgetMixin",
+    "client.ClientWorldMixin",
+    "client.ClientWorldMixin$ClientEntityHandler",
+    "client.MessageHandlerMixin",
     "client.accessor.EditBoxAccessor",
     "client.accessor.EditBoxWidgetAccessor",
     "client.accessor.TextFieldWidgetAccessor",

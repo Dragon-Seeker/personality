@@ -7,6 +7,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.logging.LogUtils;
+import io.blodhgarm.personality.api.BaseCharacter;
 import io.blodhgarm.personality.api.Character;
 import io.blodhgarm.personality.Networking;
 import io.blodhgarm.personality.api.CharacterManager;
@@ -47,38 +48,69 @@ public class PersonalityCommands {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             dispatcher.register(buildCommand("personality"));
             dispatcher.register(buildCommand("p"));
+
+            dispatcher.register(buildCharacterCommands("cm"));
+
         });
     }
 
+    public static LiteralArgumentBuilder<ServerCommandSource> buildCharacterCommands(String base){
+        return literal(base)
+                .then(literal("create")
+                        .then(argument("name", word() )
+                                .then(argument("gender", word() ).suggests( (c,b) -> suggestions(b, "male", "female", "nonbinary"))
+                                        .then(argument("description", string() )
+                                                .then(argument("biography", string() )
+                                                        .then(argument("heightOffset", floatArg(-0.5F, 0.5F) )
+                                                                .then(argument("age", integer(17, 60) )
+                                                                        .executes(PersonalityCommands::create) ))))))
+                )
+
+                .then(literal("get")
+                        .executes(c -> get(c, getCharacterFromSelf(c)))
+                        .then(literal("self")
+                                .executes(c -> get(c, getCharacterFromSelf(c))))
+                        .then(literal("player")
+                                .then(argument("player", player())
+                                        .executes(c -> get(c, getCharacterFromPlayer(c)))))
+                        .then(literal("uuid")
+                                .then(argument("uuid", greedyString())
+                                        .executes(c -> get(c, getCharacterFromUUID(c)))))
+                )
+
+                .then(literal("set")
+                        .then(setters(literal("self"), PersonalityCommands::getCharacterFromSelf ))
+                        .then(literal("player").then(setters(argument("player", player()), PersonalityCommands::getCharacterFromPlayer )))
+                        .then(literal("uuid").then(setters(argument("uuid", string()), PersonalityCommands::getCharacterFromUUID)))
+                )
+
+                .then(literal("known")
+                        .then(literal("list")
+                                .executes(PersonalityCommands::listKnownCharacters))
+                        .then(literal("add")
+                                .then(argument("players", players())
+                                        .executes(PersonalityCommands::addKnownCharacterByPlayer))
+                                .then(argument("uuid", string())
+                                        .executes(PersonalityCommands::addKnownCharacterByUUID)))
+                        .then(literal("remove")
+                                .then(argument("players", players())
+                                        .executes(PersonalityCommands::removeKnownCharacterByPlayer))
+                                .then(argument("uuid", string())
+                                        .executes(PersonalityCommands::removeKnownCharacterByUUID)))
+                )
+
+                .then(literal("delete")
+                        .executes(c -> deleteCharacter(c, false))
+                        .then(argument("players", players())
+                                .executes(c -> deleteCharacterByPlayer(c, false)))
+                        .then(argument("uuid", string())
+                                .executes(c -> deleteCharacterByUUID(c, false)))
+                );
+    }
+
+
     public static LiteralArgumentBuilder<ServerCommandSource> buildCommand(String base) {
         return literal(base)
-            .then(literal("create")
-                .then(argument("name", word() )
-                    .then(argument("gender", word() ).suggests( (c,b) -> suggestions(b, "male", "female", "nonbinary"))
-                        .then(argument("description", string() )
-                            .then(argument("biography", string() )
-                                .then(argument("heightOffset", floatArg(-0.5F, 0.5F) )
-                                    .then(argument("age", integer(17, 60) )
-                                        .executes(PersonalityCommands::create) ))))))
-            )
-
-            .then(literal("get")
-                .executes(c -> get(c, getCharacterFromSelf(c)))
-                .then(literal("self")
-                    .executes(c -> get(c, getCharacterFromSelf(c))))
-                .then(literal("player")
-                    .then(argument("player", player())
-                        .executes(c -> get(c, getCharacterFromPlayer(c)))))
-                .then(literal("uuid")
-                    .then(argument("uuid", greedyString())
-                        .executes(c -> get(c, getCharacterFromUUID(c)))))
-            )
-
-            .then(literal("set")
-                .then(setters(literal("self"), PersonalityCommands::getCharacterFromSelf ))
-                .then(literal("player").then(setters(argument("player", player()), PersonalityCommands::getCharacterFromPlayer )))
-                .then(literal("uuid").then(setters(argument("uuid", string()), PersonalityCommands::getCharacterFromUUID)))
-            )
 
             .then(literal("associate")
                 .then(argument("uuid", string())
@@ -87,26 +119,17 @@ public class PersonalityCommands {
                         .executes(c -> associate(c, getPlayer(c,"player")))))
             )
 
-            .then(literal("kill")
-                .executes(c -> deleteCharacter(c, true))
-                    .then(argument("players", players())
-                        .executes(c -> deleteCharacterByPlayer(c, true)))
-                    .then(argument("uuid", string())
-                        .executes(c -> deleteCharacterByUUID(c, true)))
-            )
-
-            .then(literal("delete")
-                .executes(c -> deleteCharacter(c, false))
-                .then(argument("players", players())
-                    .executes(c -> deleteCharacterByPlayer(c, false)))
-                .then(argument("uuid", string())
-                    .executes(c -> deleteCharacterByUUID(c, false)))
+            .then(literal("list-all-characters")
+                    .requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(1))
+                    .executes(PersonalityCommands::listAllCharacters)
             )
 
             .then(literal("reveal")
-                .then(literal("near")
+                .then(literal("small")
+                    .executes(c -> revealRange(c, 3) ))
+                .then(literal("medium")
                     .executes(c -> revealRange(c, 7) ))
-                .then(literal("far")
+                .then(literal("large")
                     .executes(c -> revealRange(c, 15) ))
                 .then(literal("range")
                     .then(argument("range", integer(0))
@@ -116,27 +139,17 @@ public class PersonalityCommands {
                         .executes(PersonalityCommands::revealPerson)))
             )
 
-            .then(literal("characters")
-                .then(literal("list")
-                    .executes(PersonalityCommands::listKnownCharacters))
-                .then(literal("add")
-                    .then(argument("players", players())
-                        .executes(PersonalityCommands::addKnownCharacterByPlayer))
-                    .then(argument("uuid", string())
-                        .executes(PersonalityCommands::addKnownCharacterByUUID)))
-                .then(literal("remove")
-                    .then(argument("players", players())
-                        .executes(PersonalityCommands::removeKnownCharacterByPlayer))
-                    .then(argument("uuid", string())
-                        .executes(PersonalityCommands::removeKnownCharacterByUUID)))
-                .then(literal("list-all")
-                        .requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(1))
-                        .executes(PersonalityCommands::listAllCharacters)
-                )
-
+            .then(literal("kill")
+                .requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(1))
+                .executes(c -> deleteCharacter(c, true))
+                .then(argument("players", players())
+                        .executes(c -> deleteCharacterByPlayer(c, true)))
+                .then(argument("uuid", string())
+                        .executes(c -> deleteCharacterByUUID(c, true)))
             )
 
             .then(literal("screen")
+                .requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(1))
                 .then(literal("creation")
                     .executes(PersonalityCommands::openCreationScreen)
                 )
@@ -254,7 +267,7 @@ public class PersonalityCommands {
             for (Map.Entry<String, KnownCharacter> entry : c.getKnownCharacters().entrySet()) {
                 String characterUUID = entry.getKey();
 
-                Character pc = ServerCharacters.INSTANCE.getCharacter(characterUUID);
+                BaseCharacter pc = entry.getValue();
 
                 if(pc != null) {
                     text.append(Text.literal(pc.getName() + "\n").setStyle(Style.EMPTY.withHoverEvent(
@@ -304,7 +317,7 @@ public class PersonalityCommands {
             Character pCharacter = ServerCharacters.INSTANCE.getCharacter(p);
 
             if(pCharacter != null) {
-                c.getKnownCharacters().put(pCharacter.getUUID(), new KnownCharacter(pCharacter.getUUID()));
+                c.getKnownCharacters().put(pCharacter.getUUID(), new KnownCharacter(c.getUUID(), pCharacter.getUUID()));
             } else {
                 LOGGER.error("Could not add a known Character to [{}] as it wasn't found by the character manager: [Player: {}]", player, p);
             }
@@ -321,7 +334,7 @@ public class PersonalityCommands {
 
         String characterUUID = getString(context, "uuid");
 
-        c.getKnownCharacters().put(characterUUID, new KnownCharacter(characterUUID));
+        c.getKnownCharacters().put(characterUUID, new KnownCharacter(c.getUUID(), characterUUID));
         ServerCharacters.INSTANCE.saveCharacter(c);
 
         return msg(context, "Character Added");
@@ -452,8 +465,8 @@ public class PersonalityCommands {
     //Helpers:
 
     private static CompletableFuture<Suggestions> suggestions(SuggestionsBuilder builder, String... suggestions) {
-        for (String suggestion : suggestions)
-            builder.suggest(suggestion);
+        for (String suggestion : suggestions) builder.suggest(suggestion);
+
         return builder.buildFuture();
     }
 

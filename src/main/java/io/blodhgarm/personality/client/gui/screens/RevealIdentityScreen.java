@@ -11,6 +11,7 @@ import io.blodhgarm.personality.client.gui.utils.CustomSurfaces;
 import io.blodhgarm.personality.impl.RevelCharacterInfo;
 import io.blodhgarm.personality.misc.pond.owo.AnimationExtension;
 import io.blodhgarm.personality.packets.RevealCharacterC2SPacket;
+import io.blodhgarm.personality.utils.DebugCharacters;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.base.BaseParentComponent;
 import io.wispforest.owo.ui.component.Components;
@@ -48,6 +49,8 @@ public class RevealIdentityScreen extends BaseOwoScreen<FlowLayout> {
     @Nullable
     private RevelCharacterInfo.RevealRange selectedRevealRange = null;
 
+    private final List<String> closableComponentIds = List.of("REVEAL_LEVEL", "REVEAL_RANGE", "ROOT");
+
     @Override
     protected @NotNull OwoUIAdapter<FlowLayout> createAdapter() {
         return OwoUIAdapter.create(this, Containers::verticalFlow);
@@ -55,47 +58,36 @@ public class RevealIdentityScreen extends BaseOwoScreen<FlowLayout> {
 
     @Override
     protected void build(FlowLayout root) {
-        root.id("root");
+        root.id("ROOT");
 
-        confirmationLayout = Containers.verticalFlow(Sizing.content(), Sizing.content());
-
-        confirmationLayout
-                .padding(Insets.of(6))
-                .surface(ThemeHelper.dynamicSurface())
-                .horizontalAlignment(HorizontalAlignment.CENTER)
-                .verticalAlignment(VerticalAlignment.CENTER)
-                .positioning(PersonalityClient.customRelative(200, 50));
+        confirmationLayout = Containers.verticalFlow(Sizing.content(), Sizing.content())
+                .configure(
+                        layout -> layout.padding(Insets.of(6))
+                                .surface(ThemeHelper.dynamicSurface())
+                                .horizontalAlignment(HorizontalAlignment.CENTER)
+                                .verticalAlignment(VerticalAlignment.CENTER)
+                                .positioning(PersonalityClient.customRelative(200, 50))
+                );
 
         confirmationLayout.child(
-                Components.label(
-                        Text.of("Are you sure that you want to send this info out?")
-                ).maxWidth(135)
+                Components.label(Text.of("Are you sure that you want to send this info out?"))
+                        .maxWidth(135)
                         .margins(Insets.bottom(3))
-        );
-
-        confirmationLayout.child(
+        ).child(
                 Containers.verticalFlow(Sizing.content(), Sizing.content())
                         .surface(CustomSurfaces.INVERSE_PANEL)
                         .padding(Insets.of(6))
                         .id("confirmation_info_layout")
                         .margins(Insets.bottom(3))
-        );
-
-        confirmationLayout.child(
+        ).child(
                 Containers.horizontalFlow(Sizing.content(), Sizing.content())
                         .child(
-                                Components.button(
-                                        Text.of("No"),
-                                        buttonComponent -> {
-                                            this.close();
-                                        }
-                                ).horizontalSizing(Sizing.fixed(45))
+                                Components.button(Text.of("No"), buttonComponent -> this.close())
+                                        .horizontalSizing(Sizing.fixed(45))
                         )
                         .child(
-                                Components.button(
-                                        Text.of("Yes"),
-                                        buttonComponent -> confirmSelection()
-                                ).horizontalSizing(Sizing.fixed(45))
+                                Components.button(Text.of("Yes"), buttonComponent -> confirmSelection())
+                                        .horizontalSizing(Sizing.fixed(45))
                         )
                         .gap(10)
                         .horizontalAlignment(HorizontalAlignment.CENTER)
@@ -105,12 +97,10 @@ public class RevealIdentityScreen extends BaseOwoScreen<FlowLayout> {
 
         revealLevel = new SimpleRadialLayoutBuilder().adjustRadi(0, 15, 140, 80)
                 .addComponents(
-                        Arrays.stream(InfoRevealLevel.values())
+                        Arrays.stream(InfoRevealLevel.VALID_VALUES)
                                 .map(level -> {
                                     return Containers.verticalFlow(Sizing.fixed(50), Sizing.fixed(50))
-                                            .child(
-                                                    Components.label(level.getTranslation())
-                                            )
+                                            .child(Components.label(level.getTranslation()))
                                             .verticalAlignment(VerticalAlignment.CENTER)
                                             .horizontalAlignment(HorizontalAlignment.CENTER)
                                             .id(level.toString());
@@ -227,11 +217,7 @@ public class RevealIdentityScreen extends BaseOwoScreen<FlowLayout> {
         root.mouseDown().subscribe((mouseX, mouseY, button) -> {
             Component component = root.childAt(Math.round((float) mouseX), Math.round((float) mouseY));
 
-            if(component != null && (Objects.equals(component.id(), revealLevel.mainComponentID)
-                                  || Objects.equals(component.id(), revealRange.mainComponentID)
-                                  || Objects.equals(component.id(), "root")
-                    )){
-
+            if(component != null && component.id() != null && closableComponentIds.contains(component.id())){
                 if((button | GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_MOUSE_BUTTON_LEFT){
                     this.close();
 
@@ -247,18 +233,23 @@ public class RevealIdentityScreen extends BaseOwoScreen<FlowLayout> {
     }
 
     public void confirmSelection(){
+        String playerUUID = "";
+
         if(selectedRevealRange == RevelCharacterInfo.RevealRange.DIRECTED) {
-            ClientPlayerEntity clientPlayer = MinecraftClient.getInstance().player;
-
-            assert clientPlayer != null;
-
-            HitResult result = clientPlayer.raycast(60, MinecraftClient.getInstance().getTickDelta(), false);
+            HitResult result = MinecraftClient.getInstance().player
+                    .raycast(60, MinecraftClient.getInstance().getTickDelta(), false);
 
             if (result instanceof EntityHitResult entityHitResult && entityHitResult.getEntity() instanceof PlayerEntity playerEntity) {
-                Networking.sendC2S(new RevealCharacterC2SPacket(this.selectedRevealLevel, this.selectedRevealRange, playerEntity.getUuid().toString()));
+                playerUUID = playerEntity.getUuid().toString();
+            } else {
+                LOGGER.warn("[RevealIdentityScreen] The Directed Reveal Range was used but that the Client wasn't looking at a player");
+
+                playerUUID = DebugCharacters.ERROR.getUUID();
             }
-        } else {
-            Networking.sendC2S(new RevealCharacterC2SPacket(this.selectedRevealLevel, this.selectedRevealRange));
+        }
+
+        if(!Objects.equals(playerUUID, DebugCharacters.ERROR.getUUID())) {
+            Networking.sendC2S(new RevealCharacterC2SPacket(this.selectedRevealLevel, this.selectedRevealRange, playerUUID));
         }
 
         this.close();

@@ -3,11 +3,20 @@ package io.blodhgarm.personality.api.reveal;
 import net.minecraft.text.Text;
 
 public enum InfoRevealLevel {
+    UNDISCOVERED("undiscovered"),
     NONE("none"), //No Information shown
     GENERAL("general"), //DESCRIPTION, ALIAS(Unknown if such is real)
     ASSOCIATE("associate"), //GENDER, AGE
-    TRUSTED("trusted"), //BIOGRAPHY
-    CONFIDANT("confidant"); //NAME
+    TRUSTED("trusted"), //NAME
+    CONFIDANT("confidant"); //BIOGRAPHY
+
+    public static final InfoRevealLevel[] VALID_VALUES = new InfoRevealLevel[]{
+            NONE,
+            GENERAL,
+            ASSOCIATE,
+            TRUSTED,
+            CONFIDANT
+    };
 
     private final String name;
 
@@ -20,7 +29,7 @@ public enum InfoRevealLevel {
     }
 
     public boolean shouldUpdateLevel(InfoRevealLevel level){
-        return this.ordinal() < level.ordinal();
+        return true; //this.ordinal() < level.ordinal();
     }
 
 }

@@ -21,36 +21,52 @@ public class KnownCharacter implements BaseCharacter {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    public final String characterUUID;
+    public final String ownerCharacterUUID;
+
+    public final String wrappedCharacterUUID;
+
+    public int aliasIndex = -1;
 
     public InfoRevealLevel level;
 
     public final List<Identifier> specificKnownInfo;
 
-    public transient Character parentCharacter = DebugCharacters.ERROR;
+    public transient CharacterManager<?> manager;
 
-    public KnownCharacter(String characterUUID) {
-        this.characterUUID = characterUUID;
+    public KnownCharacter(String ownerCharacterUUID, String wrappedCharacterUUID) {
+        this.ownerCharacterUUID = ownerCharacterUUID;
+
+        this.wrappedCharacterUUID = wrappedCharacterUUID;
         this.level = InfoRevealLevel.NONE;
         this.specificKnownInfo = new ArrayList<>();
     }
 
     public KnownCharacter(Character character) {
-        this.characterUUID = character.getUUID();
+        this.ownerCharacterUUID = "";
+
+        this.wrappedCharacterUUID = character.getUUID();
         this.level = InfoRevealLevel.NONE;
         this.specificKnownInfo = new ArrayList<>();
-
-        this.parentCharacter = character;
     }
 
-    public void setParentCharacter(CharacterManager<?> manager){
-        Character character = manager.getCharacter(this.characterUUID);
+    public void setCharacterManager(CharacterManager<?> manager){
+        this.manager = manager;
+    }
 
-        if(character != null) {
-            this.parentCharacter = character;
+    public Character getWrappedCharacter(){
+        if(manager != null){
+            Character character = manager.getCharacter(this.wrappedCharacterUUID);
+
+            if(character != null) {
+                return character;
+            } else {
+                LOGGER.error("[KnownCharacter] Seems that a Known Character was attempted to be accessed but was not found!");
+            }
         } else {
-            LOGGER.error("[KnownCharacter] Seems that a know character was initialized");
+            LOGGER.error("[KnownCharacter] Seems that a Known Character was attempted to be accessed but that manager was not set yet!");
         }
+
+        return DebugCharacters.ERROR;
     }
 
     public void updateInfoLevel(InfoRevealLevel level){
@@ -64,12 +80,12 @@ public class KnownCharacter implements BaseCharacter {
 
     @Override
     public Map<Identifier, BaseAddon> getAddons() {
-        return parentCharacter.getAddons();
+        return getWrappedCharacter().getAddons();
     }
 
     @Override
     public Map<String, KnownCharacter> getKnownCharacters(){
-        return parentCharacter.getKnownCharacters();
+        return getWrappedCharacter().getKnownCharacters();
     }
 
     @Override
@@ -79,19 +95,19 @@ public class KnownCharacter implements BaseCharacter {
 
     @Override
     public String getUUID() {
-        return parentCharacter.getUUID();
+        return getWrappedCharacter().getUUID();
     }
 
     @Override
     public String getName() {
-        return getResult(PersonalityMod.id("name"), parentCharacter.getName()).result();
+        return getResult(PersonalityMod.id("name"), getWrappedCharacter().getName()).result();
     }
 
     @Override
     public Text getFormattedName() {
-        InfoRevealResult<String> name = getResult(PersonalityMod.id("name"), parentCharacter.getName());
+        InfoRevealResult<String> name = getResult(PersonalityMod.id("name"), getWrappedCharacter().getName());
 
-        String defaultAlias = parentCharacter.getAlias();
+        String defaultAlias = getWrappedCharacter().getAlias();
 
         if(!name.replaced()){
             MutableText nameText = Text.literal(name.result());
@@ -115,29 +131,34 @@ public class KnownCharacter implements BaseCharacter {
 
     @Override
     public String getAlias() {
-        String alias = parentCharacter.getAlias();
+        String alias = getWrappedCharacter().getAlias();
 
         return getResult(PersonalityMod.id("alias"), alias == null ? "none" : alias).result();
     }
 
     @Override
     public String getGender() {
-        return getResult(PersonalityMod.id("gender"), parentCharacter.getGender()).result();
+        return getResult(PersonalityMod.id("gender"), getWrappedCharacter().getGender()).result();
     }
 
     @Override
     public String getDescription() {
-        return getResult(PersonalityMod.id("description"), parentCharacter.getDescription()).result();
+        return getResult(PersonalityMod.id("description"), getWrappedCharacter().getDescription()).result();
     }
 
     @Override
     public String getBiography() {
-        return getResult(PersonalityMod.id("biography"), parentCharacter.getBiography()).result();
+        return getResult(PersonalityMod.id("biography"), getWrappedCharacter().getBiography()).result();
     }
 
     @Override
     public int getAge() {
-        return getResult(PersonalityMod.id("age"), parentCharacter.getAge()).result();
+        return getResult(PersonalityMod.id("age"), getWrappedCharacter().getAge()).result();
+    }
+
+    @Override
+    public int getPlaytime() {
+        return getWrappedCharacter().getPlaytime();
     }
 
     private <T> InfoRevealResult<T> getResult(Identifier valueId, T defaultValue){

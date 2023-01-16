@@ -84,10 +84,15 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
         return c;
     }
 
-    @Nullable
     @Override
-    public ServerPlayerEntity getPlayer(String characterUUID) {
-        return ServerAccess.getPlayer(playerToCharacterReferences().inverse().get(characterUUID));
+    public PlayerAccess<ServerPlayerEntity> getPlayer(String characterUUID) {
+        String playerUUID = playerToCharacterReferences().inverse().get(characterUUID);
+
+        if(playerUUID != null) {
+            return new PlayerAccess<>(playerUUID, ServerAccess.getPlayer(playerToCharacterReferences().inverse().get(characterUUID)));
+        }
+
+        return super.getPlayer(characterUUID);
     }
 
     @Override
@@ -169,18 +174,32 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     @Override
     public SuccessfulRevealReturn<ServerPlayerEntity> revealCharacterInfo(Character sourceC, Character targetC, InfoRevealLevel level) {
         if (!targetC.getKnownCharacters().containsKey(sourceC.getUUID())) {
-            targetC.getKnownCharacters().put(sourceC.getUUID(), new KnownCharacter(sourceC.getUUID()));
+            KnownCharacter character = new KnownCharacter(targetC.getUUID(), sourceC.getUUID());
 
-            saveCharacter(targetC);
+            character.updateInfoLevel(level);
 
-            return player -> Networking.sendS2C(player, new IntroductionPackets.UnknownIntroduction(sourceC.getUUID()));
+            targetC.getKnownCharacters().put(sourceC.getUUID(), character);
+
+            return player -> {
+                saveCharacter(targetC);
+
+                LOGGER.info("[ServerCharacter] A new Character (Character Name: {}) was revealed to {}", sourceC.getName(), targetC.getName());
+
+                Networking.sendS2C(player, new IntroductionPackets.UnknownIntroduction(sourceC.getUUID()));
+            };
         } else {
             KnownCharacter sourceKnownCharacter = targetC.getKnownCharacters().get(sourceC.getUUID());
 
             if(sourceKnownCharacter.level.shouldUpdateLevel(level)){
                 sourceKnownCharacter.updateInfoLevel(level);
 
-                return player -> Networking.sendS2C(player, new IntroductionPackets.UpdatedKnowledge(sourceC.getUUID()));
+                return player -> {
+                    saveCharacter(targetC);
+
+                    LOGGER.info("[ServerCharacter] A already known Character (Character Name: {}) had more info revealed to {}", sourceC.getName(), targetC.getName());
+
+                    Networking.sendS2C(player, new IntroductionPackets.UpdatedKnowledge(sourceC.getUUID()));
+                };
             }
         }
 

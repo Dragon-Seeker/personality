@@ -18,7 +18,7 @@ public interface RevelCharacterInfo<P extends PlayerEntity> {
 
     default void revealCharacterInfo(P source, int range, InfoRevealLevel level){
         List<P> players = (List<P>) source.getWorld().getPlayers().stream()
-                .filter(player -> source.getPos().distanceTo(player.getPos()) <= range)
+                .filter(player -> source.getPos().distanceTo(player.getPos()) <= range && !player.equals(source))
                 .toList();
 
         revealCharacterInfo(source, players, level);

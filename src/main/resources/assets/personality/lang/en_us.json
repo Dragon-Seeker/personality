@@ -18,5 +18,7 @@
   "text.config.personality.option.THEME_MODE.value.dark_mode": "Dark Mode",
   "text.config.personality.option.THEME_MODE.value.system": "System",
   "origin.personality.unknown.name": "Unknown",
-  "origin.personality.unknown.description": "Currently Unknown to you, you can ask them or wait until they tell you?"
+  "origin.personality.unknown.description": "Currently Unknown to you, you can ask them or wait until they tell you?",
+  "personality.addon_registry.name": "Addon",
+  "personality.info_reveal_level_registry.name": "Info Reveal Level"
 }

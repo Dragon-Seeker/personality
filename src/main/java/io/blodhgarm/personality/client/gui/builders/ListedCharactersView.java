@@ -6,7 +6,7 @@ import io.blodhgarm.personality.client.gui.components.owo.CustomEntityComponent;
 import io.blodhgarm.personality.client.gui.components.owo.BetterGridLayout;
 import io.blodhgarm.personality.client.gui.screens.CharacterScreen;
 import io.blodhgarm.personality.misc.pond.owo.GridLayoutDuck;
-import io.blodhgarm.personality.mixin.client.accessor.ScrollContainerAccessor;
+import io.blodhgarm.personality.mixin.client.owo.ScrollContainerAccessor;
 import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.container.Containers;
@@ -56,6 +56,7 @@ public class ListedCharactersView {
 
         componentBuilders.add(new LabeledCharacterComponentWrapper(Text.of("Name"),
                 (character, mode1, isParentVertical) -> Components.label(character.getFormattedName())
+                        .margins(Insets.of(2))
                 ).onlyAllowWhenVertical(true)
         );
     }
@@ -81,15 +82,15 @@ public class ListedCharactersView {
     public void buildLayout(FlowLayout rootComponent, ScrollContainer<FlowLayout> parent){
         boolean isVertical = ((ScrollContainerAccessor) parent).personality$direction() == ScrollContainer.ScrollDirection.VERTICAL;
 
-        BetterGridLayout mainLayout = new BetterGridLayout(Sizing.content(), Sizing.content(), 1, 1)
+        List<LabeledCharacterComponentWrapper> wrappers = this.componentBuilders.stream()
+                .filter(wrapper -> !wrapper.onlyShowWhenVertical || isVertical)
+                .toList();
+
+        BetterGridLayout mainLayout = new BetterGridLayout(Sizing.content(), Sizing.content(), 1, wrappers.size())
                 .setColumnDividingLine(1)
                 .setRowDividingLine(1);
 
         List<BaseCharacter> characters = this.characterSupplier.get();
-
-        List<LabeledCharacterComponentWrapper> wrappers = this.componentBuilders.stream()
-                .filter(wrapper -> !wrapper.onlyShowWhenVertical || isVertical)
-                .toList();
 
         boolean updatedSize = false;
 

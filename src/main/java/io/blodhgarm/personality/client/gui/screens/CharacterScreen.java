@@ -116,6 +116,8 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
             playerDisplayComponent.child(screenAddons.get(originScreenAddon).addBranchComponent(rootComponent));
         }
 
+//        playerDisplayComponent.gap(5);
+
         playerDisplayComponent.child(
                 (CustomEntityComponent.playerEntityComponent(Sizing.fixed(originAddonExists ? 85 : 100), player))
                         .scale(originAddonExists ? 0.55F : 0.65F)

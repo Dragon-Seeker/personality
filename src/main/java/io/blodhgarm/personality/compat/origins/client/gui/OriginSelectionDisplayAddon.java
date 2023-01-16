@@ -416,7 +416,7 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
 
     @Override
     public Component buildBranchComponent(BaseParentComponent rootComponent) {
-        return Containers.horizontalFlow(Sizing.content(), Sizing.fixed(26 + 12))
+        return Containers.horizontalFlow(Sizing.content(), Sizing.fixed(26 + 12 + 4))
                 .child(
                         new OriginHeaderComponent(Sizing.fixed(122), Sizing.fixed(32), getCurrentOrigin(), layerList.get(currentLayerIndex))
                                 .shortVersion(true)

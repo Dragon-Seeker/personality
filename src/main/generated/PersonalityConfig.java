@@ -44,6 +44,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
     private final Option<java.lang.Integer> MAX_EXTRA_YEARS_OF_LIFE = this.optionForKey(new Option.Key("MAX_EXTRA_YEARS_OF_LIFE"));
     private final Option<java.lang.Boolean> RESIZE_BOUNDS_ONLY = this.optionForKey(new Option.Key("RESIZE_BOUNDS_ONLY"));
     private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.ThemeMode> THEME_MODE = this.optionForKey(new Option.Key("THEME_MODE"));
+    private final Option<java.lang.Boolean> showPlayerNameWhenHovering = this.optionForKey(new Option.Key("showPlayerNameWhenHovering"));
 
     private PersonalityConfig() {
         super(io.blodhgarm.personality.misc.config.PersonalityConfigModel.class);
@@ -347,6 +348,14 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
 
     public void THEME_MODE(io.blodhgarm.personality.misc.config.PersonalityConfigModel.ThemeMode value) {
         THEME_MODE.set(value);
+    }
+
+    public boolean showPlayerNameWhenHovering() {
+        return showPlayerNameWhenHovering.value();
+    }
+
+    public void showPlayerNameWhenHovering(boolean value) {
+        showPlayerNameWhenHovering.set(value);
     }
 
 

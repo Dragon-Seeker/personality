@@ -30,6 +30,8 @@ public class PersonalityConfigModel {
 
     public ThemeMode THEME_MODE = ThemeMode.SYSTEM;
 
+    public boolean showPlayerNameWhenHovering = true;
+
     public enum ThemeMode {
         LIGHT_MODE,
         DARK_MODE,

@@ -1,7 +1,10 @@
 package io.blodhgarm.personality.api.reveal;
 
 import com.mojang.logging.LogUtils;
+import io.blodhgarm.personality.PersonalityMod;
+import io.blodhgarm.personality.api.core.BaseRegistry;
 import io.blodhgarm.personality.api.core.DelayedRegistry;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.apache.commons.collections4.map.LinkedMap;
 import org.slf4j.Logger;
@@ -70,7 +73,7 @@ public class InfoRevealRegistry extends DelayedRegistry {
     }
 
     public <T> InfoRevealResult<T> defaultOrReplace(InfoRevealLevel level, Identifier identifier, T defaultValue){
-        if(showInformation(level, identifier)) return new InfoRevealResult<T>(false, defaultValue);
+        if(showInformation(level, identifier)) return new InfoRevealResult<>(false, defaultValue);
 
         ObfuscatedReplacement<T> replacement = getReplacement(identifier);
 

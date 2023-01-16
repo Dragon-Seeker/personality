@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(OwoUIAdapter.class)
+@Mixin(value = OwoUIAdapter.class)
 public abstract class OwoUIAdapterMixin {
 
     @Inject(method = "keyPressed", at = @At(value = "HEAD"))

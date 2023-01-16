@@ -15,3 +15,7 @@ extendable method net/minecraft/client/gui/widget/EditBoxWidget drawSelection (L
 accessible class net/minecraft/client/gui/EditBox$Substring
 
 accessible field net/minecraft/client/gui/EditBox$Substring EMPTY Lnet/minecraft/client/gui/EditBox$Substring;
+
+accessible class net/minecraft/server/MinecraftServer$ResourceManagerHolder
+
+accessible class net/minecraft/client/world/ClientWorld$ClientEntityHandler
