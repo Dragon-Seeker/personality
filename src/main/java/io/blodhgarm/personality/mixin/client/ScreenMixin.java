@@ -27,6 +27,6 @@ public abstract class ScreenMixin {
 
     @Inject(method = "renderTextHoverEffect", at = @At(value = "JUMP", opcode = Opcodes.IFEQ, ordinal = 0), locals = LocalCapture.CAPTURE_FAILHARD)
     private void personality$renderAdvancedHoverTooltip(MatrixStack matrices, Style style, int x, int y, CallbackInfo ci, HoverEvent hoverEvent, HoverEvent.ItemStackContent itemStackContent, HoverEvent.EntityContent entityContent){
-        if(PersonalityMod.CONFIG.showPlayerNameWhenHovering() && !this.client.options.advancedItemTooltips) this.renderTooltip(matrices, entityContent.asTooltip(), x, y);
+        if(PersonalityMod.CONFIG.showPlayerNameWhenHoveringChat() && !this.client.options.advancedItemTooltips) this.renderTooltip(matrices, entityContent.asTooltip(), x, y);
     }
 }

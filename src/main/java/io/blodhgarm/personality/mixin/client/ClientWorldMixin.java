@@ -1,7 +1,7 @@
 package io.blodhgarm.personality.mixin.client;
 
-import io.blodhgarm.personality.api.Character;
-import io.blodhgarm.personality.api.PlayerAccess;
+import io.blodhgarm.personality.api.character.Character;
+import io.blodhgarm.personality.api.utils.PlayerAccess;
 import io.blodhgarm.personality.client.ClientCharacters;
 import io.blodhgarm.personality.misc.pond.CharacterToPlayerLink;
 import net.minecraft.client.network.AbstractClientPlayerEntity;

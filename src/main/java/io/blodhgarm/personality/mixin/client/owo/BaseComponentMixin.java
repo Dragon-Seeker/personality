@@ -35,22 +35,18 @@ public abstract class BaseComponentMixin {
 
         if(polygons.isEmpty()) return;
 
-        Vec3f vec3f;
+        boolean isUpdateX = Objects.equals(ci.getId(), "updateX");
 
-        if(Objects.equals(ci.getId(), "updateX")){
-            int diff = value - this.x;
+        int diff = value - (isUpdateX ? this.x : this.y);
 
-            if(diff == 0) return;
+        if(diff != 0) {
+            Vec3f vec3f = new Vec3f(
+                    isUpdateX ? diff : 0,
+                    isUpdateX ? 0 : diff,
+                    0f
+            );
 
-            vec3f = new Vec3f(diff, 0, 0f);
-        } else {
-            int diff = value - this.y;
-
-            if(diff == 0) return;
-
-            vec3f = new Vec3f(0, diff, 0f);
+            polygons.forEach(abstractPolygon -> abstractPolygon.movePolygon(vec3f, Vec3f::add));
         }
-
-        polygons.forEach(abstractPolygon -> abstractPolygon.movePolygon(vec3f, Vec3f::add));
     }
 }

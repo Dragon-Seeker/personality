@@ -1,10 +1,9 @@
 package io.blodhgarm.personality.mixin.client;
 
-import io.blodhgarm.personality.api.BaseCharacter;
-import io.blodhgarm.personality.api.Character;
-import io.blodhgarm.personality.api.CharacterManager;
+import io.blodhgarm.personality.api.character.BaseCharacter;
+import io.blodhgarm.personality.api.character.Character;
+import io.blodhgarm.personality.api.character.CharacterManager;
 import io.blodhgarm.personality.client.ClientCharacters;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.network.message.MessageHandler;
 import net.minecraft.network.message.MessageMetadata;
@@ -47,11 +46,9 @@ public abstract class MessageHandlerMixin {
                     Character clientCharacter = CharacterManager.getClientCharacter();
 
                     if(clientCharacter != null) {
-                        if (Objects.equals(clientCharacter.getUUID(), ClientCharacters.INSTANCE.getCharacterUUID(playerUUID))) {
-                            mutableText = Text.literal(clientCharacter.getName());
-                        } else {
-                            mutableText = Text.literal("Obscured");
-                        }
+                        mutableText = Objects.equals(clientCharacter.getUUID(), ClientCharacters.INSTANCE.getCharacterUUID(playerUUID))
+                                ? Text.literal(clientCharacter.getName())
+                                : Text.literal("Obscured");
                     }
                 }
 

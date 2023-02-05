@@ -1,7 +1,7 @@
 package io.blodhgarm.personality.client;
 
 import io.blodhgarm.personality.Networking;
-import io.blodhgarm.personality.api.client.PersonalityScreenAddonRegistry;
+import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddonRegistry;
 import io.blodhgarm.personality.compat.origins.client.gui.OriginSelectionDisplayAddon;
 import io.blodhgarm.personality.compat.pehkui.client.PehkuiScaleDisplayAddon;
 import io.blodhgarm.personality.compat.trinkets.TrinketsGlasses;
@@ -26,7 +26,7 @@ public class PersonalityClient implements ClientModInitializer {
         ClientTickEvents.END_WORLD_TICK.register(KeyBindings::processKeybindings);
 
         if(FabricLoader.getInstance().isModLoaded("trinkets")){
-            TrinketsGlasses.init();
+            TrinketsGlasses.clientInit();
         }
 
         if(FabricLoader.getInstance().isModLoaded("origins")){

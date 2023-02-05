@@ -2,8 +2,8 @@ package io.blodhgarm.personality.packets;
 
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.PersonalityMod;
-import io.blodhgarm.personality.api.Character;
-import io.blodhgarm.personality.api.PlayerAccess;
+import io.blodhgarm.personality.api.character.Character;
+import io.blodhgarm.personality.api.utils.PlayerAccess;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.api.core.DelayedRegistry;
@@ -73,6 +73,8 @@ public class SyncS2CPackets {
             PlayerAccess<AbstractClientPlayerEntity> playerCharacter = ClientCharacters.INSTANCE.getPlayer(c);
 
             ClientCharacters.INSTANCE.characterLookupMap().put(c.getUUID(), c);
+
+            ClientCharacters.INSTANCE.sortCharacterLookupMap();
 
             if(playerCharacter.valid()
                     && Objects.equals(playerCharacter.UUID(), access.player().getUuid().toString())) {

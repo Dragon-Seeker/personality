@@ -2,9 +2,9 @@ package io.blodhgarm.personality.api.reveal;
 
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.PersonalityMod;
-import io.blodhgarm.personality.api.core.BaseRegistry;
 import io.blodhgarm.personality.api.core.DelayedRegistry;
-import net.minecraft.text.Text;
+import io.blodhgarm.personality.api.utils.InfoRevealResult;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Identifier;
 import org.apache.commons.collections4.map.LinkedMap;
 import org.slf4j.Logger;
@@ -13,6 +13,9 @@ import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 
+/**
+ * Registry used for Registering Obfuscated replacements for given Info about a Character
+ */
 public class InfoRevealRegistry extends DelayedRegistry {
 
     private static Logger LOGGER = LogUtils.getLogger();
@@ -31,6 +34,14 @@ public class InfoRevealRegistry extends DelayedRegistry {
         Arrays.stream(InfoRevealLevel.values()).forEach(level -> REGISTRY.put(level, new ArrayList<>()));
     }
 
+    /**
+     * Method used to register Info Reveal Data
+     *
+     * @param level The given level which this info can be showed rather than Obfuscation
+     * @param valueId The given value's Identifier being called within Known Character
+     * @param replacementInfo A Helper used to show the Obfuscated info if the character doesn't know that info
+     * @return
+     */
     public InfoRevealRegistry registerValueForRevealing(InfoRevealLevel level, Identifier valueId, ObfuscatedReplacement<?> replacementInfo){
         List<Identifier> valueForLevel = REGISTRY.get(level);
 
@@ -49,6 +60,10 @@ public class InfoRevealRegistry extends DelayedRegistry {
         return this;
     }
 
+    /**
+     * Method allowing for delayed registry of Info Reveal Data if your mod requires loading of DataPacks and such (See {@link #onServerStarted(MinecraftServer)}
+     * @param registerConsumer A consumer with used to register your methods at a later time
+     */
     public InfoRevealRegistry registerDelayedInfoRevealing(Consumer<InfoRevealRegistry> registerConsumer){
         DELAYED_REGISTERS.add(registerConsumer);
 

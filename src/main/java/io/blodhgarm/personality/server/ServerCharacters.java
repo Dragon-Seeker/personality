@@ -1,4 +1,4 @@
-package io.blodhgarm.personality.impl;
+package io.blodhgarm.personality.server;
 
 import com.google.common.collect.HashBiMap;
 import com.google.common.reflect.TypeToken;
@@ -7,18 +7,18 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.Networking;
-import io.blodhgarm.personality.api.PlayerAccess;
-import io.blodhgarm.personality.api.events.FinalizedPlayerConnectionEvent;
-import io.blodhgarm.personality.api.reveal.KnownCharacter;
+import io.blodhgarm.personality.api.character.Character;
+import io.blodhgarm.personality.api.character.CharacterManager;
+import io.blodhgarm.personality.api.utils.PlayerAccess;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
-import io.blodhgarm.personality.api.Character;
-import io.blodhgarm.personality.api.CharacterManager;
 import io.blodhgarm.personality.api.addon.BaseAddon;
+import io.blodhgarm.personality.api.events.FinalizedPlayerConnectionEvent;
 import io.blodhgarm.personality.api.reveal.InfoRevealLevel;
+import io.blodhgarm.personality.api.reveal.KnownCharacter;
 import io.blodhgarm.personality.packets.IntroductionPackets;
 import io.blodhgarm.personality.packets.SyncS2CPackets;
 import io.blodhgarm.personality.utils.DebugCharacters;
-import io.blodhgarm.personality.utils.ServerAccess;
+import io.wispforest.owo.Owo;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.loader.api.FabricLoader;
@@ -37,9 +37,11 @@ import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.function.Consumer;
 
 public class ServerCharacters extends CharacterManager<ServerPlayerEntity> implements FinalizedPlayerConnectionEvent.Finish, ServerWorldEvents.Load {
 
@@ -75,7 +77,9 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
                 characterLookupMap().put(uuid, c);
 
-                Networking.sendToAll(new SyncS2CPackets.SyncCharacter(characterJson, AddonRegistry.INSTANCE.loadAddonsForCharacter(c)));
+                sortCharacterLookupMap();
+
+                Networking.sendToAll(new SyncS2CPackets.SyncCharacter(characterJson, AddonRegistry.INSTANCE.loadAddonsFromDisc(c, true)));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -89,7 +93,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
         String playerUUID = playerToCharacterReferences().inverse().get(characterUUID);
 
         if(playerUUID != null) {
-            return new PlayerAccess<>(playerUUID, ServerAccess.getPlayer(playerToCharacterReferences().inverse().get(characterUUID)));
+            return new PlayerAccess<>(playerUUID, getPlayerFromServer(playerUUID));
         }
 
         return super.getPlayer(characterUUID);
@@ -108,7 +112,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
     @Override
     public String dissociateUUID(String UUID, boolean isCharacterUUID) {
-        ServerPlayerEntity player = ServerAccess.getPlayer(super.dissociateUUID(UUID, isCharacterUUID));
+        ServerPlayerEntity player = getPlayerFromServer(super.dissociateUUID(UUID, isCharacterUUID));
 
         Networking.sendToAll(new SyncS2CPackets.Dissociation(UUID, isCharacterUUID));
 
@@ -129,6 +133,10 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     }
 
     //----------------------------------------------------
+
+    public static ServerPlayerEntity getPlayerFromServer(String playerUUID) {
+        return Owo.currentServer().getPlayerManager().getPlayer(UUID.fromString(playerUUID));
+    }
 
     public void killCharacter(String uuid) {
         killCharacter(characterIDToCharacter.get(uuid));
@@ -159,7 +167,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     //----------------------------------------------------
 
     @Override
-    public void revealCharacterInfo(ServerPlayerEntity source, List<ServerPlayerEntity> targets, InfoRevealLevel level) {
+    public void revealCharacterInfo(ServerPlayerEntity source, Collection<ServerPlayerEntity> targets, InfoRevealLevel level) {
         Character sourceCharacter = this.getCharacter(source);
 
         if (sourceCharacter == null) return;
@@ -167,12 +175,12 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
         for (ServerPlayerEntity otherPlayer : targets) {
             Character targetCharacter = this.getCharacter(otherPlayer);
 
-            if(targetCharacter != null) revealCharacterInfo(sourceCharacter, targetCharacter, level).finishEvent(otherPlayer);
+            if(targetCharacter != null) revealCharacterInfo(sourceCharacter, targetCharacter, level).accept(otherPlayer);
         }
     }
 
     @Override
-    public SuccessfulRevealReturn<ServerPlayerEntity> revealCharacterInfo(Character sourceC, Character targetC, InfoRevealLevel level) {
+    public Consumer<ServerPlayerEntity> revealCharacterInfo(Character sourceC, Character targetC, InfoRevealLevel level) {
         if (!targetC.getKnownCharacters().containsKey(sourceC.getUUID())) {
             KnownCharacter character = new KnownCharacter(targetC.getUUID(), sourceC.getUUID());
 
@@ -297,7 +305,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     }
 
     public void loadCharacterReference() {
-        BASE_PATH = ServerAccess.getServer().getSavePath(WorldSavePath.ROOT).resolve("mod_data/personality");
+        BASE_PATH = Owo.currentServer().getSavePath(WorldSavePath.ROOT).resolve("mod_data/personality");
 
         CHARACTER_PATH = BASE_PATH.resolve("characters");
         REFERENCE_PATH = BASE_PATH.resolve("reference.json");
@@ -340,6 +348,31 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     @Override
     public void onWorldLoad(MinecraftServer server, ServerWorld world) {
         loadCharacterReference();
+
+        File[] folders = CHARACTER_PATH.toFile().listFiles();
+
+        if(folders == null) return;
+
+        for(final File folderEntry : folders){
+            try {
+                Path path = folderEntry.toPath().resolve("info.json");
+
+                if (Files.exists(path)) {
+                    String characterJson = Files.readString(path);
+
+                    Character c = GSON.fromJson(characterJson, Character.class);
+
+                    characterLookupMap().put(c.getUUID(), c);
+
+                    AddonRegistry.INSTANCE.loadAddonsFromDisc(c, false);
+                }
+            } catch (IOException e) {
+                LOGGER.error("[Server Character]: A character was unable to be loaded from the disc, such will be skipped [Path: {}]", folderEntry.getPath());
+                e.printStackTrace();
+            }
+        }
+
+        sortCharacterLookupMap();
     }
 
     @Override
@@ -349,7 +382,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
         Map<String, Map<Identifier, String>> characters = new HashMap<>();
 
         for (Character c : characterLookupMap().values()){
-            characters.put(GSON.toJson(c), AddonRegistry.INSTANCE.loadAddonsForCharacter(c)); //GSON.toJson(c.getAddons())
+            characters.put(GSON.toJson(c), AddonRegistry.INSTANCE.serializesAddons(c)); //GSON.toJson(c.getAddons())
         }
 
         Networking.sendS2C(handler.player, new SyncS2CPackets.Initial(characters, playerToCharacterReferences()));

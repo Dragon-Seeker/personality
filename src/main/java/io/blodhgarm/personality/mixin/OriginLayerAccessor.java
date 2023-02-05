@@ -11,10 +11,6 @@ import java.util.List;
 @Mixin(value = OriginLayer.class, remap = false)
 @Pseudo
 public interface OriginLayerAccessor {
-
-    @Accessor("originsExcludedFromRandom")
-    List<Identifier> personality$OriginsExcludedFromRandom();
-
-    @Accessor("doesRandomAllowUnchoosable")
-    boolean personality$DoesRandomAllowUnchoosable();
+    @Accessor("originsExcludedFromRandom") List<Identifier> personality$OriginsExcludedFromRandom();
+    @Accessor("doesRandomAllowUnchoosable") boolean personality$DoesRandomAllowUnchoosable();
 }

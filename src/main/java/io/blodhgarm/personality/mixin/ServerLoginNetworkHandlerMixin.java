@@ -14,6 +14,7 @@ public class ServerLoginNetworkHandlerMixin {
 
     @Inject(at = @At("TAIL"), method = "addToServer")
     private void personality$latestInjectPoint(ServerPlayerEntity player, CallbackInfo ci) {
-        FinalizedPlayerConnectionEvent.CONNECTION_FINISHED.invoker().onFinalize(player.networkHandler, new ServerPlayNetworkAddon(player.networkHandler, player.server), player.server);
+        FinalizedPlayerConnectionEvent.CONNECTION_FINISHED.invoker()
+                .onFinalize(player.networkHandler, new ServerPlayNetworkAddon(player.networkHandler, player.server), player.server);
     }
 }

@@ -1,20 +1,18 @@
 package io.blodhgarm.personality.packets;
 
-import io.blodhgarm.personality.api.Character;
-import io.blodhgarm.personality.api.CharacterManager;
-import io.blodhgarm.personality.impl.RevelCharacterInfo;
-import io.blodhgarm.personality.impl.ServerCharacters;
+import io.blodhgarm.personality.api.character.Character;
+import io.blodhgarm.personality.api.character.CharacterManager;
+import io.blodhgarm.personality.api.reveal.RevelInfoManager;
 import io.blodhgarm.personality.api.reveal.InfoRevealLevel;
 import io.wispforest.owo.network.ServerAccess;
 import net.minecraft.server.network.ServerPlayerEntity;
 
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.UUID;
 
-public record RevealCharacterC2SPacket(InfoRevealLevel level, RevelCharacterInfo.RevealRange range, String uuid) {
+public record RevealCharacterC2SPacket(InfoRevealLevel level, RevelInfoManager.RevealRange range, String uuid) {
 
-    public RevealCharacterC2SPacket(InfoRevealLevel level, RevelCharacterInfo.RevealRange range){
+    public RevealCharacterC2SPacket(InfoRevealLevel level, RevelInfoManager.RevealRange range){
         this(level, range, "");
     }
 
@@ -25,7 +23,7 @@ public record RevealCharacterC2SPacket(InfoRevealLevel level, RevelCharacterInfo
 
         if(sourceCharacter == null) return;
 
-        if(message.range == RevelCharacterInfo.RevealRange.DIRECTED){
+        if(message.range == RevelInfoManager.RevealRange.DIRECTED){
             ServerPlayerEntity target = access.runtime().getPlayerManager().getPlayer(UUID.fromString(message.uuid));
 
             if(target == null) return;

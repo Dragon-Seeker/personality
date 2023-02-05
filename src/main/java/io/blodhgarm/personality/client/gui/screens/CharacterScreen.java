@@ -3,13 +3,14 @@ package io.blodhgarm.personality.client.gui.screens;
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.Networking;
 import io.blodhgarm.personality.PersonalityMod;
-import io.blodhgarm.personality.api.BaseCharacter;
-import io.blodhgarm.personality.api.Character;
+import io.blodhgarm.personality.api.character.BaseCharacter;
+import io.blodhgarm.personality.api.character.Character;
 import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddon;
-import io.blodhgarm.personality.api.client.AddonObservable;
-import io.blodhgarm.personality.api.client.PersonalityScreenAddonRegistry;
-import io.blodhgarm.personality.client.ThemeHelper;
+import io.blodhgarm.personality.api.addon.client.AddonObservable;
+import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddonRegistry;
+import io.blodhgarm.personality.client.gui.ThemeHelper;
 import io.blodhgarm.personality.client.gui.CharacterScreenMode;
+import io.blodhgarm.personality.client.gui.GenderSelection;
 import io.blodhgarm.personality.client.gui.components.owo.CustomEntityComponent;
 import io.blodhgarm.personality.client.gui.utils.CustomSurfaces;
 import io.blodhgarm.personality.client.gui.components.vanilla.BetterEditBoxWidget;
@@ -28,6 +29,8 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.input.CursorMovement;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.toast.SystemToast;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.stat.Stats;
 import net.minecraft.text.MutableText;
@@ -141,13 +144,21 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
                     .append(Text.literal("Name: "))
                     .append(!isModifiable ? currentCharacter.getFormattedName() : Text.empty());
 
-            namePropertyLayout.child(Components.label(nameLabel));
+            namePropertyLayout.child(
+                    Components.label(nameLabel)
+                            .color(ThemeHelper.dynamicColor())
+            );
 
             if (isModifiable) {
                 namePropertyLayout
                         .child(
                                 BetterTextFieldWidget.textBox(Sizing.fixed(112), importCharacterData ? currentCharacter.getName() : "") //132
                                         .bqColor(Color.ofArgb(0xFF555555))
+                                        .configure(component -> {
+                                            if(component instanceof BetterTextFieldWidget widget){
+                                                widget.setMaxLength(100);
+                                            }
+                                        })
                                         .id("character_name")
                         );
             }
@@ -223,6 +234,11 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
                                                 .textWidth(130)
                                                 .bqColor(Color.ofArgb(0xFF555555))
                                                 .canEdit(isModifiable)
+                                                .configure(component -> {
+                                                    if(component instanceof BetterEditBoxWidget betterEditBoxWidget){
+                                                        betterEditBoxWidget.setMaxLength(5000);
+                                                    }
+                                                })
                                                 .id("description_text_box")
                                 )
                                 .margins(Insets.bottom(8))
@@ -240,6 +256,11 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
                                                 .textWidth(130)
                                                 .bqColor(Color.ofArgb(0xFF555555))
                                                 .canEdit(isModifiable)
+                                                .configure(component -> {
+                                                    if(component instanceof BetterEditBoxWidget betterEditBoxWidget){
+                                                        betterEditBoxWidget.setMaxLength(5000);
+                                                    }
+                                                })
                                                 .id("biography_text_box")
                                 )
                 );
@@ -308,7 +329,13 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
                                         if (this.finishCharacterCreation(rootComponent)) {
                                             this.close();
                                         } else {
-                                            //TODO: Handle this
+                                            //TODO: Handle this better with custom info on what is missing
+
+                                            MinecraftClient.getInstance().getToastManager()
+                                                    .add(new SystemToast(SystemToast.Type.PERIODIC_NOTIFICATION,
+                                                            Text.of("Missing Information for Character"),
+                                                            Text.of("Your character is missing required information to be created!"))
+                                                    );
                                         }
                                     })
                                     .horizontalSizing(Sizing.fixed(100))
@@ -318,7 +345,8 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
         } else {
             if(this.buildAsScreen) {
                 characterPanel.child(
-                        Components.button(Text.of("❌"), (ButtonComponent component) -> this.close())
+                        Components.button(Text.literal("❌").formatted(ThemeHelper.dynamicTextColor()), (ButtonComponent component) -> this.close())
+                                .textShadow(ThemeHelper.isDarkMode())
                                 .renderer(ButtonComponent.Renderer.flat(0, 0, 0))
                                 .sizing(Sizing.fixed(12))
                                 .positioning(Positioning.relative(100, 0))
@@ -403,6 +431,11 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
         return BetterTextFieldWidget.textBox(Sizing.fixed(58), importCharacterData ? currentCharacter.getGender() : "")
                 .setEditAbility(currentSelection.openTextField())
                 .tooltip(Text.of("Required"))
+                .configure(component -> {
+                    if(component instanceof BetterTextFieldWidget widget){
+                        widget.setMaxLength(100);
+                    }
+                })
                 .id("gender_text_field");
     }
 
@@ -440,9 +473,17 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
 
         if(name.isEmpty()) return false;
 
-        String gender = currentSelection != GenderSelection.OTHER
-                ? currentSelection.translation().getString()
-                : rootComponent.childById(TextFieldWidget.class, "gender_text_field").getText();
+        String gender;
+
+        if(currentSelection != GenderSelection.OTHER){
+            gender = currentSelection.translation().getString();
+        } else {
+            gender = rootComponent.childById(TextFieldWidget.class, "gender_text_field").getText();
+
+            if(gender.isBlank()) return false;
+        }
+
+        ClientPlayerEntity entity = MinecraftClient.getInstance().player;
 
         String description = rootComponent.childById(BetterEditBoxWidget.class, "description_text_box").convertTextBox();
 
@@ -450,9 +491,9 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
 
         int age = (int) rootComponent.childById(DiscreteSliderComponent.class, "age_slider").discreteValue();
 
-        int activityOffset = MinecraftClient.getInstance().player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME));
+        int activityOffset = entity.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME));
 
-        Character character = new Character(name, gender, description, biography, age, activityOffset);
+        Character character = new Character(entity.getUuidAsString(), name, gender, description, biography, age, activityOffset);
 
         //Addon Data
 
@@ -469,52 +510,6 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
         Networking.sendC2S(new SyncC2SPackets.NewCharacter(PersonalityMod.GSON.toJson(character), addonData, true));
 
         return true;
-    }
-
-    public enum GenderSelection {
-        MALE("male"),
-        FEMALE("female"),
-        NON_BINARY("non-binary"),
-        OTHER("other");
-
-        public final String name;
-
-        GenderSelection(String name){
-            this.name = name;
-        }
-
-        public static GenderSelection attemptToGetGender(String gender){
-            for(GenderSelection selection : GenderSelection.values()){
-                if(Objects.equals(selection.name, gender.toLowerCase(Locale.ROOT))){
-                    return selection;
-                }
-            }
-
-            return OTHER;
-        }
-
-        public boolean openTextField(){
-            return this == GenderSelection.OTHER;
-        }
-
-        public GenderSelection getNextSelection(){
-            int nextIndex = this.ordinal() + 1;
-
-            return GenderSelection.values()[nextIndex >= GenderSelection.values().length ? 0 : nextIndex];
-        }
-
-        public Text translation(){
-            return Text.translatable("personality.gender." + name.replace(" ", "_").toLowerCase(Locale.ROOT));
-        }
-
-        public String translatedString(){
-            return translation().getString();
-        }
-
-
-        public int textSizing(){
-            return MinecraftClient.getInstance().textRenderer.getWidth(this.translation().asOrderedText());
-        }
     }
 
     //-------------------------------------------------------
@@ -538,6 +533,6 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
 
     @Override
     public boolean shouldCloseOnEsc() {
-        return false;
+        return currentMode.importFromCharacter();
     }
 }

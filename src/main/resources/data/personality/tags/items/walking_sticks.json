@@ -1,6 +1,7 @@
 {
   "values" : [
     "minecraft:stick",
-    "minecraft:wooden_hoe"
+    "minecraft:wooden_hoe",
+    "personality:walking_stick"
   ]
 }

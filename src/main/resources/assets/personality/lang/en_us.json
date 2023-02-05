@@ -12,11 +12,105 @@
   "personality.reveal_range.small": "Small",
   "personality.reveal_range.medium": "Medium",
   "personality.reveal_range.large": "Large",
-  "text.config.personality.option.THEME_MODE": "UI Theme Mode",
-  "text.config.personality.option.THEME_MODE.tooltip": "Change this setting if your want either the light mode or dark mode version of the Personality UI",
-  "text.config.personality.option.THEME_MODE.value.light_mode": "Light Mode",
-  "text.config.personality.option.THEME_MODE.value.dark_mode": "Dark Mode",
-  "text.config.personality.option.THEME_MODE.value.system": "System",
+
+  "text.config.personality.title": "Personality Config",
+
+  "text.config.personality.section.character_configuration": "Character Configuration",
+
+  "text.config.personality.category.fasterExhaustion": "Faster Exhaustion",
+  "text.config.personality.category.fasterExhaustion.tooltip": "Controls a increase effect of Exhaustion on the given Age Range that weakens as you Age",
+
+  "text.config.personality.option.fasterExhaustion.minAge": "Minimum Starting Age",
+  "text.config.personality.option.fasterExhaustion.maxAge": "Maximum Starting Age",
+  "text.config.personality.option.fasterExhaustion.startingValue": "Starting Value for Calculation",
+  "text.config.personality.option.fasterExhaustion.endingValue": "Ending Value for Calculation",
+  "text.config.personality.option.fasterExhaustion.calculationCurve": "Calculation Curve Type",
+
+  "text.config.personality.category.fasterHealing": "Faster Healing",
+  "text.config.personality.category.fasterHealing.tooltip": "Controls a effect on a Players healing allowing for faster Regeneration for a given Age Range that weakens as you Age",
+
+  "text.config.personality.option.fasterHealing.minAge": "Minimum Starting Age",
+  "text.config.personality.option.fasterHealing.maxAge": "Maximum Starting Age",
+  "text.config.personality.option.fasterHealing.startingValue": "Starting Value for Calculation",
+  "text.config.personality.option.fasterHealing.endingValue": "Ending Value for Calculation",
+  "text.config.personality.option.fasterHealing.calculationCurve": "Calculation Curve Type",
+
+  "text.config.personality.category.minimumHungerToHeal": "Minimum Hunger To Heal",
+  "text.config.personality.category.minimumHungerToHeal.tooltip": "Controls the minimum amount of Hunger Bar needed to start Healing for a given Age Range that weakens as you Age",
+
+  "text.config.personality.option.minimumHungerToHeal.minAge": "Minimum Starting Age",
+  "text.config.personality.option.minimumHungerToHeal.maxAge": "Maximum Starting Age",
+  "text.config.personality.option.minimumHungerToHeal.startingValue": "Starting Value for Calculation",
+  "text.config.personality.option.minimumHungerToHeal.endingValue": "Ending Value for Calculation",
+  "text.config.personality.option.minimumHungerToHeal.calculationCurve": "Calculation Curve Type",
+
+  "text.config.personality.category.agingSlowness": "Slowness Infliction by Aging",
+  "text.config.personality.category.agingSlowness.tooltip": "Controls a Slowness Infliction that will increase with getting closer to the maximum Age",
+
+  "text.config.personality.option.agingSlowness.minAge": "Minimum Starting Age",
+  "text.config.personality.option.agingSlowness.maxAge": "Maximum Starting Age",
+  "text.config.personality.option.agingSlowness.startingValue": "Starting Value for Calculation",
+  "text.config.personality.option.agingSlowness.endingValue": "Ending Value for Calculation",
+  "text.config.personality.option.agingSlowness.calculationCurve": "Calculation Curve Type",
+
+  "text.config.personality.category.agingBlurriness": "Blurriness Infliction by Aging",
+  "text.config.personality.category.agingBlurriness.tooltip": "Controls a Blurriness Infliction that will increase with getting closer to the maximum Age",
+
+  "text.config.personality.option.agingBlurriness.minAge": "Minimum Starting Age",
+  "text.config.personality.option.agingBlurriness.maxAge": "Maximum Starting Age",
+  "text.config.personality.option.agingBlurriness.startingValue": "Starting Value for Calculation",
+  "text.config.personality.option.agingBlurriness.endingValue": "Ending Value for Calculation",
+  "text.config.personality.option.agingBlurriness.calculationCurve": "Calculation Curve Type",
+
+  "text.config.personality.category.extraAgeConfiguration": "Extra Age Configuration",
+  "text.config.personality.category.extraAgeConfiguration.tooltip": "Configuration that adjusts how a given character will get in Extra Age",
+
+  "text.config.personality.option.extraAgeConfiguration.minAge": "Minimum Starting Age",
+  "text.config.personality.option.extraAgeConfiguration.maxAge": "Maximum Starting Age",
+  "text.config.personality.option.extraAgeConfiguration.minimumHoursForExtraLife": "Minimum Hours before encoring Extra life",
+  "text.config.personality.option.extraAgeConfiguration.multiplier": "Calculation Multiplier",
+  "text.config.personality.option.extraAgeConfiguration.calculationCurve": "Curve used to Calculate that amount of Extra Age",
+
+  "text.config.personality.enum.curve.none": "None",
+  "text.config.personality.enum.curve.linear": "Linear",
+  "text.config.personality.enum.curve.quadratic": "Quadratic",
+  "text.config.personality.enum.curve.sqrt": "Square Root",
+  "text.config.personality.enum.curve.exponential": "Exponential",
+  "text.config.personality.enum.curve.logarithmic": "Logarithmic",
+  "text.config.personality.enum.curve.exponential_extreme": "Exponential Extreme",
+  "text.config.personality.enum.curve.logarithmic_extreme": "Logarithmic Extreme",
+
+  "text.config.personality.option.defaultMaximumAge": "Default Maximum Age for a Character",
+  "text.config.personality.option.maximumExtraAge": "Maximum Extra age allow for a Given Character",
+
+  "text.config.personality.section.command_authorization_configuration": "Command Authorization",
+
+  "text.config.personality.option.moderationList": "Moderation List",
+  "text.config.personality.option.moderationList.tooltip": "List use to control who has access to Moderation Aspects of Personality's internals",
+
+  "text.config.personality.option.administrationList": "Administration List",
+  "text.config.personality.option.administrationList.tooltip": "List use to control who has access to Administration Aspects of Personality's internals",
+
+  "text.config.personality.section.addon_configuration": "Addon Configuration",
+
+  "text.config.personality.option.adjustWidthAndHeightOnly": "Pehkui: Adjust only Width and Height",
+
+  "text.config.personality.section.client": "Client",
+
+  "text.config.personality.option.themeMode": "UI Theme Mode",
+  "text.config.personality.option.themeMode.tooltip": "Change this setting if your want either the light mode or dark mode version of the Personality UI",
+  "text.config.personality.option.themeMode.value.light_mode": "Light Mode",
+  "text.config.personality.option.themeMode.value.dark_mode": "Dark Mode",
+  "text.config.personality.option.themeMode.value.system": "System",
+
+  "text.config.personality.option.showPlayerNameWhenHoveringChat": "Show Player Name when Hovering Chat Messages",
+  "text.config.personality.option.showPlayerNamePlateAtChestLevel": "Show Player Nameplate at Chest Level",
+
+  "category.personality": "Personality",
+
+  "personality.keybind.open_subscreen": "Open Character Screen",
+  "personality.keybind.reveal": "Open Reveal Screen",
+
   "origin.personality.unknown.name": "Unknown",
   "origin.personality.unknown.description": "Currently Unknown to you, you can ask them or wait until they tell you?",
   "personality.addon_registry.name": "Addon",

@@ -1,6 +1,6 @@
-package io.blodhgarm.personality.impl;
+package io.blodhgarm.personality.server;
 
-import io.blodhgarm.personality.api.Character;
+import io.blodhgarm.personality.api.character.Character;
 import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.misc.PersonalityTags;
 import io.blodhgarm.personality.misc.config.ConfigHelper;
@@ -19,7 +19,7 @@ import java.util.UUID;
 public class CharacterTick implements ServerTickEvents.EndWorldTick {
 
     public static final DamageSource DEATH_BY_OLD_AGE = DamageSourceAccessor.createDamageSource("oldAge");
-    private static final UUID NO_STICK_SLOWNESS = UUID.fromString("662A6B8D-DA3E-4C1C-8813-96EA6097278F");
+    private static final UUID AGING_SLOWNESS_MODIFIER_UUID = UUID.fromString("662A6B8D-DA3E-4C1C-8813-96EA6097278F");
 
     @Override
     public void onEndTick(ServerWorld world) {
@@ -36,14 +36,14 @@ public class CharacterTick implements ServerTickEvents.EndWorldTick {
             }
 
             // Apply Slowness to Old Characters without a stick
-            PersonalityConfig.GradualValue config = PersonalityMod.CONFIG.NO_STICK_SLOWNESS;
+            PersonalityConfig.GradualValue config = PersonalityMod.CONFIG.agingSlowness;
             EntityAttributeInstance instance = player.getAttributeInstance(EntityAttributes.GENERIC_MOVEMENT_SPEED);
             if (ConfigHelper.shouldApply(config, c) && !player.getOffHandStack().isIn(PersonalityTags.WALKING_STICKS) && !player.getMainHandStack().isIn(PersonalityTags.WALKING_STICKS)) {
-                if (instance.getModifier(NO_STICK_SLOWNESS) == null)
-                    instance.addTemporaryModifier(new EntityAttributeModifier(NO_STICK_SLOWNESS, "Old Person with No Stick", ConfigHelper.apply(config, c), EntityAttributeModifier.Operation.MULTIPLY_BASE));
+                if (instance.getModifier(AGING_SLOWNESS_MODIFIER_UUID) == null)
+                    instance.addTemporaryModifier(new EntityAttributeModifier(AGING_SLOWNESS_MODIFIER_UUID, "Old Person with No Stick", -ConfigHelper.apply(config, c), EntityAttributeModifier.Operation.MULTIPLY_BASE));
             }
             else {
-                instance.tryRemoveModifier(NO_STICK_SLOWNESS);
+                instance.removeModifier(AGING_SLOWNESS_MODIFIER_UUID);
             }
         }
     }

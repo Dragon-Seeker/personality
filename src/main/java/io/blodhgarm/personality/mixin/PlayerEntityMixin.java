@@ -1,8 +1,8 @@
 package io.blodhgarm.personality.mixin;
 
-import io.blodhgarm.personality.api.BaseCharacter;
-import io.blodhgarm.personality.api.Character;
-import io.blodhgarm.personality.api.CharacterManager;
+import io.blodhgarm.personality.api.character.BaseCharacter;
+import io.blodhgarm.personality.api.character.Character;
+import io.blodhgarm.personality.api.character.CharacterManager;
 import io.blodhgarm.personality.api.core.KnownCharacterLookup;
 import io.blodhgarm.personality.misc.config.ConfigHelper;
 import io.blodhgarm.personality.misc.pond.CharacterToPlayerLink;
@@ -28,12 +28,12 @@ public abstract class PlayerEntityMixin implements CharacterToPlayerLink<PlayerE
 
     @ModifyArg(method = "addExhaustion", index = 0, at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/HungerManager;addExhaustion(F)V"))
     public float personality$addExtraExhaustionForYouth(float original) {
-        if (((PlayerEntity)(Object)this) instanceof ServerPlayerEntity serverPlayerEntity) {
+        if (((PlayerEntity)(Object) this) instanceof ServerPlayerEntity player) {
 
-            Character character = CharacterManager.getManger(serverPlayerEntity).getCharacter(serverPlayerEntity);
+            Character character = CharacterManager.getManger(player).getCharacter(player);
 
-            if (ConfigHelper.shouldApply(CONFIG.FASTER_EXHAUSTION, character)) {
-                original = original * ConfigHelper.apply(CONFIG.FASTER_EXHAUSTION, character);
+            if (ConfigHelper.shouldApply(CONFIG.fasterExhaustion, character)) {
+                original = original * ConfigHelper.apply(CONFIG.fasterExhaustion, character);
             }
         }
 
@@ -42,31 +42,23 @@ public abstract class PlayerEntityMixin implements CharacterToPlayerLink<PlayerE
 
     @ModifyVariable(method = "getDisplayName", at = @At(value = "INVOKE", target = "Lnet/minecraft/scoreboard/Team;decorateName(Lnet/minecraft/scoreboard/AbstractTeam;Lnet/minecraft/text/Text;)Lnet/minecraft/text/MutableText;", shift = At.Shift.BY, by = 2))
     private MutableText personality$attemptToAddCharacterName(MutableText mutableText){
-//        Character character = CharacterManager.getManger((PlayerEntity) (Object) this).getCharacter((PlayerEntity) (Object) this);
+        PlayerEntity player = (PlayerEntity) (Object) this;
 
-        MutableText characterInfo = Text.empty();
-
-        CharacterManager<PlayerEntity> manager = CharacterManager.getManger((PlayerEntity) (Object) this);
+        CharacterManager<PlayerEntity> manager = CharacterManager.getManger(player);
 
         if(manager instanceof KnownCharacterLookup lookup){
-            BaseCharacter character = lookup.getKnownCharacter((PlayerEntity) (Object) this);
+            BaseCharacter character = lookup.getKnownCharacter(player);
 
-            if(character != null){
-                characterInfo
-                        .append(" | ")
-                        .append(Text.literal(character.getName()));
-            } else {
-                if(CharacterManager.getClientCharacter() != null
-                        && manager.getCharacter((PlayerEntity) (Object) this) != null) {
-                    characterInfo
-                            .append(" | ")
-                            .append(Text.literal("Obscured"));
-                }
-            }
+            Text inCharacterName = character != null
+                    ? Text.literal(character.getName())
+                    : ((CharacterManager.getClientCharacter() != null && manager.getCharacter(player) != null)
+                        ? Text.literal("Obscured")
+                        : null);
+
+            if(inCharacterName != null) mutableText.append(" | ").append(inCharacterName);
         }
 
-        return mutableText
-                .append(characterInfo);
+        return mutableText;
     }
 
     @Override

@@ -1,4 +1,4 @@
-package io.blodhgarm.personality.api;
+package io.blodhgarm.personality.api.utils;
 
 import net.minecraft.entity.player.PlayerEntity;
 import org.jetbrains.annotations.Nullable;

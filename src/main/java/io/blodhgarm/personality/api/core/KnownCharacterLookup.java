@@ -1,10 +1,8 @@
 package io.blodhgarm.personality.api.core;
 
-import io.blodhgarm.personality.api.BaseCharacter;
+import io.blodhgarm.personality.api.character.BaseCharacter;
 import net.minecraft.entity.player.PlayerEntity;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
 
 public interface KnownCharacterLookup {
 

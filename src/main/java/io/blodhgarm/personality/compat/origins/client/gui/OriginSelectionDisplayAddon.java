@@ -1,8 +1,8 @@
 package io.blodhgarm.personality.compat.origins.client.gui;
 
-import io.blodhgarm.personality.api.BaseCharacter;
+import io.blodhgarm.personality.api.character.BaseCharacter;
 import io.blodhgarm.personality.api.addon.BaseAddon;
-import io.blodhgarm.personality.client.ThemeHelper;
+import io.blodhgarm.personality.client.gui.ThemeHelper;
 import io.blodhgarm.personality.client.gui.CharacterScreenMode;
 import io.blodhgarm.personality.compat.origins.OriginAddon;
 import io.blodhgarm.personality.compat.origins.client.gui.components.OriginHeaderComponent;

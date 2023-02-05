@@ -1,4 +1,4 @@
-package io.blodhgarm.personality.misc.owo;
+package io.blodhgarm.personality.client.gui.utils.owo;
 
 import io.blodhgarm.personality.misc.pond.owo.LineManageable;
 import io.wispforest.owo.ui.core.Component;

@@ -1,8 +1,8 @@
 package io.blodhgarm.personality.packets;
 
 import com.mojang.logging.LogUtils;
-import io.blodhgarm.personality.api.Character;
-import io.blodhgarm.personality.api.CharacterManager;
+import io.blodhgarm.personality.api.character.Character;
+import io.blodhgarm.personality.api.character.CharacterManager;
 import io.blodhgarm.personality.client.gui.CharacterScreenMode;
 import io.blodhgarm.personality.client.gui.screens.CharacterScreen;
 import io.wispforest.owo.network.ClientAccess;
@@ -26,9 +26,7 @@ public record OpenPersonalityScreenS2CPacket(CharacterScreenMode mode, String ch
             boolean errorHasOccured = false;
 
             if(!message.characterUUID.isEmpty()) {
-                character = message.characterUUID.equals("personality$packet_target")
-                        ? manager.getCharacter(access.player())
-                        : manager.getCharacter(message.characterUUID);
+                character = manager.getCharacter(message.characterUUID);
             } else {
                 LOGGER.error("[Personality] There was a attempt to create a Screen for {} a character and the UUID was found to be empty, meaning no screen will be opened.", message.mode);
 

@@ -1,9 +1,10 @@
 package io.blodhgarm.personality.client.gui.screens;
 
 import io.blodhgarm.personality.PersonalityMod;
-import io.blodhgarm.personality.client.ThemeHelper;
-import io.blodhgarm.personality.client.gui.components.ButtonFlowLayout;
-import io.blodhgarm.personality.client.gui.utils.VariantsNinePatchRender;
+import io.blodhgarm.personality.client.gui.ThemeHelper;
+import io.blodhgarm.personality.client.gui.components.ButtonAddon;
+import io.blodhgarm.personality.client.gui.utils.owo.VariantsNinePatchRender;
+import io.blodhgarm.personality.misc.pond.owo.ButtonAddonDuck;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.base.BaseParentComponent;
 import io.wispforest.owo.ui.component.ButtonComponent;
@@ -14,11 +15,13 @@ import io.wispforest.owo.ui.core.*;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.MathHelper;
 import org.apache.commons.collections4.map.LinkedMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.function.Function;
 
 public abstract class TabbedScreen extends BaseOwoScreen<FlowLayout> {
 
@@ -44,7 +47,7 @@ public abstract class TabbedScreen extends BaseOwoScreen<FlowLayout> {
 
         FlowLayout tabLayout = Containers.horizontalFlow(Sizing.fixed(480 - 32), Sizing.content());
 
-        int sizing = 100 / registeredBuilders.size();
+        int sizing = MathHelper.floor((480 - 34) / ((float) registeredBuilders.size())); //100 / registeredBuilders.size();
 
         int builderIndex = 0;
 
@@ -52,7 +55,7 @@ public abstract class TabbedScreen extends BaseOwoScreen<FlowLayout> {
             boolean isLast = (builderIndex + 1) == registeredBuilders.size();
 
             tabLayout.child(
-                    entry.getValue().build(this, tabLayout, sizing)
+                    entry.getValue().build(this, tabLayout, sizing, Sizing::fixed)
                             .margins(Insets.right(isLast ? 0 : 2))
             );
 
@@ -66,7 +69,8 @@ public abstract class TabbedScreen extends BaseOwoScreen<FlowLayout> {
         tabBar.child(
                 Containers.horizontalFlow(Sizing.content(), Sizing.content())
                         .child(
-                                Components.button(Text.of("❌"), (ButtonComponent component) -> this.close())
+                                Components.button(Text.literal("❌").formatted(ThemeHelper.dynamicTextColor()), (ButtonComponent component) -> this.close())
+                                        .textShadow(ThemeHelper.isDarkMode())
                                         .renderer(ButtonComponent.Renderer.flat(0, 0, 0))
                                         .sizing(Sizing.fixed(16))
                         ).surface(TabComponentBuilder.tabSurfaceRender)
@@ -182,11 +186,19 @@ public abstract class TabbedScreen extends BaseOwoScreen<FlowLayout> {
             return this;
         }
 
-        public FlowLayout build(TabbedScreen screen, FlowLayout rootComponent, int sizing){
-            ButtonFlowLayout mainLayout = new ButtonFlowLayout(Sizing.fill(sizing), Sizing.fixed(16));
+        public FlowLayout build(TabbedScreen screen, FlowLayout rootComponent, int sizing, Function<Integer, Sizing> widthFunc){
+            FlowLayout mainLayout = Containers.horizontalFlow(widthFunc.apply(sizing), Sizing.fixed(16));
 
-            mainLayout
-                    .setVIndex(3)
+            ((ButtonAddonDuck<FlowLayout>) mainLayout)
+                    .setButtonAddon(layout -> {
+                        return new ButtonAddon<>(layout)
+                                .useCustomButtonSurface(render -> render.setVIndex(ButtonAddon.getVIndex(ThemeHelper.isDarkMode(), false)))
+                                .onPress(button -> {
+                                    screen.isTabOpen(id);
+
+                                    screen.openTab(this);
+                                });
+                    })
                     .padding(Insets.of(3))
                     .verticalAlignment(VerticalAlignment.CENTER)
                     .tooltip(this.title);
@@ -203,16 +215,7 @@ public abstract class TabbedScreen extends BaseOwoScreen<FlowLayout> {
                 );
             }
 
-            mainLayout.child(
-                    Components.label(title)
-                            .color(ThemeHelper.dynamicColor())
-            );
-
-            mainLayout.onPress(button -> {
-                screen.isTabOpen(id);
-
-                screen.openTab(this);
-            });
+            mainLayout.child(Components.label(title).color(ThemeHelper.dynamicColor()));
 
             return mainLayout;
         }

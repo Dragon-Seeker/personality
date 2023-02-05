@@ -1,36 +1,56 @@
 package io.blodhgarm.personality.mixin.client.owo;
 
-import io.blodhgarm.personality.client.gui.components.LineComponent;
+import io.blodhgarm.personality.client.gui.components.ButtonAddon;
 import io.blodhgarm.personality.client.gui.utils.polygons.AbstractPolygon;
-import io.blodhgarm.personality.misc.owo.LineEvent;
+import io.blodhgarm.personality.client.gui.utils.owo.LineEvent;
 import io.blodhgarm.personality.misc.pond.owo.*;
 import io.wispforest.owo.ui.base.BaseParentComponent;
 import io.wispforest.owo.ui.container.FlowLayout;
+import io.wispforest.owo.ui.core.Component;
 import io.wispforest.owo.ui.core.Sizing;
 import io.wispforest.owo.util.EventSource;
 import io.wispforest.owo.util.EventStream;
+import net.minecraft.client.util.math.MatrixStack;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 @Mixin(value = FlowLayout.class, remap = false)
-public abstract class FlowLayoutMixin extends BaseParentComponent implements ExcludableBoundingArea<FlowLayout>, RefinedBoundingArea<FlowLayout>, LineManageable<FlowLayout>, FocusCheckable, CustomFocusHighlighting<FlowLayout> {
+public abstract class FlowLayoutMixin extends BaseParentComponent implements ExcludableBoundingArea<FlowLayout>, RefinedBoundingArea<FlowLayout>, LineManageable<FlowLayout>, FocusCheckable, CustomFocusHighlighting<FlowLayout>, ButtonAddonDuck<FlowLayout> {
 
     private final List<AbstractPolygon> exclusionZones = new ArrayList<>();
 
+    //----------------------------
+
     @Nullable private AbstractPolygon refinedBoundingArea = null;
 
-    private final List<LineComponent> lines = new ArrayList<>();
+    //----------------------------
+
+    private final List<Component> lines = new ArrayList<>();
 
     private final List<LineEvent> lineEvents = new ArrayList<>();
 
     private boolean setupInteractionEvents = false;
 
+    //----------------------------
+
     private final EventStream<FocusCheck> allowFocusEvents = FocusCheck.newStream();
 
+    //----------------------------
+
     @Nullable private HighlightRenderEvent highlightRenderEvent = null;
+
+    //----------------------------
+
+    private ButtonAddon<FlowLayout> buttonAddon = null;
+
+    //----------------------------
 
     protected FlowLayoutMixin(Sizing horizontalSizing, Sizing verticalSizing) {
         super(horizontalSizing, verticalSizing);
@@ -76,48 +96,7 @@ public abstract class FlowLayoutMixin extends BaseParentComponent implements Exc
     //----------------------------
 
     @Override
-    public FlowLayout addLine(LineComponent line) {
-        this.lines.add(line);
-
-        return (FlowLayout) (Object) this;
-    }
-
-    @Override
-    public FlowLayout addLines(List<LineComponent> lines) {
-        this.lines.addAll(lines);
-
-        return (FlowLayout) (Object) this;
-    }
-
-    @Override
-    public FlowLayout addLineEvent(LineEvent event) {
-        this.lineEvents.add(event);
-
-        if(!setupInteractionEvents){
-            this.focusGained().subscribe(source -> {
-                this.lineEvents.forEach(event1 -> event1.action(this, "focus_gained"));
-            });
-
-            this.focusLost().subscribe(() -> {
-                this.lineEvents.forEach(event1 -> event1.action(this, "focus_lost"));
-            });
-
-            this.mouseEnter().subscribe(() -> {
-                this.lineEvents.forEach(event1 -> event1.action(this, "mouse_enter"));
-            });
-
-            this.mouseLeave().subscribe(() -> {
-                this.lineEvents.forEach(event1 -> event1.action(this, "mouse_leave"));
-            });
-
-            setupInteractionEvents = true;
-        }
-
-        return (FlowLayout) (Object) this;
-    }
-
-    @Override
-    public List<LineComponent> getLines() {
+    public List<Component> getLines() {
         return lines;
     }
 
@@ -125,6 +104,17 @@ public abstract class FlowLayoutMixin extends BaseParentComponent implements Exc
     public List<LineEvent> getLineEvents() {
         return lineEvents;
     }
+
+    @Override
+    public boolean hasSetupInteractionEvents() {
+        return setupInteractionEvents;
+    }
+
+    @Override
+    public void toggleSetupInteractionEvents() {
+        setupInteractionEvents = !setupInteractionEvents;
+    }
+
 
     //----------------------------
 
@@ -151,5 +141,39 @@ public abstract class FlowLayoutMixin extends BaseParentComponent implements Exc
     @Nullable
     public HighlightRenderEvent getEvent() {
         return this.highlightRenderEvent;
+    }
+
+    //----------------------------
+
+    @Inject(method = "draw", at = @At("HEAD"))
+    private void beforeRender(MatrixStack matrices, int mouseX, int mouseY, float partialTicks, float delta, CallbackInfo ci){
+        if(buttonAddon != null) buttonAddon.beforeDraw(matrices, mouseX, mouseY, partialTicks, delta);
+    }
+
+    @Override
+    public boolean onKeyPress(int keyCode, int scanCode, int modifiers) {
+        if(buttonAddon != null && buttonAddon.onKeyPress(keyCode, scanCode, modifiers)) return true;
+
+        return super.onKeyPress(keyCode, scanCode, modifiers);
+    }
+
+    @Override
+    public boolean onMouseDown(double mouseX, double mouseY, int button) {
+        if(buttonAddon != null && buttonAddon.onMouseDown(mouseX, mouseY, button)) return true;
+
+        return super.onMouseDown(mouseX, mouseY, button);
+    }
+
+    @Override
+    public FlowLayout setButtonAddon(Function<FlowLayout, ButtonAddon<FlowLayout>> addonBuilder) {
+        this.buttonAddon = addonBuilder.apply((FlowLayout) (Object) this);
+
+        return (FlowLayout) (Object) this;
+    }
+
+    @Override
+    @Nullable
+    public ButtonAddon<FlowLayout> getAddon() {
+        return buttonAddon;
     }
 }

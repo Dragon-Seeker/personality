@@ -1,4 +1,4 @@
-package io.blodhgarm.personality.mixin.client.owo;
+package io.blodhgarm.personality.mixin.client.accessor;
 
 import io.wispforest.owo.ui.container.ScrollContainer;
 import org.spongepowered.asm.mixin.Mixin;

@@ -2,10 +2,10 @@ package io.blodhgarm.personality.packets;
 
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.PersonalityMod;
-import io.blodhgarm.personality.api.Character;
+import io.blodhgarm.personality.api.character.Character;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.core.BaseRegistry;
-import io.blodhgarm.personality.impl.ServerCharacters;
+import io.blodhgarm.personality.server.ServerCharacters;
 import io.wispforest.owo.network.ServerAccess;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
@@ -23,7 +23,11 @@ public class SyncC2SPackets {
     public record ModifyCharacter(String characterJson) {
         public static void modifyCharacter(ModifyCharacter message, ServerAccess access) {
             Character c = PersonalityMod.GSON.fromJson(message.characterJson, Character.class);
+
             ServerCharacters.INSTANCE.characterLookupMap().put(c.getUUID(), c);
+
+            ServerCharacters.INSTANCE.sortCharacterLookupMap();
+
             ServerCharacters.INSTANCE.saveCharacter(c);
         }
     }
@@ -31,6 +35,11 @@ public class SyncC2SPackets {
     public record NewCharacter(String characterJson, Map<Identifier, String> addonData, boolean immediateAssociation) {
         public static void newCharacter(NewCharacter message, ServerAccess access) {
             Character c = PersonalityMod.GSON.fromJson(message.characterJson, Character.class);
+
+            if(!c.getPlayerUUID().equals(access.player().getUuidAsString())){
+                //TODO: More handling for this or nah? Maybe ask Team about what they think
+                LOGGER.warn("[New Character]: It seems that a Character was created on the Client and was found to be having mismatching Player UUID: [Character UUID: {}]", c.getUUID());
+            }
 
             AddonRegistry.INSTANCE.deserializesAddons(c, message.addonData);
 

@@ -1,8 +1,6 @@
-package io.blodhgarm.personality.api.client;
+package io.blodhgarm.personality.api.addon.client;
 
-import io.blodhgarm.personality.api.BaseCharacter;
-import io.blodhgarm.personality.api.Character;
-import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddon;
+import io.blodhgarm.personality.api.character.BaseCharacter;
 import io.blodhgarm.personality.client.gui.CharacterScreenMode;
 import io.blodhgarm.personality.client.gui.screens.CharacterScreen;
 import net.minecraft.entity.player.PlayerEntity;

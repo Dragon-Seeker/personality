@@ -1,11 +1,11 @@
 package io.blodhgarm.personality.client;
 
 import io.blodhgarm.personality.PersonalityMod;
-import io.blodhgarm.personality.api.Character;
-import io.blodhgarm.personality.api.CharacterManager;
+import io.blodhgarm.personality.api.character.Character;
+import io.blodhgarm.personality.api.character.CharacterManager;
+import io.blodhgarm.personality.client.gui.screens.CharacterInfoScreen;
 import io.blodhgarm.personality.client.gui.screens.PersonalitySubScreen;
 import io.blodhgarm.personality.client.gui.screens.RevealIdentityScreen;
-import io.github.apace100.origins.Origins;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
@@ -42,7 +42,10 @@ public class KeyBindings {
         }
 
         while (OPEN_SUB_SCREEN_KEYBIND.wasPressed())
-            client.setScreen(new PersonalitySubScreen());
+            client.setScreen(CharacterManager.hasModerationPermissions(MinecraftClient.getInstance().player)
+                    ? new PersonalitySubScreen()
+                    : new CharacterInfoScreen()
+            );
     }
 
     public static void init(){

@@ -8,16 +8,19 @@
     "MinecraftServerMixin",
     "OriginLayerAccessor",
     "PlayerEntityMixin",
-    "ServerLoginNetworkHandlerMixin"
+    "ServerLoginNetworkHandlerMixin",
+    "LivingEntityMixin"
   ],
   "client": [
-    "client.EntityRendererMixin",
-    "client.TextFieldWidgetMixin",
     "client.ClientWorldMixin",
     "client.ClientWorldMixin$ClientEntityHandler",
+    "client.EntityRendererMixin",
     "client.MessageHandlerMixin",
+    "client.TextFieldWidgetMixin",
     "client.accessor.EditBoxAccessor",
     "client.accessor.EditBoxWidgetAccessor",
+    "client.accessor.NinePatchRendererAccessor",
+    "client.accessor.ScrollContainerAccessor",
     "client.accessor.TextFieldWidgetAccessor",
     "client.origins.ModPacketsS2CMixin",
     "client.owo.AnimationMixin",
@@ -28,12 +31,11 @@
     "client.owo.DrawerMixin$DebugDrawerMixin",
     "client.owo.FlowLayoutMixin",
     "client.owo.GridLayoutMixin",
-    "client.owo.NinePatchRendererAccessor",
     "client.owo.OwoUIAdapterMixin",
     "client.owo.ParentComponentMixin",
     "client.owo.PositioningMixin",
     "client.owo.PositioningMixin$TypeMixin",
-    "client.owo.ScrollContainerAccessor"
+    "client.owo.ScrollContainerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

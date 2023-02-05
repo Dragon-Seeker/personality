@@ -1,7 +1,7 @@
 package io.blodhgarm.personality.client;
 
 import com.google.common.collect.Lists;
-import io.blodhgarm.personality.api.Character;
+import io.blodhgarm.personality.api.character.Character;
 import io.blodhgarm.personality.misc.PersonalityTags;
 import io.blodhgarm.personality.misc.config.ConfigHelper;
 import ladysnake.satin.api.event.ShaderEffectRenderCallback;
@@ -25,7 +25,7 @@ public class BlurryVisionShaderEffect implements ShaderEffectRenderCallback {
     });
 
     private final ManagedShaderEffect blur = ShaderEffectManager.getInstance().manage(new Identifier("blur", "shaders/post/fade_in_blur.json"),
-            shader -> shader.setUniformValue("Radius", CONFIG.NO_GLASSES_BLURRINESS.END_VALUE()));
+            shader -> shader.setUniformValue("Radius", CONFIG.agingBlurriness.endingValue()));
 
     private float progress = 0F;
 
@@ -38,10 +38,11 @@ public class BlurryVisionShaderEffect implements ShaderEffectRenderCallback {
         if (client.player != null) {
             Character c = ClientCharacters.INSTANCE.getCharacter(client.player);
 
-            if (ConfigHelper.shouldApply(CONFIG.NO_GLASSES_BLURRINESS, c) && progress < getStrength(c) && !hasGlasses())
+            if (ConfigHelper.shouldApply(CONFIG.agingBlurriness, c) && progress < getStrength(c) && !hasGlasses()) {
                 progress += 0.05;
-            else if (progress > 0)
+            } else if (progress > 0) {
                 progress -= 0.05;
+            }
         }
 
         if (progress > 0) {
@@ -51,13 +52,11 @@ public class BlurryVisionShaderEffect implements ShaderEffectRenderCallback {
     }
 
     private float getStrength(Character c) {
-        return ConfigHelper.apply(CONFIG.NO_GLASSES_BLURRINESS, c) / CONFIG.NO_GLASSES_BLURRINESS.END_VALUE();
+        return ConfigHelper.apply(CONFIG.agingBlurriness, c) / CONFIG.agingBlurriness.endingValue();
     }
 
     private boolean hasGlasses() {
-        for(GlassesCheck checker : GLASSES_CHECKERS){
-            if(checker.hasGlasses(client.player)) return true;
-        }
+        for(GlassesCheck checker : GLASSES_CHECKERS) if(checker.hasGlasses(client.player)) return true;
 
         return false;
     }

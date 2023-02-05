@@ -2,13 +2,12 @@ package io.blodhgarm.personality.client.gui.screens;
 
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.Networking;
-import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.reveal.InfoRevealLevel;
 import io.blodhgarm.personality.client.PersonalityClient;
-import io.blodhgarm.personality.client.ThemeHelper;
+import io.blodhgarm.personality.client.gui.ThemeHelper;
 import io.blodhgarm.personality.client.gui.builders.SimpleRadialLayoutBuilder;
 import io.blodhgarm.personality.client.gui.utils.CustomSurfaces;
-import io.blodhgarm.personality.impl.RevelCharacterInfo;
+import io.blodhgarm.personality.api.reveal.RevelInfoManager;
 import io.blodhgarm.personality.misc.pond.owo.AnimationExtension;
 import io.blodhgarm.personality.packets.RevealCharacterC2SPacket;
 import io.blodhgarm.personality.utils.DebugCharacters;
@@ -19,7 +18,6 @@ import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.*;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.hit.EntityHitResult;
@@ -47,7 +45,7 @@ public class RevealIdentityScreen extends BaseOwoScreen<FlowLayout> {
     private InfoRevealLevel selectedRevealLevel = null;
 
     @Nullable
-    private RevelCharacterInfo.RevealRange selectedRevealRange = null;
+    private RevelInfoManager.RevealRange selectedRevealRange = null;
 
     private final List<String> closableComponentIds = List.of("REVEAL_LEVEL", "REVEAL_RANGE", "ROOT");
 
@@ -142,7 +140,7 @@ public class RevealIdentityScreen extends BaseOwoScreen<FlowLayout> {
         components.add(Containers.verticalFlow(Sizing.fixed(0), Sizing.fixed(0)));
 
         components.addAll(
-                Arrays.stream(RevelCharacterInfo.RevealRange.values())
+                Arrays.stream(RevelInfoManager.RevealRange.values())
                         .map(range -> {
                             return Containers.verticalFlow(Sizing.fixed(50), Sizing.fixed(50))
                                     .child(
@@ -165,7 +163,7 @@ public class RevealIdentityScreen extends BaseOwoScreen<FlowLayout> {
 
                         if (id != null) {
                             try {
-                                this.selectedRevealRange = RevelCharacterInfo.RevealRange.valueOf(id);
+                                this.selectedRevealRange = RevelInfoManager.RevealRange.valueOf(id);
 
                                 ((AnimationExtension<Positioning, ?>) this.revealRange.getComponent()
                                         .positioning().animate(500, Easing.LINEAR, PersonalityClient.customRelative(-200, 50)).forwards())
@@ -235,7 +233,7 @@ public class RevealIdentityScreen extends BaseOwoScreen<FlowLayout> {
     public void confirmSelection(){
         String playerUUID = "";
 
-        if(selectedRevealRange == RevelCharacterInfo.RevealRange.DIRECTED) {
+        if(selectedRevealRange == RevelInfoManager.RevealRange.DIRECTED) {
             HitResult result = MinecraftClient.getInstance().player
                     .raycast(60, MinecraftClient.getInstance().getTickDelta(), false);
 

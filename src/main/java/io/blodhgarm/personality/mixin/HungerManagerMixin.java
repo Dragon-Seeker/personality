@@ -1,13 +1,12 @@
 package io.blodhgarm.personality.mixin;
 
-import io.blodhgarm.personality.api.Character;
-import io.blodhgarm.personality.impl.ServerCharacters;
+import io.blodhgarm.personality.api.character.Character;
+import io.blodhgarm.personality.server.ServerCharacters;
 import io.blodhgarm.personality.misc.config.ConfigHelper;
 import net.minecraft.entity.player.HungerManager;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -17,7 +16,6 @@ import static io.blodhgarm.personality.PersonalityMod.CONFIG;
 @Mixin(HungerManager.class)
 public abstract class HungerManagerMixin {
 
-    @Shadow public abstract void addExhaustion(float exhaustion);
     @Unique private Character character;
 
     @Inject(method = "update", at = @At("HEAD"))
@@ -27,26 +25,27 @@ public abstract class HungerManagerMixin {
 
     @ModifyConstant(method = "update", constant = @Constant(intValue = 80, ordinal = 0))
     public int personality$healFasterForYouth(int original) {
-        if (ConfigHelper.shouldApply(CONFIG.FASTER_HEAL, character))
-            return (int) (original / ConfigHelper.apply(CONFIG.FASTER_HEAL, character));
-        return original;
+        return ConfigHelper.shouldApply(CONFIG.fasterHealing, character)
+                ? Math.round(original / ConfigHelper.apply(CONFIG.fasterHealing, character))
+                : original;
     }
 
     @ModifyConstant(method = "update", constant = @Constant(intValue = 18))
     public int personality$modifyMinimumHungerForHealForYouth(int original) {
-        if (ConfigHelper.shouldApply(CONFIG.LOWER_HUNGER_MINIMUM, character))
-            return (int) ConfigHelper.apply(CONFIG.LOWER_HUNGER_MINIMUM, character);
-        return original;
+        return ConfigHelper.shouldApply(CONFIG.minimumHungerToHeal, character)
+                ? Math.round(ConfigHelper.apply(CONFIG.minimumHungerToHeal, character))
+                : original;
     }
 
+    @ModifyVariable(method = "update", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/HungerManager;addExhaustion(F)V", ordinal = 0))
+    private float personality$addExtraExhaustionForYouth1(float exhaustion){ return adjustExhaustionValue(exhaustion); }
 
-    @Redirect(method = "update", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/HungerManager;addExhaustion(F)V"))
-    public void personality$addExtraExhaustionForYouth(HungerManager instance, float exhaustion, PlayerEntity player) {
-        if (ConfigHelper.shouldApply(CONFIG.FASTER_EXHAUSTION, character))
-            addExhaustion(exhaustion * ConfigHelper.apply(CONFIG.FASTER_EXHAUSTION, character));
-        else
-            addExhaustion(exhaustion);
+    @ModifyConstant(method = "update", constant = @Constant(floatValue = 6.0f, ordinal = 2))
+    private float personality$addExtraExhaustionForYouth2(float exhaustion){ return adjustExhaustionValue(exhaustion); }
 
+    private float adjustExhaustionValue(float exhaustion){
+        return ConfigHelper.shouldApply(CONFIG.fasterExhaustion, character)
+                ? exhaustion * ConfigHelper.apply(CONFIG.fasterExhaustion, character)
+                : exhaustion;
     }
-
 }

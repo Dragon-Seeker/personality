@@ -1,17 +1,15 @@
 package io.blodhgarm.personality.packets;
 
 import com.mojang.logging.LogUtils;
-import io.blodhgarm.personality.api.BaseCharacter;
-import io.blodhgarm.personality.api.Character;
-import io.blodhgarm.personality.api.CharacterManager;
+import io.blodhgarm.personality.api.character.BaseCharacter;
+import io.blodhgarm.personality.api.character.Character;
+import io.blodhgarm.personality.api.character.CharacterManager;
 import io.blodhgarm.personality.api.reveal.KnownCharacter;
-import io.blodhgarm.personality.client.ClientCharacters;
 import io.wispforest.owo.network.ClientAccess;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.toast.SystemToast;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
 import org.slf4j.Logger;
 

@@ -33,7 +33,7 @@ public class PehkuiAddonRegistry implements PersonalityEntrypoint {
                         .build()
         );
 
-        PersonalityMod.CONFIG.subscribeToRESIZE_BOUNDS_ONLY(resizeBoundsOnly -> {
+        PersonalityMod.CONFIG.subscribeToAdjustWidthAndHeightOnly(resizeBoundsOnly -> {
             ScaleTypes.WIDTH.getDefaultBaseValueModifiers().remove(CHARACTER_MODIFIER);
             ScaleTypes.HEIGHT.getDefaultBaseValueModifiers().remove(CHARACTER_MODIFIER);
             ScaleTypes.BASE.getDefaultBaseValueModifiers().remove(CHARACTER_MODIFIER);
@@ -46,7 +46,7 @@ public class PehkuiAddonRegistry implements PersonalityEntrypoint {
             }
         });
 
-        if (PersonalityMod.CONFIG.RESIZE_BOUNDS_ONLY()) { //PersonalityMod.CONFIG.RE.get()
+        if (PersonalityMod.CONFIG.adjustWidthAndHeightOnly()) { //PersonalityMod.CONFIG.RE.get()
             ScaleTypes.WIDTH.getDefaultBaseValueModifiers().add(CHARACTER_MODIFIER);
             ScaleTypes.HEIGHT.getDefaultBaseValueModifiers().add(CHARACTER_MODIFIER);
         } else {

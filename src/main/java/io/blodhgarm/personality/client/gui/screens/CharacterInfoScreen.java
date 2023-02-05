@@ -1,29 +1,33 @@
 package io.blodhgarm.personality.client.gui.screens;
 
 import io.blodhgarm.personality.PersonalityMod;
-import io.blodhgarm.personality.api.BaseCharacter;
-import io.blodhgarm.personality.api.Character;
+import io.blodhgarm.personality.api.character.BaseCharacter;
+import io.blodhgarm.personality.api.character.Character;
 import io.blodhgarm.personality.api.reveal.KnownCharacter;
 import io.blodhgarm.personality.client.ClientCharacters;
-import io.blodhgarm.personality.client.ThemeHelper;
+import io.blodhgarm.personality.client.gui.ThemeHelper;
 import io.blodhgarm.personality.client.gui.CharacterScreenMode;
+import io.blodhgarm.personality.client.gui.builders.EnhancedGridLayout;
 import io.blodhgarm.personality.client.gui.utils.CustomSurfaces;
-import io.blodhgarm.personality.client.gui.builders.ListedCharactersView;
 import io.blodhgarm.personality.utils.DebugCharacters;
 import io.wispforest.owo.ui.base.BaseParentComponent;
 import io.wispforest.owo.ui.component.Components;
+import io.wispforest.owo.ui.component.TextBoxComponent;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.container.ScrollContainer;
-import io.wispforest.owo.ui.core.Insets;
-import io.wispforest.owo.ui.core.Sizing;
+import io.wispforest.owo.ui.core.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class CharacterInfoScreen extends TabbedScreen {
 
@@ -47,7 +51,7 @@ public class CharacterInfoScreen extends TabbedScreen {
 
         registeredBuilders.put(characterInformation.id, characterInformation);
         registeredBuilders.put(knownCharacters.id, knownCharacters);
-        registeredBuilders.put(heritageInfo.id, heritageInfo);
+//        registeredBuilders.put(heritageInfo.id, heritageInfo);
     }
 
     public void buildCharacterInfoTab(FlowLayout layout){
@@ -63,19 +67,25 @@ public class CharacterInfoScreen extends TabbedScreen {
 
         this.currentCharacter = ClientCharacters.INSTANCE.getCharacter(MinecraftClient.getInstance().player);
 
-        if(this.currentCharacter == null) this.currentCharacter = DebugCharacters.REVEAL_TEST;
+        if(this.currentCharacter == null) this.currentCharacter = DebugCharacters.getRevealTest(ClientCharacters.INSTANCE);
 
         List<BaseCharacter> knownCharacters = new ArrayList<>(this.currentCharacter.getKnownCharacters().values());
 
-        if(knownCharacters.isEmpty() && !DebugCharacters.KNOWN_CHARACTERS.isEmpty()) knownCharacters.addAll(DebugCharacters.KNOWN_CHARACTERS);
+        if(knownCharacters.isEmpty() && !DebugCharacters.KNOWN_CHARACTERS.isEmpty()) knownCharacters.addAll(DebugCharacters.getKnownCharacters(ClientCharacters.INSTANCE));
 
         FlowLayout knownCharacterLayout = Containers.verticalFlow(Sizing.content(), Sizing.content()); //140
 
-        ScrollContainer<FlowLayout> knownCharacterContainer = Containers.verticalScroll(Sizing.content(), Sizing.fill(100), knownCharacterLayout);
+        ScrollContainer<FlowLayout> knownCharacterContainer = Containers.verticalScroll(Sizing.content(), Sizing.fill(85), knownCharacterLayout);
 
-        new ListedCharactersView(this, () -> knownCharacters)
-                .addComponent(Text.of("Friendliness"), (baseCharacter, mode, isParentVertical) -> Components.label(((KnownCharacter) baseCharacter).level.getTranslation()))
-                .buildLayout(knownCharacterLayout, knownCharacterContainer);
+        knownCharacterLayout.child(
+            new EnhancedGridLayout(Sizing.content(), Sizing.content(),this)
+//                    .changeDirection(((ScrollContainerAccessor) knownCharacterContainer).personality$direction() == ScrollContainer.ScrollDirection.VERTICAL)
+                    .setRowDividingLine(1)
+                    .setColumnDividingLine(1)
+                    .addCharacters(knownCharacters)
+                    .addBuilder(Text.of("Friendliness"), (baseCharacter, mode, isParentVertical) -> Components.label(((KnownCharacter) baseCharacter).level.getTranslation()))
+                    .id("knownCharacterList")
+        );
 
         mainLayout.child(
                 knownCharacterContainer
@@ -87,10 +97,46 @@ public class CharacterInfoScreen extends TabbedScreen {
                 .surface(ThemeHelper.dynamicSurface())
                 .padding(Insets.of(6));
 
+        mainLayout.child(
+                Components.textBox(Sizing.fill(40), "")
+                        .configure(component -> {
+                            ((TextBoxComponent) component).onChanged()
+                                    .subscribe(value -> {
+                                        EnhancedGridLayout listLayout = layout.childById(EnhancedGridLayout.class, "knownCharacterList");
+
+                                        Predicate<BaseCharacter> filter = null;
+
+                                        if(!value.isEmpty()) {
+                                            String regex = Arrays.stream(value.toLowerCase()
+                                                            .split(" "))
+                                                    .filter(s -> !s.trim().equals(""))
+                                                    .collect(Collectors.joining("|"));
+
+                                            var pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+
+                                            filter = character -> pattern.asPredicate().test(character.getName());
+                                        } else {
+                                            System.out.println("weeeeeeeeeeeeeeeeeeeeeee");
+                                        }
+
+                                        listLayout.filterCharacters(filter);
+                                    });
+                        })
+                        .margins(Insets.vertical(3))
+
+        );
+
+        mainLayout.horizontalAlignment(HorizontalAlignment.CENTER);
+
         layout.child(mainLayout);
     }
 
     public void buildHeritageInfo(FlowLayout layout){
         layout.child(Containers.verticalFlow(Sizing.content(), Sizing.content()));
+    }
+
+    @Override
+    public boolean shouldPause() {
+        return false;
     }
 }

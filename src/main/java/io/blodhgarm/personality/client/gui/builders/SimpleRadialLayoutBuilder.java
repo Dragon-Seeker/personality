@@ -305,37 +305,41 @@ public class SimpleRadialLayoutBuilder {
                     .addLineEvent((manager, eventType) -> {
                         if(Objects.equals(eventType, "selected")){
                             manager.getLines().forEach(component -> {
-                                component.zIndex(10);
+                                LineComponent line = (LineComponent) component;
+
+                                line.zIndex(10);
 
                                 Easing linearWrapped = x -> {
-                                    if(x == 0.0f){ component.zIndex(0); }
+                                    if(x == 0.0f){ line.zIndex(0); }
 
                                     return Easing.LINEAR.apply(x);
                                 };
 
-                                Animation<Color> startColor = component.startColor().animation();
+                                Animation<Color> startColor = line.startColor().animation();
 
-                                if(startColor == null) startColor = component.startColor().animate(100, Easing.LINEAR, new Color(1.0f, 1.0f, 1.0f));
+                                if(startColor == null) startColor = line.startColor().animate(100, Easing.LINEAR, new Color(1.0f, 1.0f, 1.0f));
 
                                 ((AnimationExtension<Color, ?>) startColor)
                                         .setOnCompletionEvent(animation -> {
-                                            if(animation.direction() == Animation.Direction.BACKWARDS) component.zIndex(0);
+                                            if(animation.direction() == Animation.Direction.BACKWARDS) line.zIndex(0);
                                         }).forwards();
 
-                                Animation<Color> endColor = component.endColor().animation();
+                                Animation<Color> endColor = line.endColor().animation();
 
-                                if(endColor == null) endColor = component.endColor().animate(100, Easing.LINEAR, new Color(1.0f, 1.0f, 1.0f));
+                                if(endColor == null) endColor = line.endColor().animate(100, Easing.LINEAR, new Color(1.0f, 1.0f, 1.0f));
 
                                 ((AnimationExtension<Color, ?>) endColor)
                                         .setOnCompletionEvent(animation -> {
-                                            if(animation.direction() == Animation.Direction.BACKWARDS) component.zIndex(0);
+                                            if(animation.direction() == Animation.Direction.BACKWARDS) line.zIndex(0);
                                         }).forwards();
 
                             });
                         } else if(Objects.equals(eventType, "deselected")){
                             manager.getLines().forEach(component -> {
-                                if(component.startColor().animation() != null) component.startColor().animation().backwards();
-                                if(component.endColor().animation() != null) component.endColor().animation().backwards();
+                                LineComponent line = (LineComponent) component;
+
+                                if(line.startColor().animation() != null) line.startColor().animation().backwards();
+                                if(line.endColor().animation() != null) line.endColor().animation().backwards();
                             });
                         }
 

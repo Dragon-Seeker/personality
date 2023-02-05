@@ -1,6 +1,6 @@
 package io.blodhgarm.personality.misc.pond;
 
-import io.blodhgarm.personality.api.BaseCharacter;
+import io.blodhgarm.personality.api.character.BaseCharacter;
 import net.minecraft.entity.player.PlayerEntity;
 import org.jetbrains.annotations.Nullable;
 

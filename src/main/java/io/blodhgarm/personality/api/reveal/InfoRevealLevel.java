@@ -2,6 +2,11 @@ package io.blodhgarm.personality.api.reveal;
 
 import net.minecraft.text.Text;
 
+/**
+ * Enum that currently holds the given Info Levels which are used
+ * within {@link KnownCharacter} to store what info is available to
+ * a given character
+ */
 public enum InfoRevealLevel {
     UNDISCOVERED("undiscovered"),
     NONE("none"), //No Information shown

@@ -2,10 +2,11 @@ package io.blodhgarm.personality.api.reveal;
 
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.PersonalityMod;
-import io.blodhgarm.personality.api.BaseCharacter;
-import io.blodhgarm.personality.api.Character;
-import io.blodhgarm.personality.api.CharacterManager;
+import io.blodhgarm.personality.api.character.BaseCharacter;
+import io.blodhgarm.personality.api.character.Character;
+import io.blodhgarm.personality.api.character.CharacterManager;
 import io.blodhgarm.personality.api.addon.BaseAddon;
+import io.blodhgarm.personality.api.utils.InfoRevealResult;
 import io.blodhgarm.personality.utils.DebugCharacters;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
@@ -96,6 +97,11 @@ public class KnownCharacter implements BaseCharacter {
     @Override
     public String getUUID() {
         return getWrappedCharacter().getUUID();
+    }
+
+    @Override
+    public String getPlayerUUID() {
+        return getWrappedCharacter().getPlayerUUID();
     }
 
     @Override

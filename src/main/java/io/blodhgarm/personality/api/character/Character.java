@@ -1,9 +1,14 @@
-package io.blodhgarm.personality.api;
+package io.blodhgarm.personality.api.character;
 
 import com.google.common.reflect.TypeToken;
+import com.google.gson.InstanceCreator;
+import com.google.gson.TypeAdapter;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.api.reveal.KnownCharacter;
-import io.blodhgarm.personality.impl.ServerCharacters;
+import io.blodhgarm.personality.api.utils.PlayerAccess;
+import io.blodhgarm.personality.server.ServerCharacters;
 import io.blodhgarm.personality.misc.PersonalityTags;
 import io.blodhgarm.personality.utils.Constants;
 import io.blodhgarm.personality.utils.DebugCharacters;
@@ -16,9 +21,13 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
 
+/**
+ * Main Class implementation for a Character within Personality
+ */
 public class Character implements BaseCharacter {
 
     public static final Type REF_MAP_TYPE = new TypeToken<Map<Identifier, BaseAddon>>() {}.getType();
@@ -26,6 +35,7 @@ public class Character implements BaseCharacter {
     public boolean isDead;
 
     private final String uuid;
+    private final String playerUUID;
 
     private String name;
 
@@ -46,12 +56,14 @@ public class Character implements BaseCharacter {
 
     private transient Map<Identifier, BaseAddon> characterAddons = new HashMap<>();
 
-    public Character(String name, String gender, String description, String biography, int ageOffset, int activityOffset) {
-        this(UUID.randomUUID().toString(), name, gender, description, biography, ageOffset, activityOffset);
+    public Character(String playerUUID, String name, String gender, String description, String biography, int ageOffset, int activityOffset) {
+        this(UUID.randomUUID().toString(), playerUUID, name, gender, description, biography, ageOffset, activityOffset);
     }
 
-    public Character(String uuid, String name, String gender, String description, String biography, int ageOffset, int activityOffset) {
+    public Character(String uuid, String playerUUID, String name, String gender, String description, String biography, int ageOffset, int activityOffset) {
         this.uuid = uuid;
+        this.playerUUID = playerUUID;
+
         this.name = name;
         this.gender = gender;
         this.description = description;
@@ -86,6 +98,11 @@ public class Character implements BaseCharacter {
     @Override
     public String getUUID() {
         return uuid;
+    }
+
+    @Override
+    public String getPlayerUUID() {
+        return this.playerUUID;
     }
 
     //---------------------------
@@ -223,7 +240,6 @@ public class Character implements BaseCharacter {
         return DebugCharacters.ERROR == this;
     }
 
-
     @Override
     public String toString() {
         return "Character{" +
@@ -238,4 +254,6 @@ public class Character implements BaseCharacter {
                 ",\n knowCharacters=" + knownCharacters +
                 "\n}";
     }
+
+    //--------------------------------------------
 }

@@ -1,9 +1,7 @@
 package io.blodhgarm.personality.api.addon.client;
 
-import io.blodhgarm.personality.api.BaseCharacter;
-import io.blodhgarm.personality.api.Character;
+import io.blodhgarm.personality.api.character.BaseCharacter;
 import io.blodhgarm.personality.api.addon.BaseAddon;
-import io.blodhgarm.personality.api.client.AddonObservable;
 import io.blodhgarm.personality.client.gui.CharacterScreenMode;
 import io.blodhgarm.personality.client.gui.screens.CharacterScreen;
 import io.wispforest.owo.ui.base.BaseParentComponent;
@@ -98,7 +96,6 @@ public abstract class PersonalityScreenAddon {
      */
     public abstract void branchUpdate();
 
-    //TODO: IMPLEMENT THIS
     public abstract Map<Identifier, BaseAddon> getAddonData();
 
     public abstract boolean isDataEmpty(BaseParentComponent rootComponent);

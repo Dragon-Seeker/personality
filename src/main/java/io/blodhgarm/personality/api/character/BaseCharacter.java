@@ -1,4 +1,4 @@
-package io.blodhgarm.personality.api;
+package io.blodhgarm.personality.api.character;
 
 import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.addon.BaseAddon;
@@ -13,21 +13,22 @@ import java.util.Map;
 import static java.lang.Math.*;
 import static java.lang.Math.log;
 
+/**
+ * Base Interface for Characters used in both {@link Character} & {@link KnownCharacter}.
+ */
 public interface BaseCharacter {
 
     public enum Stage {YOUTH, PRIME, OLD}
 
-    Map<Identifier, BaseAddon> getAddons();
-
     Map<String, KnownCharacter> getKnownCharacters();
 
-    void beforeSaving();
+    Map<Identifier, BaseAddon> getAddons();
 
-    default BaseAddon getAddon(Identifier identifier){
-        return getAddons().get(identifier);
-    }
+    default BaseAddon getAddon(Identifier identifier){ return getAddons().get(identifier); }
 
     String getUUID();
+
+    String getPlayerUUID();
 
     String getName();
 
@@ -44,6 +45,8 @@ public interface BaseCharacter {
     int getAge();
 
     int getPlaytime();
+
+    void beforeSaving();
 
     default String getInfo() {
         StringBuilder baseInfoText = new StringBuilder();
@@ -67,17 +70,17 @@ public interface BaseCharacter {
     }
 
     default int getMaxAge() {
-        return PersonalityMod.CONFIG.BASE_MAXIMUM_AGE() + Math.min(PersonalityMod.CONFIG.MAX_EXTRA_YEARS_OF_LIFE(), getExtraAge());
+        return PersonalityMod.CONFIG.defaultMaximumAge() + Math.min(PersonalityMod.CONFIG.maximumExtraAge(), getExtraAge());
     }
 
     default int getExtraAge() {
-        PersonalityConfig.ExtraLife config = PersonalityMod.CONFIG.EXTRA_LIFE;
+        PersonalityConfig.ExtraLife config = PersonalityMod.CONFIG.extraAgeConfiguration;
         double hoursPlayed = (float) getPlaytime() / Constants.HOUR_IN_MILLISECONDS;
         int extraYears = 0;
 
-        if (hoursPlayed > config.START_HOURS_PER_EXTRA_LIFE() && getAge() > config.MIN_AGE()) {
+        if (hoursPlayed > config.minimumHoursForExtraLife() && getAge() > config.minAge()) {
             for (int i = 1; ; i++) {
-                double hoursNeeded = config.START_HOURS_PER_EXTRA_LIFE() + config.CURVE_MULTIPLIER() * switch (config.CURVE()) {
+                double hoursNeeded = config.minimumHoursForExtraLife() + config.multiplier() * switch (config.calculationCurve()) {
                     case NONE -> 0;
                     case LINEAR -> i - 1;
                     case QUADRATIC -> pow(i, 2) - 1;

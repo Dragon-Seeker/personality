@@ -1,6 +1,6 @@
 package io.blodhgarm.personality.client.gui.screens;
 
-import io.blodhgarm.personality.client.ThemeHelper;
+import io.blodhgarm.personality.client.gui.ThemeHelper;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.Components;
@@ -24,35 +24,40 @@ public class PersonalitySubScreen extends BaseOwoScreen<FlowLayout> {
 
     @Override
     protected void build(FlowLayout rootComponent) {
-        FlowLayout mainFlowLayout = Containers.verticalFlow(Sizing.content(), Sizing.content());
+        FlowLayout mainFlowLayout = Containers.verticalFlow(Sizing.fixed(125), Sizing.content());
 
         mainFlowLayout.child(
                 Components.label(Text.of("Personality Sub Menu"))
                         .color(ThemeHelper.dynamicColor())
-                        .margins(Insets.bottom(4))
+                        .margins(Insets.of(2, 3, 0, 0))
         );
 
         mainFlowLayout.child(
                 Components.button(Text.of("Character Info"), (ButtonComponent component) -> {
                         MinecraftClient.getInstance().setScreen(new CharacterInfoScreen());
-                })
-                .margins(Insets.bottom(4))
+                }).horizontalSizing(Sizing.fill(100))
+                        .margins(Insets.of(0, 4, 1, 1))
         );
 
         mainFlowLayout.child(
                 Components.button(Text.of("Full Character List"), (ButtonComponent component) -> {
-
-                })
-                .margins(Insets.bottom(4))
+                        MinecraftClient.getInstance().setScreen(new AdminCharacterScreen());
+                }).horizontalSizing(Sizing.fill(100))
+                        .margins(Insets.of(0, 4, 1, 1))
         );
 
         mainFlowLayout
-                .verticalAlignment(VerticalAlignment.CENTER)
+                .horizontalAlignment(HorizontalAlignment.CENTER)
                 .surface(ThemeHelper.dynamicSurface())
                 .padding(Insets.of(4))
                 .positioning(Positioning.relative(50, 50));
 
         rootComponent.child(mainFlowLayout);
 
+    }
+
+    @Override
+    public boolean shouldPause() {
+        return false;
     }
 }

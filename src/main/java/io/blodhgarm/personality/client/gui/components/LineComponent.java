@@ -13,6 +13,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec2f;
 
 import javax.annotation.Nullable;
+import javax.sound.sampled.Line;
 
 public class LineComponent extends BaseComponent implements UnimportantComponent {
 
@@ -28,6 +29,8 @@ public class LineComponent extends BaseComponent implements UnimportantComponent
     protected AnimatableProperty<Color> endColor = AnimatableProperty.of(Color.BLACK);
 
     protected boolean hasBeenMoved = true;
+
+    private float lineWidth = 1.0f;
 
     public LineComponent(int startX, int startY, int endX, int endY){
         boolean startRight = startX > endX;
@@ -90,6 +93,12 @@ public class LineComponent extends BaseComponent implements UnimportantComponent
         return this.endColor;
     }
 
+    public LineComponent setLineWidth(float lineWidth){
+        this.lineWidth = lineWidth;
+
+        return this;
+    }
+
     @Override
     public void updateX(int x) {
         if(this.x() != x) this.hasBeenMoved = true;
@@ -131,6 +140,8 @@ public class LineComponent extends BaseComponent implements UnimportantComponent
             Vec2f vec = new Vec2f(endPos.x - startPos.x, endPos.y - startPos.y).normalize();
 
             this.offsetVec = new Vec2f(vec.y, -vec.x).multiply(0.5F);
+
+            if(lineWidth > 0) this.offsetVec = this.offsetVec.multiply(lineWidth);
 
             hasBeenMoved = false;
         }

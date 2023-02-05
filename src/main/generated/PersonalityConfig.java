@@ -10,41 +10,44 @@ import java.util.function.Consumer;
 
 public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.misc.config.PersonalityConfigModel> {
 
-    private final Option<java.lang.Integer> FASTER_EXHAUSTION_MIN_AGE = this.optionForKey(new Option.Key("FASTER_EXHAUSTION.MIN_AGE"));
-    private final Option<java.lang.Integer> FASTER_EXHAUSTION_MAX_AGE = this.optionForKey(new Option.Key("FASTER_EXHAUSTION.MAX_AGE"));
-    private final Option<java.lang.Float> FASTER_EXHAUSTION_START_VALUE = this.optionForKey(new Option.Key("FASTER_EXHAUSTION.START_VALUE"));
-    private final Option<java.lang.Float> FASTER_EXHAUSTION_END_VALUE = this.optionForKey(new Option.Key("FASTER_EXHAUSTION.END_VALUE"));
-    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> FASTER_EXHAUSTION_CURVE = this.optionForKey(new Option.Key("FASTER_EXHAUSTION.CURVE"));
-    private final Option<java.lang.Integer> FASTER_HEAL_MIN_AGE = this.optionForKey(new Option.Key("FASTER_HEAL.MIN_AGE"));
-    private final Option<java.lang.Integer> FASTER_HEAL_MAX_AGE = this.optionForKey(new Option.Key("FASTER_HEAL.MAX_AGE"));
-    private final Option<java.lang.Float> FASTER_HEAL_START_VALUE = this.optionForKey(new Option.Key("FASTER_HEAL.START_VALUE"));
-    private final Option<java.lang.Float> FASTER_HEAL_END_VALUE = this.optionForKey(new Option.Key("FASTER_HEAL.END_VALUE"));
-    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> FASTER_HEAL_CURVE = this.optionForKey(new Option.Key("FASTER_HEAL.CURVE"));
-    private final Option<java.lang.Integer> LOWER_HUNGER_MINIMUM_MIN_AGE = this.optionForKey(new Option.Key("LOWER_HUNGER_MINIMUM.MIN_AGE"));
-    private final Option<java.lang.Integer> LOWER_HUNGER_MINIMUM_MAX_AGE = this.optionForKey(new Option.Key("LOWER_HUNGER_MINIMUM.MAX_AGE"));
-    private final Option<java.lang.Float> LOWER_HUNGER_MINIMUM_START_VALUE = this.optionForKey(new Option.Key("LOWER_HUNGER_MINIMUM.START_VALUE"));
-    private final Option<java.lang.Float> LOWER_HUNGER_MINIMUM_END_VALUE = this.optionForKey(new Option.Key("LOWER_HUNGER_MINIMUM.END_VALUE"));
-    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> LOWER_HUNGER_MINIMUM_CURVE = this.optionForKey(new Option.Key("LOWER_HUNGER_MINIMUM.CURVE"));
-    private final Option<java.lang.Integer> NO_STICK_SLOWNESS_MIN_AGE = this.optionForKey(new Option.Key("NO_STICK_SLOWNESS.MIN_AGE"));
-    private final Option<java.lang.Integer> NO_STICK_SLOWNESS_MAX_AGE = this.optionForKey(new Option.Key("NO_STICK_SLOWNESS.MAX_AGE"));
-    private final Option<java.lang.Float> NO_STICK_SLOWNESS_START_VALUE = this.optionForKey(new Option.Key("NO_STICK_SLOWNESS.START_VALUE"));
-    private final Option<java.lang.Float> NO_STICK_SLOWNESS_END_VALUE = this.optionForKey(new Option.Key("NO_STICK_SLOWNESS.END_VALUE"));
-    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> NO_STICK_SLOWNESS_CURVE = this.optionForKey(new Option.Key("NO_STICK_SLOWNESS.CURVE"));
-    private final Option<java.lang.Integer> NO_GLASSES_BLURRINESS_MIN_AGE = this.optionForKey(new Option.Key("NO_GLASSES_BLURRINESS.MIN_AGE"));
-    private final Option<java.lang.Integer> NO_GLASSES_BLURRINESS_MAX_AGE = this.optionForKey(new Option.Key("NO_GLASSES_BLURRINESS.MAX_AGE"));
-    private final Option<java.lang.Float> NO_GLASSES_BLURRINESS_START_VALUE = this.optionForKey(new Option.Key("NO_GLASSES_BLURRINESS.START_VALUE"));
-    private final Option<java.lang.Float> NO_GLASSES_BLURRINESS_END_VALUE = this.optionForKey(new Option.Key("NO_GLASSES_BLURRINESS.END_VALUE"));
-    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> NO_GLASSES_BLURRINESS_CURVE = this.optionForKey(new Option.Key("NO_GLASSES_BLURRINESS.CURVE"));
-    private final Option<java.lang.Integer> BASE_MAXIMUM_AGE = this.optionForKey(new Option.Key("BASE_MAXIMUM_AGE"));
-    private final Option<java.lang.Integer> EXTRA_LIFE_MIN_AGE = this.optionForKey(new Option.Key("EXTRA_LIFE.MIN_AGE"));
-    private final Option<java.lang.Integer> EXTRA_LIFE_MAX_AGE = this.optionForKey(new Option.Key("EXTRA_LIFE.MAX_AGE"));
-    private final Option<java.lang.Float> EXTRA_LIFE_START_HOURS_PER_EXTRA_LIFE = this.optionForKey(new Option.Key("EXTRA_LIFE.START_HOURS_PER_EXTRA_LIFE"));
-    private final Option<java.lang.Float> EXTRA_LIFE_CURVE_MULTIPLIER = this.optionForKey(new Option.Key("EXTRA_LIFE.CURVE_MULTIPLIER"));
-    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> EXTRA_LIFE_CURVE = this.optionForKey(new Option.Key("EXTRA_LIFE.CURVE"));
-    private final Option<java.lang.Integer> MAX_EXTRA_YEARS_OF_LIFE = this.optionForKey(new Option.Key("MAX_EXTRA_YEARS_OF_LIFE"));
-    private final Option<java.lang.Boolean> RESIZE_BOUNDS_ONLY = this.optionForKey(new Option.Key("RESIZE_BOUNDS_ONLY"));
-    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.ThemeMode> THEME_MODE = this.optionForKey(new Option.Key("THEME_MODE"));
-    private final Option<java.lang.Boolean> showPlayerNameWhenHovering = this.optionForKey(new Option.Key("showPlayerNameWhenHovering"));
+    private final Option<java.lang.Integer> defaultMaximumAge = this.optionForKey(new Option.Key("defaultMaximumAge"));
+    private final Option<java.lang.Integer> fasterExhaustion_minAge = this.optionForKey(new Option.Key("fasterExhaustion.minAge"));
+    private final Option<java.lang.Integer> fasterExhaustion_maxAge = this.optionForKey(new Option.Key("fasterExhaustion.maxAge"));
+    private final Option<java.lang.Float> fasterExhaustion_startingValue = this.optionForKey(new Option.Key("fasterExhaustion.startingValue"));
+    private final Option<java.lang.Float> fasterExhaustion_endingValue = this.optionForKey(new Option.Key("fasterExhaustion.endingValue"));
+    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> fasterExhaustion_calculationCurve = this.optionForKey(new Option.Key("fasterExhaustion.calculationCurve"));
+    private final Option<java.lang.Integer> fasterHealing_minAge = this.optionForKey(new Option.Key("fasterHealing.minAge"));
+    private final Option<java.lang.Integer> fasterHealing_maxAge = this.optionForKey(new Option.Key("fasterHealing.maxAge"));
+    private final Option<java.lang.Float> fasterHealing_startingValue = this.optionForKey(new Option.Key("fasterHealing.startingValue"));
+    private final Option<java.lang.Float> fasterHealing_endingValue = this.optionForKey(new Option.Key("fasterHealing.endingValue"));
+    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> fasterHealing_calculationCurve = this.optionForKey(new Option.Key("fasterHealing.calculationCurve"));
+    private final Option<java.lang.Integer> minimumHungerToHeal_minAge = this.optionForKey(new Option.Key("minimumHungerToHeal.minAge"));
+    private final Option<java.lang.Integer> minimumHungerToHeal_maxAge = this.optionForKey(new Option.Key("minimumHungerToHeal.maxAge"));
+    private final Option<java.lang.Float> minimumHungerToHeal_startingValue = this.optionForKey(new Option.Key("minimumHungerToHeal.startingValue"));
+    private final Option<java.lang.Float> minimumHungerToHeal_endingValue = this.optionForKey(new Option.Key("minimumHungerToHeal.endingValue"));
+    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> minimumHungerToHeal_calculationCurve = this.optionForKey(new Option.Key("minimumHungerToHeal.calculationCurve"));
+    private final Option<java.lang.Integer> agingSlowness_minAge = this.optionForKey(new Option.Key("agingSlowness.minAge"));
+    private final Option<java.lang.Integer> agingSlowness_maxAge = this.optionForKey(new Option.Key("agingSlowness.maxAge"));
+    private final Option<java.lang.Float> agingSlowness_startingValue = this.optionForKey(new Option.Key("agingSlowness.startingValue"));
+    private final Option<java.lang.Float> agingSlowness_endingValue = this.optionForKey(new Option.Key("agingSlowness.endingValue"));
+    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> agingSlowness_calculationCurve = this.optionForKey(new Option.Key("agingSlowness.calculationCurve"));
+    private final Option<java.lang.Integer> agingBlurriness_minAge = this.optionForKey(new Option.Key("agingBlurriness.minAge"));
+    private final Option<java.lang.Integer> agingBlurriness_maxAge = this.optionForKey(new Option.Key("agingBlurriness.maxAge"));
+    private final Option<java.lang.Float> agingBlurriness_startingValue = this.optionForKey(new Option.Key("agingBlurriness.startingValue"));
+    private final Option<java.lang.Float> agingBlurriness_endingValue = this.optionForKey(new Option.Key("agingBlurriness.endingValue"));
+    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> agingBlurriness_calculationCurve = this.optionForKey(new Option.Key("agingBlurriness.calculationCurve"));
+    private final Option<java.lang.Integer> extraAgeConfiguration_minAge = this.optionForKey(new Option.Key("extraAgeConfiguration.minAge"));
+    private final Option<java.lang.Integer> extraAgeConfiguration_maxAge = this.optionForKey(new Option.Key("extraAgeConfiguration.maxAge"));
+    private final Option<java.lang.Float> extraAgeConfiguration_minimumHoursForExtraLife = this.optionForKey(new Option.Key("extraAgeConfiguration.minimumHoursForExtraLife"));
+    private final Option<java.lang.Float> extraAgeConfiguration_multiplier = this.optionForKey(new Option.Key("extraAgeConfiguration.multiplier"));
+    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> extraAgeConfiguration_calculationCurve = this.optionForKey(new Option.Key("extraAgeConfiguration.calculationCurve"));
+    private final Option<java.lang.Integer> maximumExtraAge = this.optionForKey(new Option.Key("maximumExtraAge"));
+    private final Option<java.util.List<java.lang.String>> moderationList = this.optionForKey(new Option.Key("moderationList"));
+    private final Option<java.util.List<java.lang.String>> administrationList = this.optionForKey(new Option.Key("administrationList"));
+    private final Option<java.lang.Boolean> adjustWidthAndHeightOnly = this.optionForKey(new Option.Key("adjustWidthAndHeightOnly"));
+    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.ThemeMode> themeMode = this.optionForKey(new Option.Key("themeMode"));
+    private final Option<java.lang.Boolean> showPlayerNameWhenHoveringChat = this.optionForKey(new Option.Key("showPlayerNameWhenHoveringChat"));
+    private final Option<java.lang.Boolean> showPlayerNamePlateAtChestLevel = this.optionForKey(new Option.Key("showPlayerNamePlateAtChestLevel"));
 
     private PersonalityConfig() {
         super(io.blodhgarm.personality.misc.config.PersonalityConfigModel.class);
@@ -56,332 +59,356 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         return wrapper;
     }
 
-    public final FASTER_EXHAUSTION FASTER_EXHAUSTION = new FASTER_EXHAUSTION();
-    public class FASTER_EXHAUSTION implements GradualValue {
-        public int MIN_AGE() {
-            return FASTER_EXHAUSTION_MIN_AGE.value();
+    public int defaultMaximumAge() {
+        return defaultMaximumAge.value();
+    }
+
+    public void defaultMaximumAge(int value) {
+        defaultMaximumAge.set(value);
+    }
+
+    public final FasterExhaustion fasterExhaustion = new FasterExhaustion();
+    public class FasterExhaustion implements GradualValue {
+        public int minAge() {
+            return fasterExhaustion_minAge.value();
         }
 
-        public void MIN_AGE(int value) {
-            FASTER_EXHAUSTION_MIN_AGE.set(value);
+        public void minAge(int value) {
+            fasterExhaustion_minAge.set(value);
         }
 
-        public int MAX_AGE() {
-            return FASTER_EXHAUSTION_MAX_AGE.value();
+        public int maxAge() {
+            return fasterExhaustion_maxAge.value();
         }
 
-        public void MAX_AGE(int value) {
-            FASTER_EXHAUSTION_MAX_AGE.set(value);
+        public void maxAge(int value) {
+            fasterExhaustion_maxAge.set(value);
         }
 
-        public float START_VALUE() {
-            return FASTER_EXHAUSTION_START_VALUE.value();
+        public float startingValue() {
+            return fasterExhaustion_startingValue.value();
         }
 
-        public void START_VALUE(float value) {
-            FASTER_EXHAUSTION_START_VALUE.set(value);
+        public void startingValue(float value) {
+            fasterExhaustion_startingValue.set(value);
         }
 
-        public float END_VALUE() {
-            return FASTER_EXHAUSTION_END_VALUE.value();
+        public float endingValue() {
+            return fasterExhaustion_endingValue.value();
         }
 
-        public void END_VALUE(float value) {
-            FASTER_EXHAUSTION_END_VALUE.set(value);
+        public void endingValue(float value) {
+            fasterExhaustion_endingValue.set(value);
         }
 
-        public io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve CURVE() {
-            return FASTER_EXHAUSTION_CURVE.value();
+        public io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve calculationCurve() {
+            return fasterExhaustion_calculationCurve.value();
         }
 
-        public void CURVE(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value) {
-            FASTER_EXHAUSTION_CURVE.set(value);
+        public void calculationCurve(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value) {
+            fasterExhaustion_calculationCurve.set(value);
         }
 
     }
-    public final FASTER_HEAL FASTER_HEAL = new FASTER_HEAL();
-    public class FASTER_HEAL implements GradualValue {
-        public int MIN_AGE() {
-            return FASTER_HEAL_MIN_AGE.value();
+    public final FasterHealing fasterHealing = new FasterHealing();
+    public class FasterHealing implements GradualValue {
+        public int minAge() {
+            return fasterHealing_minAge.value();
         }
 
-        public void MIN_AGE(int value) {
-            FASTER_HEAL_MIN_AGE.set(value);
+        public void minAge(int value) {
+            fasterHealing_minAge.set(value);
         }
 
-        public int MAX_AGE() {
-            return FASTER_HEAL_MAX_AGE.value();
+        public int maxAge() {
+            return fasterHealing_maxAge.value();
         }
 
-        public void MAX_AGE(int value) {
-            FASTER_HEAL_MAX_AGE.set(value);
+        public void maxAge(int value) {
+            fasterHealing_maxAge.set(value);
         }
 
-        public float START_VALUE() {
-            return FASTER_HEAL_START_VALUE.value();
+        public float startingValue() {
+            return fasterHealing_startingValue.value();
         }
 
-        public void START_VALUE(float value) {
-            FASTER_HEAL_START_VALUE.set(value);
+        public void startingValue(float value) {
+            fasterHealing_startingValue.set(value);
         }
 
-        public float END_VALUE() {
-            return FASTER_HEAL_END_VALUE.value();
+        public float endingValue() {
+            return fasterHealing_endingValue.value();
         }
 
-        public void END_VALUE(float value) {
-            FASTER_HEAL_END_VALUE.set(value);
+        public void endingValue(float value) {
+            fasterHealing_endingValue.set(value);
         }
 
-        public io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve CURVE() {
-            return FASTER_HEAL_CURVE.value();
+        public io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve calculationCurve() {
+            return fasterHealing_calculationCurve.value();
         }
 
-        public void CURVE(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value) {
-            FASTER_HEAL_CURVE.set(value);
-        }
-
-    }
-    public final LOWER_HUNGER_MINIMUM LOWER_HUNGER_MINIMUM = new LOWER_HUNGER_MINIMUM();
-    public class LOWER_HUNGER_MINIMUM implements GradualValue {
-        public int MIN_AGE() {
-            return LOWER_HUNGER_MINIMUM_MIN_AGE.value();
-        }
-
-        public void MIN_AGE(int value) {
-            LOWER_HUNGER_MINIMUM_MIN_AGE.set(value);
-        }
-
-        public int MAX_AGE() {
-            return LOWER_HUNGER_MINIMUM_MAX_AGE.value();
-        }
-
-        public void MAX_AGE(int value) {
-            LOWER_HUNGER_MINIMUM_MAX_AGE.set(value);
-        }
-
-        public float START_VALUE() {
-            return LOWER_HUNGER_MINIMUM_START_VALUE.value();
-        }
-
-        public void START_VALUE(float value) {
-            LOWER_HUNGER_MINIMUM_START_VALUE.set(value);
-        }
-
-        public float END_VALUE() {
-            return LOWER_HUNGER_MINIMUM_END_VALUE.value();
-        }
-
-        public void END_VALUE(float value) {
-            LOWER_HUNGER_MINIMUM_END_VALUE.set(value);
-        }
-
-        public io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve CURVE() {
-            return LOWER_HUNGER_MINIMUM_CURVE.value();
-        }
-
-        public void CURVE(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value) {
-            LOWER_HUNGER_MINIMUM_CURVE.set(value);
+        public void calculationCurve(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value) {
+            fasterHealing_calculationCurve.set(value);
         }
 
     }
-    public final NO_STICK_SLOWNESS NO_STICK_SLOWNESS = new NO_STICK_SLOWNESS();
-    public class NO_STICK_SLOWNESS implements GradualValue {
-        public int MIN_AGE() {
-            return NO_STICK_SLOWNESS_MIN_AGE.value();
+    public final MinimumHungerToHeal minimumHungerToHeal = new MinimumHungerToHeal();
+    public class MinimumHungerToHeal implements GradualValue {
+        public int minAge() {
+            return minimumHungerToHeal_minAge.value();
         }
 
-        public void MIN_AGE(int value) {
-            NO_STICK_SLOWNESS_MIN_AGE.set(value);
+        public void minAge(int value) {
+            minimumHungerToHeal_minAge.set(value);
         }
 
-        public int MAX_AGE() {
-            return NO_STICK_SLOWNESS_MAX_AGE.value();
+        public int maxAge() {
+            return minimumHungerToHeal_maxAge.value();
         }
 
-        public void MAX_AGE(int value) {
-            NO_STICK_SLOWNESS_MAX_AGE.set(value);
+        public void maxAge(int value) {
+            minimumHungerToHeal_maxAge.set(value);
         }
 
-        public float START_VALUE() {
-            return NO_STICK_SLOWNESS_START_VALUE.value();
+        public float startingValue() {
+            return minimumHungerToHeal_startingValue.value();
         }
 
-        public void START_VALUE(float value) {
-            NO_STICK_SLOWNESS_START_VALUE.set(value);
+        public void startingValue(float value) {
+            minimumHungerToHeal_startingValue.set(value);
         }
 
-        public float END_VALUE() {
-            return NO_STICK_SLOWNESS_END_VALUE.value();
+        public float endingValue() {
+            return minimumHungerToHeal_endingValue.value();
         }
 
-        public void END_VALUE(float value) {
-            NO_STICK_SLOWNESS_END_VALUE.set(value);
+        public void endingValue(float value) {
+            minimumHungerToHeal_endingValue.set(value);
         }
 
-        public io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve CURVE() {
-            return NO_STICK_SLOWNESS_CURVE.value();
+        public io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve calculationCurve() {
+            return minimumHungerToHeal_calculationCurve.value();
         }
 
-        public void CURVE(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value) {
-            NO_STICK_SLOWNESS_CURVE.set(value);
-        }
-
-    }
-    public final NO_GLASSES_BLURRINESS NO_GLASSES_BLURRINESS = new NO_GLASSES_BLURRINESS();
-    public class NO_GLASSES_BLURRINESS implements GradualValue {
-        public int MIN_AGE() {
-            return NO_GLASSES_BLURRINESS_MIN_AGE.value();
-        }
-
-        public void MIN_AGE(int value) {
-            NO_GLASSES_BLURRINESS_MIN_AGE.set(value);
-        }
-
-        public int MAX_AGE() {
-            return NO_GLASSES_BLURRINESS_MAX_AGE.value();
-        }
-
-        public void MAX_AGE(int value) {
-            NO_GLASSES_BLURRINESS_MAX_AGE.set(value);
-        }
-
-        public float START_VALUE() {
-            return NO_GLASSES_BLURRINESS_START_VALUE.value();
-        }
-
-        public void START_VALUE(float value) {
-            NO_GLASSES_BLURRINESS_START_VALUE.set(value);
-        }
-
-        public float END_VALUE() {
-            return NO_GLASSES_BLURRINESS_END_VALUE.value();
-        }
-
-        public void END_VALUE(float value) {
-            NO_GLASSES_BLURRINESS_END_VALUE.set(value);
-        }
-
-        public io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve CURVE() {
-            return NO_GLASSES_BLURRINESS_CURVE.value();
-        }
-
-        public void CURVE(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value) {
-            NO_GLASSES_BLURRINESS_CURVE.set(value);
+        public void calculationCurve(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value) {
+            minimumHungerToHeal_calculationCurve.set(value);
         }
 
     }
-    public int BASE_MAXIMUM_AGE() {
-        return BASE_MAXIMUM_AGE.value();
-    }
-
-    public void BASE_MAXIMUM_AGE(int value) {
-        BASE_MAXIMUM_AGE.set(value);
-    }
-
-    public final EXTRA_LIFE EXTRA_LIFE = new EXTRA_LIFE();
-    public class EXTRA_LIFE implements ExtraLife {
-        public int MIN_AGE() {
-            return EXTRA_LIFE_MIN_AGE.value();
+    public final AgingSlowness agingSlowness = new AgingSlowness();
+    public class AgingSlowness implements GradualValue {
+        public int minAge() {
+            return agingSlowness_minAge.value();
         }
 
-        public void MIN_AGE(int value) {
-            EXTRA_LIFE_MIN_AGE.set(value);
+        public void minAge(int value) {
+            agingSlowness_minAge.set(value);
         }
 
-        public int MAX_AGE() {
-            return EXTRA_LIFE_MAX_AGE.value();
+        public int maxAge() {
+            return agingSlowness_maxAge.value();
         }
 
-        public void MAX_AGE(int value) {
-            EXTRA_LIFE_MAX_AGE.set(value);
+        public void maxAge(int value) {
+            agingSlowness_maxAge.set(value);
         }
 
-        public float START_HOURS_PER_EXTRA_LIFE() {
-            return EXTRA_LIFE_START_HOURS_PER_EXTRA_LIFE.value();
+        public float startingValue() {
+            return agingSlowness_startingValue.value();
         }
 
-        public void START_HOURS_PER_EXTRA_LIFE(float value) {
-            EXTRA_LIFE_START_HOURS_PER_EXTRA_LIFE.set(value);
+        public void startingValue(float value) {
+            agingSlowness_startingValue.set(value);
         }
 
-        public float CURVE_MULTIPLIER() {
-            return EXTRA_LIFE_CURVE_MULTIPLIER.value();
+        public float endingValue() {
+            return agingSlowness_endingValue.value();
         }
 
-        public void CURVE_MULTIPLIER(float value) {
-            EXTRA_LIFE_CURVE_MULTIPLIER.set(value);
+        public void endingValue(float value) {
+            agingSlowness_endingValue.set(value);
         }
 
-        public io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve CURVE() {
-            return EXTRA_LIFE_CURVE.value();
+        public io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve calculationCurve() {
+            return agingSlowness_calculationCurve.value();
         }
 
-        public void CURVE(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value) {
-            EXTRA_LIFE_CURVE.set(value);
+        public void calculationCurve(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value) {
+            agingSlowness_calculationCurve.set(value);
         }
 
     }
-    public int MAX_EXTRA_YEARS_OF_LIFE() {
-        return MAX_EXTRA_YEARS_OF_LIFE.value();
+    public final AgingBlurriness agingBlurriness = new AgingBlurriness();
+    public class AgingBlurriness implements GradualValue {
+        public int minAge() {
+            return agingBlurriness_minAge.value();
+        }
+
+        public void minAge(int value) {
+            agingBlurriness_minAge.set(value);
+        }
+
+        public int maxAge() {
+            return agingBlurriness_maxAge.value();
+        }
+
+        public void maxAge(int value) {
+            agingBlurriness_maxAge.set(value);
+        }
+
+        public float startingValue() {
+            return agingBlurriness_startingValue.value();
+        }
+
+        public void startingValue(float value) {
+            agingBlurriness_startingValue.set(value);
+        }
+
+        public float endingValue() {
+            return agingBlurriness_endingValue.value();
+        }
+
+        public void endingValue(float value) {
+            agingBlurriness_endingValue.set(value);
+        }
+
+        public io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve calculationCurve() {
+            return agingBlurriness_calculationCurve.value();
+        }
+
+        public void calculationCurve(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value) {
+            agingBlurriness_calculationCurve.set(value);
+        }
+
+    }
+    public final ExtraAgeConfiguration extraAgeConfiguration = new ExtraAgeConfiguration();
+    public class ExtraAgeConfiguration implements ExtraLife {
+        public int minAge() {
+            return extraAgeConfiguration_minAge.value();
+        }
+
+        public void minAge(int value) {
+            extraAgeConfiguration_minAge.set(value);
+        }
+
+        public int maxAge() {
+            return extraAgeConfiguration_maxAge.value();
+        }
+
+        public void maxAge(int value) {
+            extraAgeConfiguration_maxAge.set(value);
+        }
+
+        public float minimumHoursForExtraLife() {
+            return extraAgeConfiguration_minimumHoursForExtraLife.value();
+        }
+
+        public void minimumHoursForExtraLife(float value) {
+            extraAgeConfiguration_minimumHoursForExtraLife.set(value);
+        }
+
+        public float multiplier() {
+            return extraAgeConfiguration_multiplier.value();
+        }
+
+        public void multiplier(float value) {
+            extraAgeConfiguration_multiplier.set(value);
+        }
+
+        public io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve calculationCurve() {
+            return extraAgeConfiguration_calculationCurve.value();
+        }
+
+        public void calculationCurve(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value) {
+            extraAgeConfiguration_calculationCurve.set(value);
+        }
+
+    }
+    public int maximumExtraAge() {
+        return maximumExtraAge.value();
     }
 
-    public void MAX_EXTRA_YEARS_OF_LIFE(int value) {
-        MAX_EXTRA_YEARS_OF_LIFE.set(value);
+    public void maximumExtraAge(int value) {
+        maximumExtraAge.set(value);
     }
 
-    public boolean RESIZE_BOUNDS_ONLY() {
-        return RESIZE_BOUNDS_ONLY.value();
+    public java.util.List<java.lang.String> moderationList() {
+        return moderationList.value();
     }
 
-    public void RESIZE_BOUNDS_ONLY(boolean value) {
-        RESIZE_BOUNDS_ONLY.set(value);
+    public void moderationList(java.util.List<java.lang.String> value) {
+        moderationList.set(value);
     }
 
-    public void subscribeToRESIZE_BOUNDS_ONLY(Consumer<java.lang.Boolean> subscriber) {
-        RESIZE_BOUNDS_ONLY.observe(subscriber);
+    public java.util.List<java.lang.String> administrationList() {
+        return administrationList.value();
     }
 
-    public io.blodhgarm.personality.misc.config.PersonalityConfigModel.ThemeMode THEME_MODE() {
-        return THEME_MODE.value();
+    public void administrationList(java.util.List<java.lang.String> value) {
+        administrationList.set(value);
     }
 
-    public void THEME_MODE(io.blodhgarm.personality.misc.config.PersonalityConfigModel.ThemeMode value) {
-        THEME_MODE.set(value);
+    public boolean adjustWidthAndHeightOnly() {
+        return adjustWidthAndHeightOnly.value();
     }
 
-    public boolean showPlayerNameWhenHovering() {
-        return showPlayerNameWhenHovering.value();
+    public void adjustWidthAndHeightOnly(boolean value) {
+        adjustWidthAndHeightOnly.set(value);
     }
 
-    public void showPlayerNameWhenHovering(boolean value) {
-        showPlayerNameWhenHovering.set(value);
+    public void subscribeToAdjustWidthAndHeightOnly(Consumer<java.lang.Boolean> subscriber) {
+        adjustWidthAndHeightOnly.observe(subscriber);
+    }
+
+    public io.blodhgarm.personality.misc.config.PersonalityConfigModel.ThemeMode themeMode() {
+        return themeMode.value();
+    }
+
+    public void themeMode(io.blodhgarm.personality.misc.config.PersonalityConfigModel.ThemeMode value) {
+        themeMode.set(value);
+    }
+
+    public boolean showPlayerNameWhenHoveringChat() {
+        return showPlayerNameWhenHoveringChat.value();
+    }
+
+    public void showPlayerNameWhenHoveringChat(boolean value) {
+        showPlayerNameWhenHoveringChat.set(value);
+    }
+
+    public boolean showPlayerNamePlateAtChestLevel() {
+        return showPlayerNamePlateAtChestLevel.value();
+    }
+
+    public void showPlayerNamePlateAtChestLevel(boolean value) {
+        showPlayerNamePlateAtChestLevel.set(value);
     }
 
 
-    public interface ExtraLife {
-        int MIN_AGE();
-        void MIN_AGE(int value);
-        int MAX_AGE();
-        void MAX_AGE(int value);
-        float START_HOURS_PER_EXTRA_LIFE();
-        void START_HOURS_PER_EXTRA_LIFE(float value);
-        float CURVE_MULTIPLIER();
-        void CURVE_MULTIPLIER(float value);
-        io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve CURVE();
-        void CURVE(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value);
-    }
     public interface GradualValue {
-        int MIN_AGE();
-        void MIN_AGE(int value);
-        int MAX_AGE();
-        void MAX_AGE(int value);
-        float START_VALUE();
-        void START_VALUE(float value);
-        float END_VALUE();
-        void END_VALUE(float value);
-        io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve CURVE();
-        void CURVE(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value);
+        int minAge();
+        void minAge(int value);
+        int maxAge();
+        void maxAge(int value);
+        float startingValue();
+        void startingValue(float value);
+        float endingValue();
+        void endingValue(float value);
+        io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve calculationCurve();
+        void calculationCurve(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value);
+    }
+    public interface ExtraLife {
+        int minAge();
+        void minAge(int value);
+        int maxAge();
+        void maxAge(int value);
+        float minimumHoursForExtraLife();
+        void minimumHoursForExtraLife(float value);
+        float multiplier();
+        void multiplier(float value);
+        io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve calculationCurve();
+        void calculationCurve(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value);
     }
 
 }

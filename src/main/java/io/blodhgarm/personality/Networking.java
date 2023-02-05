@@ -1,7 +1,7 @@
 package io.blodhgarm.personality;
 
 import io.blodhgarm.personality.packets.*;
-import io.blodhgarm.personality.utils.ServerAccess;
+import io.wispforest.owo.Owo;
 import io.wispforest.owo.network.OwoNetChannel;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Identifier;
@@ -57,7 +57,7 @@ public class Networking {
     }
 
     public static <R extends Record> void sendToAll(R packet) {
-        CHANNEL.serverHandle(ServerAccess.getServer()).send(packet);
+        CHANNEL.serverHandle(Owo.currentServer()).send(packet);
     }
 
     public static <R extends Record> void sendS2C(PlayerEntity player, R packet) {
