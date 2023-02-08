@@ -11,10 +11,13 @@ import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddonRegistry;
 import io.blodhgarm.personality.client.gui.ThemeHelper;
 import io.blodhgarm.personality.client.gui.CharacterScreenMode;
 import io.blodhgarm.personality.client.gui.GenderSelection;
+import io.blodhgarm.personality.client.gui.components.ButtonAddon;
 import io.blodhgarm.personality.client.gui.components.owo.CustomEntityComponent;
 import io.blodhgarm.personality.client.gui.utils.CustomSurfaces;
 import io.blodhgarm.personality.client.gui.components.vanilla.BetterEditBoxWidget;
 import io.blodhgarm.personality.client.gui.components.vanilla.BetterTextFieldWidget;
+import io.blodhgarm.personality.client.gui.utils.owo.VariantButtonSurface;
+import io.blodhgarm.personality.misc.pond.owo.ButtonAddonDuck;
 import io.blodhgarm.personality.packets.SyncC2SPackets;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.base.BaseParentComponent;
@@ -25,7 +28,10 @@ import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.container.HorizontalFlowLayout;
 import io.wispforest.owo.ui.core.*;
+import io.wispforest.owo.ui.util.Drawer;
+import io.wispforest.owo.ui.util.ScissorStack;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.input.CursorMovement;
@@ -65,6 +71,8 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
     @Nullable public final BaseCharacter currentCharacter;
     @Nullable public final PlayerEntity player;
 
+    public boolean adminMode = false;
+
     //------------------------
 
     public boolean buildAsScreen = true;
@@ -73,6 +81,12 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
     public Screen originScreen = null;
 
     //------------------------
+
+    public CharacterScreen(CharacterScreenMode currentMode, @Nullable PlayerEntity player, @Nullable BaseCharacter character, boolean adminMode) {
+        this(currentMode, player, character);
+
+        this.adminMode = adminMode;
+    }
 
     public CharacterScreen(CharacterScreenMode currentMode, @Nullable PlayerEntity player, @Nullable BaseCharacter character) {
         this.currentMode = currentMode;
@@ -123,10 +137,10 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
 
         playerDisplayComponent.child(
                 (CustomEntityComponent.playerEntityComponent(Sizing.fixed(originAddonExists ? 85 : 100), player))
-                        .scale(originAddonExists ? 0.55F : 0.65F)
+                        .scale(originAddonExists ? 0.45F : 0.55F)
                         //.scaleToFit(true)
                         .allowMouseRotation(true)
-                        .margins(Insets.of(10, 6, 5, 5))
+                        .margins(Insets.of(originAddonExists ? 10 : 30, 6, 5, 5))
         );
 
         //--------------------------------
@@ -137,63 +151,102 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
         //-- Name Property --
         FlowLayout namePropertyLayout = Containers.horizontalFlow(Sizing.content(), Sizing.content());
 
-        {
-            MutableText nameLabel = Text.empty();
 
-            nameLabel.append(isModifiable ? requiredText.copy() : Text.empty())
-                    .append(Text.literal("Name: "))
-                    .append(!isModifiable ? currentCharacter.getFormattedName() : Text.empty());
+        MutableText nameLabel = Text.empty();
 
-            namePropertyLayout.child(
-                    Components.label(nameLabel)
+        nameLabel.append(isModifiable ? requiredText.copy() : Text.empty())
+                .append(Text.literal("Name: "))
+                .append(!isModifiable ? currentCharacter.getFormattedName() : Text.empty());
+
+        namePropertyLayout.child(
+                Components.label(nameLabel)
+                        .color(ThemeHelper.dynamicColor())
+        );
+
+        if (isModifiable) {
+            namePropertyLayout
+                    .child(
+                            BetterTextFieldWidget.textBox(Sizing.fixed(112), importCharacterData ? currentCharacter.getName() : "") //132
+                                    .bqColor(Color.ofArgb(0xFF555555))
+                                    .configure(component -> {
+                                        if(component instanceof BetterTextFieldWidget widget){
+                                            widget.setMaxLength(100);
+                                        }
+                                    })
+                                    .id("character_name")
+                    );
+        }
+
+
+        FlowLayout uuidInfoLayout = Containers.horizontalFlow(Sizing.content(), Sizing.content());
+        FlowLayout playerUuidInfoLayout = Containers.horizontalFlow(Sizing.content(), Sizing.content());
+
+        if(!isModifiable && adminMode) {
+            ((ButtonAddonDuck<FlowLayout>) uuidInfoLayout).setButtonAddon(flowLayout -> {
+                return new ButtonAddon<>(flowLayout)
+                        .useCustomButtonSurface((addon, matrices, component) -> {
+                            ScissorStack.drawUnclipped(() -> {
+                                if(addon.isHovered()){
+                                    Drawer.drawRectOutline(matrices, component.x() - 2, component.y() - 2, component.width() + 4, component.height() + 4, Color.WHITE.argb());
+                                }
+                            });
+                        })
+                        .onPress(button -> {
+                            MinecraftClient.getInstance().keyboard.setClipboard(currentCharacter.getUUID());
+                        });
+            }).child(
+                    Components.label(Text.empty().append(Text.literal("UUID: " + currentCharacter.getUUID())))
                             .color(ThemeHelper.dynamicColor())
             );
 
-            if (isModifiable) {
-                namePropertyLayout
-                        .child(
-                                BetterTextFieldWidget.textBox(Sizing.fixed(112), importCharacterData ? currentCharacter.getName() : "") //132
-                                        .bqColor(Color.ofArgb(0xFF555555))
-                                        .configure(component -> {
-                                            if(component instanceof BetterTextFieldWidget widget){
-                                                widget.setMaxLength(100);
-                                            }
-                                        })
-                                        .id("character_name")
-                        );
-            }
+            ((ButtonAddonDuck<FlowLayout>) playerUuidInfoLayout).setButtonAddon(flowLayout -> {
+                return new ButtonAddon<>(flowLayout)
+                        .useCustomButtonSurface((addon, matrices, component) -> {
+                            ScissorStack.drawUnclipped(() -> {
+                                if (addon.isHovered()) {
+                                    Drawer.drawRectOutline(matrices, component.x() - 2, component.y() - 2, component.width() + 4, component.height() + 4, Color.WHITE.argb());
+                                }
+                            });
+                        })
+                        .onPress(button -> {
+                            MinecraftClient.getInstance().keyboard.setClipboard(currentCharacter.getPlayerUUID());
+                        });
+            }).child(
+                    Components.label(Text.empty().append(Text.literal("Player UUID: " + currentCharacter.getPlayerUUID())))
+                            .color(ThemeHelper.dynamicColor())
+            );
         }
+
         //-------------------
 
         //-- Age Property --
         FlowLayout agePropertyLayout = Containers.horizontalFlow(Sizing.content(), Sizing.content());
 
-        {
-            MutableText ageLabel = Text.empty()
-                    .append(Text.literal("Age: "));
+        MutableText ageLabel = Text.empty()
+                .append(Text.literal("Age: "));
 
-            if(!isModifiable){
-                int age = currentCharacter.getAge();
+        if(!isModifiable){
+            int age = currentCharacter.getAge();
 
-                ageLabel.append(Text.literal(age > 0 ? age + " Years" : "Unknown"));
-            }
-
-            agePropertyLayout.child(
-                    Components.label(ageLabel)
-                            .color(ThemeHelper.dynamicColor())
-                            .margins(Insets.right(6))
-            );
-
-            if(isModifiable){
-                agePropertyLayout
-                        .child(
-                                Components.discreteSlider(Sizing.fixed(114), 17, 60) //134
-                                        .setFromDiscreteValue(importCharacterData ? currentCharacter.getAge() : 17)
-                                        .snap(true)
-                                        .id("age_slider")
-                        );
-            }
+            ageLabel.append(Text.literal(age > 0 ? age + " Years" : "Unknown"));
         }
+
+        agePropertyLayout.child(
+                Components.label(ageLabel)
+                        .color(ThemeHelper.dynamicColor())
+                        .margins(Insets.right(6))
+        );
+
+        if(isModifiable){
+            agePropertyLayout
+                    .child(
+                            Components.discreteSlider(Sizing.fixed(114), 17, 60) //134
+                                    .setFromDiscreteValue(importCharacterData ? currentCharacter.getAge() : 17)
+                                    .snap(true)
+                                    .id("age_slider")
+                    );
+        }
+
         //------------------
 
         FlowLayout characterPropertiesContainer = Containers.verticalFlow(Sizing.content(), Sizing.content())
@@ -202,6 +255,24 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
                         .verticalAlignment(VerticalAlignment.CENTER)
                         .margins(Insets.bottom(8))
                 )
+                .configure((FlowLayout component) -> {
+                    if(!isModifiable && adminMode){
+                        component
+                            .child(
+                                    Containers.horizontalScroll(Sizing.fixed(144), Sizing.fixed(13), uuidInfoLayout)
+                                            .horizontalAlignment(HorizontalAlignment.LEFT)
+                                            .verticalAlignment(VerticalAlignment.TOP)
+                                            .margins(Insets.bottom(4))
+                            )
+                            .child(
+                                    Containers.horizontalScroll(Sizing.fixed(144), Sizing.fixed(13), playerUuidInfoLayout)
+                                            .horizontalAlignment(HorizontalAlignment.LEFT)
+                                            .verticalAlignment(VerticalAlignment.TOP)
+                                            .margins(Insets.bottom(4))
+                            );
+                    }
+                })
+
                 .child(agePropertyLayout
                         .verticalAlignment(VerticalAlignment.CENTER)
                         .margins(Insets.bottom(8))

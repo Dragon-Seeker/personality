@@ -30,6 +30,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 public class EnhancedGridLayout extends BaseParentComponent implements LineManageable<EnhancedGridLayout>, ModifiableCollectionHelper<EnhancedGridLayout, BaseCharacter> {
@@ -46,6 +47,11 @@ public class EnhancedGridLayout extends BaseParentComponent implements LineManag
     public boolean builtYet = false;
 
     private CharacterScreenMode mode = CharacterScreenMode.VIEWING;
+
+    private BiFunction<CharacterScreenMode, BaseCharacter, CharacterScreen> screenBuilder = (characterScreenMode, baseCharacter) -> {
+        return new CharacterScreen(characterScreenMode, null, baseCharacter);
+    };
+
     private Screen originScreen;
 
     private boolean isVertical = true;
@@ -79,6 +85,12 @@ public class EnhancedGridLayout extends BaseParentComponent implements LineManag
 
     //--------------------------------------------------------------------
 
+    public EnhancedGridLayout(Sizing horizontalSizing, Sizing verticalSizing, Screen originScreen, BiFunction<CharacterScreenMode, BaseCharacter, CharacterScreen> screenBuilder) {
+        this(horizontalSizing, verticalSizing, originScreen);
+
+        this.screenBuilder = screenBuilder;
+    }
+
     public EnhancedGridLayout(Sizing horizontalSizing, Sizing verticalSizing, Screen originScreen) {
         super(horizontalSizing, verticalSizing);
 
@@ -94,7 +106,7 @@ public class EnhancedGridLayout extends BaseParentComponent implements LineManag
                                 FlowLayout mainLayout = Containers.verticalFlow(Sizing.fixed(28), Sizing.fixed(24));
 
                                 mainLayout.child(Components.button(Text.of(mode.isModifiableMode() ? "✎" : "☉"), (ButtonComponent component) -> {
-                                                    CharacterScreen screen = new CharacterScreen(mode, null, character);
+                                                    CharacterScreen screen = screenBuilder.apply(this.mode, character);
 
                                                     screen.originScreen = this.originScreen;
 

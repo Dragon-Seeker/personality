@@ -1,4 +1,4 @@
-package io.blodhgarm.personality.mixin.client;
+package io.blodhgarm.personality.mixin;
 
 import io.blodhgarm.personality.Networking;
 import io.blodhgarm.personality.client.gui.CharacterScreenMode;

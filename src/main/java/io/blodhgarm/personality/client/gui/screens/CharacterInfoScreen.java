@@ -17,6 +17,7 @@ import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.container.ScrollContainer;
 import io.wispforest.owo.ui.core.*;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -57,7 +58,11 @@ public class CharacterInfoScreen extends TabbedScreen {
     public void buildCharacterInfoTab(FlowLayout layout){
         Character playerCharacter = ClientCharacters.INSTANCE.getCharacter(MinecraftClient.getInstance().player);
 
-        this.characterScreen = new CharacterScreen(CharacterScreenMode.VIEWING, MinecraftClient.getInstance().player, playerCharacter != null ? playerCharacter : DebugCharacters.DEBUG_5);
+        if(playerCharacter == null && FabricLoader.getInstance().isDevelopmentEnvironment()){
+            playerCharacter = DebugCharacters.REVEAL_TEST;
+        }
+
+        this.characterScreen = new CharacterScreen(CharacterScreenMode.VIEWING, MinecraftClient.getInstance().player, playerCharacter);
 
         characterScreen.buildAsChild(layout);
     }

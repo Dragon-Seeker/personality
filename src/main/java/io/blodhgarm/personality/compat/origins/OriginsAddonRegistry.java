@@ -127,6 +127,8 @@ public class OriginsAddonRegistry implements PersonalityEntrypoint {
             OriginLayers.getLayers().forEach(originLayer -> {
                 Origin origin = getChoosableSortedOrigins(originLayer).get(0);
 
+                System.out.println("Origin Addon ID: " + originLayer.getIdentifier());
+
                 registry.registerAddon(originLayer.getIdentifier(),
                     (Class<T>) OriginAddon.class,
                     () -> (T) new OriginAddon(origin.getIdentifier(), originLayer.getIdentifier()),
@@ -150,6 +152,8 @@ public class OriginsAddonRegistry implements PersonalityEntrypoint {
                 } else if(layerId.equals(new Identifier("origins", "origin"))) {
                     level = InfoRevealLevel.ASSOCIATE;
                 }
+
+                System.out.println("OriginInfoReveal ID: " + layerId);
 
                 revealRegistry.registerValueForRevealing(level, layerId, () -> new OriginAddon(UNKNOWN.getIdentifier(), layerId));
             });

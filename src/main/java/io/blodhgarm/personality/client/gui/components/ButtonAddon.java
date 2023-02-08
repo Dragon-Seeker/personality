@@ -1,25 +1,22 @@
 package io.blodhgarm.personality.client.gui.components;
 
-import io.blodhgarm.personality.PersonalityMod;
-import io.blodhgarm.personality.client.gui.utils.owo.VariantsNinePatchRender;
+import io.blodhgarm.personality.client.gui.utils.owo.ButtonSurface;
 import io.blodhgarm.personality.misc.pond.owo.FocusCheckable;
 import io.wispforest.owo.ui.base.BaseParentComponent;
 import io.wispforest.owo.ui.core.Component;
-import io.wispforest.owo.ui.core.Size;
+import io.wispforest.owo.ui.core.ParentComponent;
+import io.wispforest.owo.ui.core.Surface;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.sound.SoundEvents;
-import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
-
-import java.util.function.Consumer;
 
 public class ButtonAddon<T extends BaseParentComponent> {
 
-    @Nullable public VariantsNinePatchRender BUTTON_RENDER = null;
+    protected ButtonSurface renderer = null;
 
     protected boolean checkThemeMode = true;
     protected boolean squareMode = true;
@@ -64,12 +61,20 @@ public class ButtonAddon<T extends BaseParentComponent> {
         return this;
     }
 
-    public ButtonAddon<T> useCustomButtonSurface(Consumer<VariantsNinePatchRender> configure){
-        this.BUTTON_RENDER = new VariantsNinePatchRender(PersonalityMod.id("textures/gui/button_surface.png"), Size.square(3), Size.square(48), false);
+    public boolean isActive(){
+        return this.active;
+    }
 
-        configure.accept(BUTTON_RENDER);
+    public boolean isHovered(){
+        return this.hovered;
+    }
 
-        this.linkedComponent.surface(this.BUTTON_RENDER);
+    public ButtonAddon<T> useCustomButtonSurface(ButtonSurface renderer){
+        this.renderer = renderer;
+
+        var buttonSurface = new ImplButtonSurface(this, renderer);
+
+        this.linkedComponent.surface(buttonSurface);
 
         return this;
     }
@@ -79,7 +84,6 @@ public class ButtonAddon<T extends BaseParentComponent> {
     }
 
     public void beforeDraw(MatrixStack matrices, int mouseX, int mouseY, float partialTicks, float delta) {
-        if(this.BUTTON_RENDER != null) this.BUTTON_RENDER.setUIndex(this.active ? (this.hovered ? 1 : 0) : 2);
     }
 
     public boolean onKeyPress(int keyCode, int scanCode, int modifiers) {
@@ -110,4 +114,12 @@ public class ButtonAddon<T extends BaseParentComponent> {
     public interface PressAction<T extends Component> {
         void onPress(T button);
     }
+
+    private record ImplButtonSurface(ButtonAddon<?> addon, ButtonSurface renderer) implements Surface {
+        @Override
+        public void draw(MatrixStack matrices, ParentComponent component) {
+            renderer.draw(addon, matrices, component);
+        }
+    }
+
 }

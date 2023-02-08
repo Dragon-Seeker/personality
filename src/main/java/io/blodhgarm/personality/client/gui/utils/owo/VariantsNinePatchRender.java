@@ -1,7 +1,6 @@
 package io.blodhgarm.personality.client.gui.utils.owo;
 
 import io.blodhgarm.personality.mixin.client.accessor.NinePatchRendererAccessor;
-import io.wispforest.owo.ui.core.Component;
 import io.wispforest.owo.ui.core.ParentComponent;
 import io.wispforest.owo.ui.core.Size;
 import io.wispforest.owo.ui.core.Surface;
@@ -38,16 +37,6 @@ public class VariantsNinePatchRender extends NinePatchRenderer implements Surfac
         this.access().setV(variantOffsetV * offsetVIndex);
 
         return this;
-    }
-
-    public void draw(MatrixStack matrices, Component component, int offsetUIndex) {
-        int currentUIndex = this.access().getU();
-
-        this.setUIndex(offsetUIndex);
-
-        this.draw(matrices, component.x(), component.y(), component.width(), component.height());
-
-        this.setUIndex(currentUIndex);
     }
 
     @Override

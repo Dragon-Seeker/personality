@@ -79,11 +79,6 @@ public class PersonalityMod implements ModInitializer, PersonalityEntrypoint, It
 
         FinalizedPlayerConnectionEvent.CONNECTION_FINISHED.register(PersonalityMod.id("on_player_join"), ServerCharacters.INSTANCE);
 
-        ServerLifecycleEvents.END_DATA_PACK_RELOAD.register(AddonRegistry.INSTANCE);
-        ServerLifecycleEvents.SERVER_STARTED.register(AddonRegistry.INSTANCE);
-
-//        LateDataPackReloadEvent.LATEST_DATA_PACK_RELOAD.register(AddonRegistry.INSTANCE);
-
         FabricLoader.getInstance().getEntrypoints("personality", PersonalityEntrypoint.class).forEach(personalityEntrypoint -> {
             personalityEntrypoint.addonRegistry(AddonRegistry.INSTANCE);
             personalityEntrypoint.infoRevealRegistry(InfoRevealRegistry.INSTANCE);

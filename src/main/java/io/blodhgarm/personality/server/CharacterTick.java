@@ -1,11 +1,10 @@
 package io.blodhgarm.personality.server;
 
-import io.blodhgarm.personality.api.character.Character;
 import io.blodhgarm.personality.PersonalityMod;
+import io.blodhgarm.personality.api.character.Character;
 import io.blodhgarm.personality.misc.PersonalityTags;
 import io.blodhgarm.personality.misc.config.ConfigHelper;
 import io.blodhgarm.personality.misc.config.PersonalityConfig;
-import io.github.apace100.calio.mixin.DamageSourceAccessor;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.entity.attribute.EntityAttributeInstance;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
@@ -18,7 +17,7 @@ import java.util.UUID;
 
 public class CharacterTick implements ServerTickEvents.EndWorldTick {
 
-    public static final DamageSource DEATH_BY_OLD_AGE = DamageSourceAccessor.createDamageSource("oldAge");
+    public static final DamageSource DEATH_BY_OLD_AGE = new DamageSource("oldAge");
     private static final UUID AGING_SLOWNESS_MODIFIER_UUID = UUID.fromString("662A6B8D-DA3E-4C1C-8813-96EA6097278F");
 
     @Override

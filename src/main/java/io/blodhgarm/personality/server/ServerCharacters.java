@@ -101,7 +101,11 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
     @Override
     public void associateCharacterToPlayer(String characterUUID, String playerUUID){
-        if(playerToCharacterReferences().containsKey(playerUUID)) this.dissociateUUID(playerUUID, false);
+        if(playerToCharacterReferences().containsKey(playerUUID)){
+            this.dissociateUUID(playerUUID, false);
+        } else if(playerToCharacterReferences().inverse().containsKey(characterUUID)){
+            this.dissociateUUID(characterUUID, true);
+        }
 
         super.associateCharacterToPlayer(characterUUID, playerUUID);
 

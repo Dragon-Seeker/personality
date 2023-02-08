@@ -9,6 +9,7 @@ import io.blodhgarm.personality.client.gui.builders.EnhancedGridLayout;
 import io.blodhgarm.personality.client.gui.components.ButtonAddon;
 import io.blodhgarm.personality.client.gui.utils.CustomSurfaces;
 import io.blodhgarm.personality.client.gui.utils.ModifiableCollectionHelper;
+import io.blodhgarm.personality.client.gui.utils.owo.VariantButtonSurface;
 import io.blodhgarm.personality.misc.pond.owo.ButtonAddonDuck;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.component.Components;
@@ -120,7 +121,7 @@ public class AdminCharacterScreen extends BaseOwoScreen<FlowLayout> implements M
         mainLayout.child(topActionBar);
 
         mainLayout.child(Containers.verticalScroll(Sizing.content(), Sizing.fixed(155),
-                new EnhancedGridLayout(Sizing.content(), Sizing.content(), this)
+                new EnhancedGridLayout(Sizing.content(), Sizing.content(), this, (characterScreenMode, baseCharacter) -> new CharacterScreen(characterScreenMode, null, baseCharacter, true))
                         .addBuilder(Text.of("Created By"), (character, mode, isParentVertical) -> {
                             MutableText name;
 
@@ -216,7 +217,7 @@ public class AdminCharacterScreen extends BaseOwoScreen<FlowLayout> implements M
                                 ((ButtonAddonDuck<FlowLayout>) component)
                                         .setButtonAddon(layout -> {
                                             return new ButtonAddon<>(layout)
-                                                    .useCustomButtonSurface(render -> render.setVIndex(ButtonAddon.getVIndex(ThemeHelper.isDarkMode(), false)))
+                                                    .useCustomButtonSurface(VariantButtonSurface.surfaceLike(Size.square(3), Size.square(48), false, ThemeHelper.isDarkMode(), false))
                                                     .onPress(button -> {
                                                             if(this.currentPageNumber != componentPageNumber){
                                                                 travelToSelectPage(componentPageNumber);

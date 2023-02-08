@@ -41,11 +41,14 @@ public abstract class DelayedRegistry extends BaseRegistry implements ServerLife
     @Override
     public void endDataPackReload(MinecraftServer server, LifecycledResourceManager resourceManager, boolean success) {
         runDelayedRegistration();
+
+        System.out.println("EndDataPackReload");
     }
 
     @Override
     public void onServerStarted(MinecraftServer server) {
         runDelayedRegistration();
+        System.out.println("ServerStarted");
     }
 
     @Override

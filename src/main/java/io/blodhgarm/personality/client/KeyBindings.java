@@ -42,14 +42,21 @@ public class KeyBindings {
         }
 
         while (OPEN_SUB_SCREEN_KEYBIND.wasPressed())
-            client.setScreen(CharacterManager.hasModerationPermissions(MinecraftClient.getInstance().player)
-                    ? new PersonalitySubScreen()
-                    : new CharacterInfoScreen()
-            );
+            if(CharacterManager.hasModerationPermissions(MinecraftClient.getInstance().player) || FabricLoader.getInstance().isDevelopmentEnvironment()){
+                client.setScreen(new PersonalitySubScreen());
+            } else {
+                Character character = CharacterManager.getManger(world).getCharacter(client.player);
+
+                if(character != null || FabricLoader.getInstance().isDevelopmentEnvironment()){
+                    client.setScreen(new CharacterInfoScreen());
+                } else {
+                    client.player.sendMessage(Text.of("Character Info Menu requires a characters before being able to be used."));
+                }
+            }
     }
 
     public static void init(){
-        REVEAL_KEYBIND = register("reveal", GLFW.GLFW_KEY_LEFT_ALT & GLFW.GLFW_KEY_P);
-        OPEN_SUB_SCREEN_KEYBIND = register("open_subscreen", GLFW.GLFW_KEY_LEFT_ALT & GLFW.GLFW_KEY_L);
+        REVEAL_KEYBIND = register("reveal", GLFW.GLFW_KEY_J);
+        OPEN_SUB_SCREEN_KEYBIND = register("open_subscreen", GLFW.GLFW_KEY_I);
     }
 }

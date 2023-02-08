@@ -93,6 +93,11 @@ public class PersonalityCommands {
                         .executes(c -> associate(c, getPlayer(c,"player")))))
             )
 
+            .then(literal("disassociate").requires(ADMINISTRATION_CHECK)
+                    .then(argument("player", player())
+                            .executes(c -> disassociate(c, getPlayer(c,"player"))))
+            )
+
             .then(literal("get")
                 .then(literal("self")
                     .executes(c -> get(c, getCharacter(c, 0))))
@@ -254,6 +259,12 @@ public class PersonalityCommands {
         ServerCharacters.INSTANCE.associateCharacterToPlayer(getString(context, "uuid"), player.getUuidAsString());
 
         return msg(context, "Character associated");
+    }
+
+    private static int disassociate(CommandContext<ServerCommandSource> context, PlayerEntity player) {
+        ServerCharacters.INSTANCE.dissociateUUID(player.getUuidAsString(), false);
+
+        return msg(context, "Character disassociated");
     }
 
     private static int revealRange(CommandContext<ServerCommandSource> context, int range) {
@@ -515,11 +526,12 @@ public class PersonalityCommands {
     @Nullable
     private static Character getCharacter(CommandContext<ServerCommandSource> context, int characterSelectionType) {
         try {
-            switch (characterSelectionType) {
+            return switch (characterSelectionType) {
                 case 0 -> ServerCharacters.INSTANCE.getCharacter(context.getSource().getPlayer());
                 case 1 -> ServerCharacters.INSTANCE.getCharacter(getPlayer(context, "player"));
                 case 2 -> ServerCharacters.INSTANCE.getCharacter(getString(context, "uuid"));
-            }
+                default -> null;
+            };
         } catch (Exception e) { e.printStackTrace(); }
 
         return null;
