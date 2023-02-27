@@ -21,7 +21,7 @@ public class ScaleAddon extends BaseAddon {
         if(this.heightOffset == 0){
             data.resetScale();
         } else {
-            data.setTargetScale((this.heightOffset / player.getHeight()));
+            data.setTargetScale((this.heightOffset / player.getHeight()) + 1);
         }
     }
 
@@ -39,6 +39,8 @@ public class ScaleAddon extends BaseAddon {
         return heightOffset;
     }
 
+    //----------------------- Info Reveal Methods -----------------------
+
     public ScaleAddon shouldShowHeight(boolean value){
         this.shouldShowHeight = value;
 
@@ -49,6 +51,8 @@ public class ScaleAddon extends BaseAddon {
         return this.shouldShowHeight;
     }
 
+    //-------------------------------------------------------------------
+
     @Override
     public boolean isEqualToPlayer(PlayerEntity player) {
         ScaleData data = PehkuiAddonRegistry.CHARACTER_TYPE.getScaleData(player);
@@ -58,10 +62,7 @@ public class ScaleAddon extends BaseAddon {
 
     @Override
     public boolean equals(Object obj) {
-        if(obj instanceof ScaleAddon addon){
-            return Math.abs(addon.getHeightOffset() - this.getHeightOffset()) < 0.00001;
-        }
-
-        return false;
+        return obj instanceof ScaleAddon addon
+                && Math.abs(addon.getHeightOffset() - this.getHeightOffset()) < 0.00001;
     }
 }

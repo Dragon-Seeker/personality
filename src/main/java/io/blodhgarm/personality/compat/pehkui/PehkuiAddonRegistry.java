@@ -16,7 +16,7 @@ public class PehkuiAddonRegistry implements PersonalityEntrypoint {
     public static final ScaleModifier CHARACTER_MODIFIER = ScaleRegistries.register(
             ScaleRegistries.SCALE_MODIFIERS,
             PersonalityMod.id("character_modifier"),
-            new TypedScaleModifier(() -> PehkuiAddonRegistry.CHARACTER_TYPE, Double::sum)
+            new TypedScaleModifier(() -> PehkuiAddonRegistry.CHARACTER_TYPE, (a, b) -> (Double.sum(a, b) - 1))
     );
 
     public static final ScaleType CHARACTER_TYPE = registerType();
@@ -26,7 +26,7 @@ public class PehkuiAddonRegistry implements PersonalityEntrypoint {
                 ScaleRegistries.SCALE_TYPES,
                 PersonalityMod.id("character_type"),
                 ScaleType.Builder.create()
-                        .defaultBaseScale(0)
+                        .defaultBaseScale(1)
                         .defaultTickDelay(100)
                         .affectsDimensions()
                         .addDependentModifier(CHARACTER_MODIFIER)
