@@ -57,8 +57,7 @@ dependencies {
 	modImplementation "com.github.apace100:origins-fabric:${project.origin_version}"
 	modImplementation "dev.emi:trinkets:${trinkets_version}"
 
-	include "io.github.ladysnake:satin:${satin_version}"
-	modImplementation "io.github.ladysnake:satin:${satin_version}"
+	include modImplementation ("io.github.ladysnake:satin:${satin_version}")
 
 	modCompileOnly "dev.onyxstudios.cardinal-components-api:cardinal-components-base:${project.cc_version}"
 	modCompileOnly "dev.onyxstudios.cardinal-components-api:cardinal-components-entity:${project.cc_version}"
@@ -66,21 +65,15 @@ dependencies {
 	modLocalRuntime "io.wispforest:gadget:${project.gadget_version}"
 
 	//
-	include 'com.github.Dansoftowner:jSystemThemeDetector:3.8'
-	implementation 'com.github.Dansoftowner:jSystemThemeDetector:3.8'
+	include implementation ('com.github.Dansoftowner:jSystemThemeDetector:3.8')
+	include ('io.github.g00fy2:versioncompare:1.4.1')
 
-	include 'io.github.g00fy2:versioncompare:1.4.1'
-
-	include ('de.jangassen:jfa:1.2.0') {
-		exclude group: 'net.java.dev.jna', module: 'jna' // different jna version
-	}
+	include ('de.jangassen:jfa:1.2.0') { exclude group: 'net.java.dev.jna', module: 'jna' /* different jna version */}
 	//
 
-	include 'org.apache.commons:commons-collections4:4.4'
-	implementation 'org.apache.commons:commons-collections4:4.4'
-
-	include 'io.github.earcut4j:earcut4j:2.2.2'
-	implementation 'io.github.earcut4j:earcut4j:2.2.2'
+	include implementation('org.apache.commons:commons-collections4:4.4')
+	include implementation ('io.github.earcut4j:earcut4j:2.2.2')
+	include implementation ('me.xdrop:fuzzywuzzy:1.4.0')
 }
 
 loom {

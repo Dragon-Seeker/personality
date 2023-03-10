@@ -14,9 +14,8 @@ import io.blodhgarm.personality.client.gui.GenderSelection;
 import io.blodhgarm.personality.client.gui.components.ButtonAddon;
 import io.blodhgarm.personality.client.gui.components.owo.CustomEntityComponent;
 import io.blodhgarm.personality.client.gui.utils.CustomSurfaces;
-import io.blodhgarm.personality.client.gui.components.vanilla.BetterEditBoxWidget;
-import io.blodhgarm.personality.client.gui.components.vanilla.BetterTextFieldWidget;
-import io.blodhgarm.personality.client.gui.utils.owo.VariantButtonSurface;
+import io.blodhgarm.personality.client.gui.components.vanilla.EditBoxComponent;
+import io.blodhgarm.personality.client.gui.components.vanilla.ColorableTextBoxComponent;
 import io.blodhgarm.personality.misc.pond.owo.ButtonAddonDuck;
 import io.blodhgarm.personality.packets.SyncC2SPackets;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
@@ -31,7 +30,6 @@ import io.wispforest.owo.ui.core.*;
 import io.wispforest.owo.ui.util.Drawer;
 import io.wispforest.owo.ui.util.ScissorStack;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.input.CursorMovement;
@@ -166,10 +164,10 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
         if (isModifiable) {
             namePropertyLayout
                     .child(
-                            BetterTextFieldWidget.textBox(Sizing.fixed(112), importCharacterData ? currentCharacter.getName() : "") //132
+                            ColorableTextBoxComponent.textBox(Sizing.fixed(112), importCharacterData ? currentCharacter.getName() : "") //132
                                     .bqColor(Color.ofArgb(0xFF555555))
                                     .configure(component -> {
-                                        if(component instanceof BetterTextFieldWidget widget){
+                                        if(component instanceof ColorableTextBoxComponent widget){
                                             widget.setMaxLength(100);
                                         }
                                     })
@@ -300,13 +298,13 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
                                                 .margins(Insets.of(0, 4, 0, 0))
                                 )
                                 .child(
-                                        BetterEditBoxWidget.editBox(Sizing.fixed(136), Sizing.fixed(60), Text.of(""), Text.of(""), importCharacterData ? currentCharacter.getDescription() : "")
+                                        EditBoxComponent.editBox(Sizing.fixed(136), Sizing.fixed(60), Text.of(""), Text.of(""), importCharacterData ? currentCharacter.getDescription() : "")
                                                 .setCursorPosition(CursorMovement.ABSOLUTE, 0)
                                                 .textWidth(130)
                                                 .bqColor(Color.ofArgb(0xFF555555))
                                                 .canEdit(isModifiable)
                                                 .configure(component -> {
-                                                    if(component instanceof BetterEditBoxWidget betterEditBoxWidget){
+                                                    if(component instanceof EditBoxComponent betterEditBoxWidget){
                                                         betterEditBoxWidget.setMaxLength(5000);
                                                     }
                                                 })
@@ -322,13 +320,13 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
                                                 .margins(Insets.of(0, 4, 0, 0))
                                 )
                                 .child(
-                                        BetterEditBoxWidget.editBox(Sizing.fixed(136), Sizing.fixed(60), Text.of(""), Text.of(""), importCharacterData ? currentCharacter.getBiography() : "")
+                                        EditBoxComponent.editBox(Sizing.fixed(136), Sizing.fixed(60), Text.of(""), Text.of(""), importCharacterData ? currentCharacter.getBiography() : "")
                                                 .setCursorPosition(CursorMovement.ABSOLUTE, 0)
                                                 .textWidth(130)
                                                 .bqColor(Color.ofArgb(0xFF555555))
                                                 .canEdit(isModifiable)
                                                 .configure(component -> {
-                                                    if(component instanceof BetterEditBoxWidget betterEditBoxWidget){
+                                                    if(component instanceof EditBoxComponent betterEditBoxWidget){
                                                         betterEditBoxWidget.setMaxLength(5000);
                                                     }
                                                 })
@@ -481,7 +479,7 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
                                 if (currentSelection.openTextField()) {
                                     horizontalComponent.child(createGenderTextField(importCharacterData));
                                 } else {
-                                    BetterTextFieldWidget child = horizontalComponent.childById(BetterTextFieldWidget.class, "gender_text_field");
+                                    ColorableTextBoxComponent child = horizontalComponent.childById(ColorableTextBoxComponent.class, "gender_text_field");
 
                                     if (child != null) horizontalComponent.removeChild(child);
                                 }
@@ -499,11 +497,11 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
     }
 
     private Component createGenderTextField(boolean importCharacterData){
-        return BetterTextFieldWidget.textBox(Sizing.fixed(58), importCharacterData ? currentCharacter.getGender() : "")
+        return ColorableTextBoxComponent.textBox(Sizing.fixed(58), importCharacterData ? currentCharacter.getGender() : "")
                 .setEditAbility(currentSelection.openTextField())
                 .tooltip(Text.of("Required"))
                 .configure(component -> {
-                    if(component instanceof BetterTextFieldWidget widget){
+                    if(component instanceof ColorableTextBoxComponent widget){
                         widget.setMaxLength(100);
                     }
                 })
@@ -556,9 +554,9 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
 
         ClientPlayerEntity entity = MinecraftClient.getInstance().player;
 
-        String description = rootComponent.childById(BetterEditBoxWidget.class, "description_text_box").convertTextBox();
+        String description = rootComponent.childById(EditBoxComponent.class, "description_text_box").convertTextBox();
 
-        String biography = rootComponent.childById(BetterEditBoxWidget.class, "biography_text_box").convertTextBox();
+        String biography = rootComponent.childById(EditBoxComponent.class, "biography_text_box").convertTextBox();
 
         int age = (int) rootComponent.childById(DiscreteSliderComponent.class, "age_slider").discreteValue();
 

@@ -18,7 +18,10 @@ import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
 
-public class BetterEditBoxWidget extends EditBoxWidget implements ComponentStub {
+/**
+ * This is manly a copy of EditBoxWidget with certain changes to how it functions for Personality
+ */
+public class EditBoxComponent extends EditBoxWidget implements ComponentStub {
 
     private Color backgroundColor = Color.BLACK;//Color.ofArgb(0xFF555555);
     private Color outlineColor = Color.ofArgb(0xFFa0a0a0);
@@ -27,19 +30,19 @@ public class BetterEditBoxWidget extends EditBoxWidget implements ComponentStub 
 
     private ScrollBarSide position = ScrollBarSide.LEFT;
 
-    public BetterEditBoxWidget(Text placeholder, Text message) {
+    public EditBoxComponent(Text placeholder, Text message) {
         super(MinecraftClient.getInstance().textRenderer, 0,0, Integer.MAX_VALUE,0, placeholder, message);
 
         this.setText("");
     }
 
-    public static BetterEditBoxWidget emptyEditBox(Sizing horizontalSizing, Sizing verticalSizing, Text placeholder, Text message) {
+    public static EditBoxComponent emptyEditBox(Sizing horizontalSizing, Sizing verticalSizing, Text placeholder, Text message) {
         return editBox(horizontalSizing, verticalSizing, placeholder, message, "");
     }
 
-    public static BetterEditBoxWidget editBox(Sizing horizontalSizing, Sizing verticalSizing, Text placeholder, Text message, String info){
-        BetterEditBoxWidget widget = Components.createWithSizing(
-                () -> new BetterEditBoxWidget(placeholder, message),
+    public static EditBoxComponent editBox(Sizing horizontalSizing, Sizing verticalSizing, Text placeholder, Text message, String info){
+        EditBoxComponent widget = Components.createWithSizing(
+                () -> new EditBoxComponent(placeholder, message),
                 horizontalSizing,
                 verticalSizing
         );
@@ -49,7 +52,7 @@ public class BetterEditBoxWidget extends EditBoxWidget implements ComponentStub 
         return widget;
     }
 
-    public BetterEditBoxWidget textWidth(int width){
+    public EditBoxComponent textWidth(int width){
         EditBoxAccessor accessor = ((EditBoxAccessor)((EditBoxWidgetAccessor) this).personality$getEditBox());
 
         accessor.personality$setWidth(width);
@@ -58,31 +61,31 @@ public class BetterEditBoxWidget extends EditBoxWidget implements ComponentStub 
         return this;
     }
 
-    public BetterEditBoxWidget bqColor(Color color){
+    public EditBoxComponent bqColor(Color color){
         this.backgroundColor = color;
 
         return this;
     }
 
-    public BetterEditBoxWidget outlineColor(Color color){
+    public EditBoxComponent outlineColor(Color color){
         this.outlineColor = color;
 
         return this;
     }
 
-    public BetterEditBoxWidget scrollBarPosition(ScrollBarSide side){
+    public EditBoxComponent scrollBarPosition(ScrollBarSide side){
         this.position = side;
 
         return this;
     }
 
-    public BetterEditBoxWidget canEdit(boolean value){
+    public EditBoxComponent canEdit(boolean value){
         this.canEdit = value;
 
         return this;
     }
 
-    public BetterEditBoxWidget setCursorPosition(CursorMovement movement, int amount){
+    public EditBoxComponent setCursorPosition(CursorMovement movement, int amount){
         this.editBox.moveCursor(movement, amount);
 
         return this;
