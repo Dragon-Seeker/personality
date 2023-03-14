@@ -72,12 +72,16 @@ public class ClientCharacters extends CharacterManager<AbstractClientPlayerEntit
     public Consumer<AbstractClientPlayerEntity> revealCharacterInfo(Character source, Character targetCharacter, InfoRevealLevel level) { return target -> {}; }
 
     @Override
-    public void associateCharacterToPlayer(String cUUID, String playerUUID) {
-        super.associateCharacterToPlayer(cUUID, playerUUID);
+    public boolean associateCharacterToPlayer(String cUUID, String playerUUID) {
+        if(!super.associateCharacterToPlayer(cUUID, playerUUID)) {
+            return false;
+        }
 
         PlayerAccess<AbstractClientPlayerEntity> playerAssociated = this.getPlayer(playerUUID);
 
         setKnownCharacters(playerAssociated, cUUID);
+
+        return true;
     }
 
     public void setKnownCharacters(PlayerAccess<AbstractClientPlayerEntity> playerAccess, String cUUID){
@@ -107,6 +111,7 @@ public class ClientCharacters extends CharacterManager<AbstractClientPlayerEntit
     }
 
     @Override
+    @Nullable
     public String dissociateUUID(String UUID, boolean isCharacterUUID) {
         PlayerAccess<AbstractClientPlayerEntity> playerDissociated;
         Character oldC;

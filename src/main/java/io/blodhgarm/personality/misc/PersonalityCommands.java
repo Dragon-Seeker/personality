@@ -20,6 +20,7 @@ import io.blodhgarm.personality.packets.OpenPersonalityScreenS2CPacket;
 import io.blodhgarm.personality.server.ServerCharacters;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.command.CommandSource;
+import net.minecraft.command.argument.UuidArgumentType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -44,6 +45,13 @@ import static net.minecraft.command.argument.EntityArgumentType.*;
 import static net.minecraft.server.command.CommandManager.*;
 
 public class PersonalityCommands {
+
+    private static final String
+            CHARACTER_UUID_KEY = "character_uuid",
+            PLAYER_UUID_KEY = "player_uuid",
+            PLAYER_KEY = "player",
+            PLAYERS_KEY = "players",
+            TARGET_PLAYER_KEY = "target_player";
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -88,33 +96,37 @@ public class PersonalityCommands {
             )
 
             .then(literal("associate").requires(ADMINISTRATION_CHECK)
-                .then(argument("uuid", string())
-                    .then(argument("player", player())
-                        .executes(c -> associate(c, getPlayer(c,"player")))))
+                .then(argument(CHARACTER_UUID_KEY, UuidArgumentType.uuid())
+                    .then(argument(PLAYER_KEY, player())
+                        .executes(c -> associate(c, getPlayer(c, PLAYER_KEY)))))
             )
 
             .then(literal("disassociate").requires(ADMINISTRATION_CHECK)
-                    .then(argument("player", player())
-                            .executes(c -> disassociate(c, getPlayer(c,"player"))))
+                    .then(argument(PLAYER_KEY, player())
+                            .executes(c -> disassociate(c, getPlayer(c, PLAYER_KEY).getUuidAsString(), true))
+                    )
+                    .then(argument(CHARACTER_UUID_KEY, UuidArgumentType.uuid())
+                            .executes(c -> disassociate(c, getUUID(c, CHARACTER_UUID_KEY), false))
+                    )
             )
 
             .then(literal("get")
                 .then(literal("self")
                     .executes(c -> get(c, getCharacter(c, 0))))
                 .then(literal("player").requires(MODERATION_CHECK)
-                    .then(argument("player", player())
+                    .then(argument(PLAYER_KEY, player())
                         .executes(c -> get(c, getCharacter(c, 1)))))
                 .then(literal("uuid").requires(MODERATION_CHECK)
-                    .then(argument("uuid", greedyString())
+                    .then(argument(CHARACTER_UUID_KEY, UuidArgumentType.uuid())
                         .executes(c -> get(c, getCharacter(c, 2)))))
             )
 
             .then(literal("set").requires(ADMINISTRATION_CHECK)
                 .then(setters(literal("self"), c -> PersonalityCommands.getCharacter(c, 0) ))
                 .then(literal("player")
-                    .then(setters(argument("player", player()), c -> PersonalityCommands.getCharacter(c, 1))))
+                    .then(setters(argument(PLAYER_KEY, player()), c -> PersonalityCommands.getCharacter(c, 1))))
                 .then(literal("uuid")
-                    .then(setters(argument("uuid", string()), c -> PersonalityCommands.getCharacter(c, 2))))
+                    .then(setters(argument(CHARACTER_UUID_KEY, UuidArgumentType.uuid()), c -> PersonalityCommands.getCharacter(c, 2))))
             )
 
             .then(literal("known")
@@ -123,15 +135,15 @@ public class PersonalityCommands {
                 .then(literal("add").requires(ADMINISTRATION_CHECK)
                     .then(argument("reveal_level", string())
                             .suggests(REVEAL_LEVEL_SUGGESTION)
-                        .then(argument("players", players())
+                        .then(argument(PLAYERS_KEY, players())
                             .executes(c -> PersonalityCommands.addKnownCharacter(c, true)))
-                        .then(argument("uuid", string())
+                        .then(argument(CHARACTER_UUID_KEY, UuidArgumentType.uuid())
                             .executes(c -> PersonalityCommands.addKnownCharacter(c, false))))
                 )
                 .then(literal("remove").requires(ADMINISTRATION_CHECK)
-                    .then(argument("players", players())
+                    .then(argument(PLAYERS_KEY, players())
                         .executes(c -> PersonalityCommands.removeKnownCharacter(c, true)))
-                    .then(argument("uuid", string())
+                    .then(argument(CHARACTER_UUID_KEY, UuidArgumentType.uuid())
                         .executes(c -> PersonalityCommands.removeKnownCharacter(c, false)))
                 )
             )
@@ -139,15 +151,19 @@ public class PersonalityCommands {
             .then(literal("delete").requires(ADMINISTRATION_CHECK)
                 .requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(1))
                 .executes(c -> deleteCharacter(c, 0))
-                .then(argument("players", players()).executes(c -> deleteCharacter(c, 3)))
-                .then(argument("uuid", string()).executes(c -> deleteCharacter(c, 2)))
+                .then(argument(PLAYERS_KEY, players())
+                        .executes(c -> deleteCharacter(c, 3)))
+                .then(argument(CHARACTER_UUID_KEY, UuidArgumentType.uuid())
+                        .executes(c -> deleteCharacter(c, 2)))
             )
 
             .then(literal("kill").requires(ADMINISTRATION_CHECK)
                 .requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(1))
                 .executes(c -> killCharacter(c, 0))
-                .then(argument("players", players()).executes(c -> killCharacter(c, 3)))
-                .then(argument("uuid", string()).executes(c -> killCharacter(c, 2)))
+                .then(argument(PLAYERS_KEY, players())
+                        .executes(c -> killCharacter(c, 3)))
+                .then(argument(CHARACTER_UUID_KEY, UuidArgumentType.uuid())
+                        .executes(c -> killCharacter(c, 2)))
             );
     }
 
@@ -161,37 +177,45 @@ public class PersonalityCommands {
                     .then(argument("range", integer(0))
                         .executes(c -> revealRange(c, getInteger(c,"range")))))
                 .then(literal("players").requires(MODERATION_CHECK)
-                    .then(argument("players", players())
+                    .then(argument(PLAYERS_KEY, players())
                         .executes(c -> revealRange(c, -1))))
             )
             .then(literal("screen")
                 .requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(1))
-                .then(literal("creation").requires(MODERATION_CHECK)
-                    .executes(c -> PersonalityCommands.openCharacterScreen(c, 0, CharacterScreenMode.CREATION))
+                .then(
+                    buildScreenCommand(literal("creation").requires(ADMINISTRATION_CHECK), CharacterScreenMode.CREATION)
                 )
-                .then(literal("view")
-                    .then(literal("self")
-                        .executes(c -> PersonalityCommands.openCharacterScreen(c, 0, CharacterScreenMode.VIEWING))
-                    )
-                    .then(argument("player", player()).requires(MODERATION_CHECK)
-                        .executes(c -> PersonalityCommands.openCharacterScreen(c, 1, CharacterScreenMode.VIEWING))
-                    )
-                    .then(argument("uuid", string()).requires(MODERATION_CHECK)
-                            .executes(c -> PersonalityCommands.openCharacterScreen(c, 2, CharacterScreenMode.VIEWING))
-                    )
+                .then(
+                    buildScreenCommand(literal("view"), CharacterScreenMode.VIEWING)
                 )
-                .then(literal("edit")
-                    .then(literal("self")
-                            .executes(c -> PersonalityCommands.openCharacterScreen(c, 0, CharacterScreenMode.EDITING))
-                    )
-                    .then(argument("player", player()).requires(MODERATION_CHECK)
-                            .executes(c -> PersonalityCommands.openCharacterScreen(c, 1, CharacterScreenMode.EDITING))
-                    )
-                    .then(argument("uuid", string()).requires(MODERATION_CHECK)
-                            .executes(c -> PersonalityCommands.openCharacterScreen(c, 2, CharacterScreenMode.EDITING))
-                    )
+                .then(
+                    buildScreenCommand(literal("edit"), CharacterScreenMode.EDITING)
                 )
             );
+    }
+
+    private static LiteralArgumentBuilder<ServerCommandSource> buildScreenCommand(LiteralArgumentBuilder<ServerCommandSource> node, CharacterScreenMode mode){
+        node
+            .then(literal("self")
+                    .executes(c -> PersonalityCommands.openCharacterScreen(c, 0, mode, false))
+            );
+
+        if(mode.importFromCharacter()){
+            node
+                .then(argument(PLAYER_KEY, player()).requires(MODERATION_CHECK)
+                        .executes(c -> PersonalityCommands.openCharacterScreen(c, 1, mode, false))
+                )
+                .then(argument(CHARACTER_UUID_KEY, string()).requires(MODERATION_CHECK)
+                        .executes(c -> PersonalityCommands.openCharacterScreen(c, 2, mode, false))
+                );
+        } else {
+            node
+                .then(argument(TARGET_PLAYER_KEY, player()).requires(ADMINISTRATION_CHECK)
+                        .executes(c -> PersonalityCommands.openCharacterScreen(c, -1, mode, true))
+                );
+        }
+
+        return node;
     }
 
     private static ArgumentBuilder<ServerCommandSource,?> setters(ArgumentBuilder<ServerCommandSource,?> builder, Function<CommandContext<ServerCommandSource>, Character> character) {
@@ -213,16 +237,17 @@ public class PersonalityCommands {
         try {
             ServerPlayerEntity player = context.getSource().getPlayer();
 
-            if(player == null) return msg(context, "");
+            if(player == null) return requiresPlayerOperatorMsg(context);
 
-            String name = getString(context, "name");
-            String gender = getString(context, "gender");
-            String description = getString(context, "description");
-            String biography = getString(context, "biography");
-            int age = getInteger(context, "age");
-            int activityOffset = player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME));
-
-            Character c = new Character(player.getUuidAsString(), name, gender, description, biography, age, activityOffset);
+            Character c = new Character(
+                    player.getUuidAsString(),
+                    getString(context, "name"),
+                    getString(context, "gender"),
+                    getString(context, "description"),
+                    getString(context, "biography"),
+                    getInteger(context, "age"),
+                    player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME))
+            );
 
             ServerCharacters.INSTANCE.playerToCharacterReferences().put(player.getUuidAsString(), c.getUUID());
             ServerCharacters.INSTANCE.saveCharacter(c);
@@ -237,12 +262,9 @@ public class PersonalityCommands {
     private static int get(CommandContext<ServerCommandSource> context, Character c) {
         if (c == null) return msg(context, "§cYou don't have a Character");
 
-        try {
-            context.getSource().sendFeedback(Text.literal("\n§nCharacter: " + c.getInfo() + "\n"), false);
-            return 1;
-        } catch(Exception e){ e.printStackTrace(); }
+        context.getSource().sendFeedback(Text.literal("\n§nCharacter: " + c.getInfo() + "\n"), false);
 
-        return errorMsg(context);
+        return 1;
     }
 
     private static int setProperty(CommandContext<ServerCommandSource> context, Supplier<Integer> code) {
@@ -256,27 +278,35 @@ public class PersonalityCommands {
     }
 
     private static int associate(CommandContext<ServerCommandSource> context, PlayerEntity player) {
-        ServerCharacters.INSTANCE.associateCharacterToPlayer(getString(context, "uuid"), player.getUuidAsString());
+        String msg = ServerCharacters.INSTANCE.associateCharacterToPlayer(getUUID(context, CHARACTER_UUID_KEY), player.getUuidAsString())
+                ? "Player associated to selected character!"
+                : "§cUnable to locate the selected character!";
 
-        return msg(context, "Character associated");
+        return msg(context, msg);
     }
 
-    private static int disassociate(CommandContext<ServerCommandSource> context, PlayerEntity player) {
-        ServerCharacters.INSTANCE.dissociateUUID(player.getUuidAsString(), false);
+    private static int disassociate(CommandContext<ServerCommandSource> context, String UUID, boolean isPlayer) {
+        String playerUUID = ServerCharacters.INSTANCE.dissociateUUID(UUID, isPlayer);
 
-        return msg(context, "Character disassociated");
+        String targetType = (isPlayer ? "Player" : "Character");
+
+        String returnMsg = playerUUID == null
+                ? "§cTargeted " + targetType + " was not found to be Associated to anything"
+                : targetType + " disassociated!";
+
+        return msg(context, returnMsg);
     }
 
     private static int revealRange(CommandContext<ServerCommandSource> context, int range) {
         ServerPlayerEntity player = context.getSource().getPlayer();
 
-        if(player == null) return msg(context,  "");
+        if(player == null) return requiresPlayerOperatorMsg(context);
 
         try {
             if(range != -1) {
                 ServerCharacters.INSTANCE.revealCharacterInfo(player, range, InfoRevealLevel.GENERAL);
             } else {
-                ServerCharacters.INSTANCE.revealCharacterInfo(player, getPlayers(context, "players"), InfoRevealLevel.GENERAL);
+                ServerCharacters.INSTANCE.revealCharacterInfo(player, getPlayers(context, PLAYERS_KEY), InfoRevealLevel.GENERAL);
             }
 
             return msg(context, "Identity Revealed");
@@ -289,7 +319,7 @@ public class PersonalityCommands {
         try {
             ServerPlayerEntity player = context.getSource().getPlayer();
 
-            if(player == null) return msg(context,  "");
+            if(player == null) return requiresPlayerOperatorMsg(context);
 
             Character c = ServerCharacters.INSTANCE.getCharacter(player);
 
@@ -323,7 +353,7 @@ public class PersonalityCommands {
         try {
             ServerPlayerEntity player = context.getSource().getPlayer();
 
-            if(player == null) return msg(context,  "");
+            if(player == null) return requiresPlayerOperatorMsg(context);
 
             MutableText text = Text.literal("\n§nAll Characters§r:\n\n");
 
@@ -358,7 +388,7 @@ public class PersonalityCommands {
 
         if(removeViaPlayers){
             try {
-                for (ServerPlayerEntity p : getPlayers(context, "players")) {
+                for (ServerPlayerEntity p : getPlayers(context, PLAYERS_KEY)) {
                     Character pCharacter = ServerCharacters.INSTANCE.getCharacter(p);
 
                     if(pCharacter != null) {
@@ -379,7 +409,7 @@ public class PersonalityCommands {
                 return errorMsg(context);
             }
         } else {
-            String characterUUID = getString(context, "uuid");
+            String characterUUID = getUUID(context, CHARACTER_UUID_KEY);
 
             KnownCharacter wrappedCharacter = new KnownCharacter(c.getUUID(), characterUUID);
 
@@ -402,7 +432,7 @@ public class PersonalityCommands {
 
         if(removeViaPlayers) {
             try {
-                for (ServerPlayerEntity p : getPlayers(context, "players")) {
+                for (ServerPlayerEntity p : getPlayers(context, PLAYERS_KEY)) {
                     Character pCharacter = ServerCharacters.INSTANCE.getCharacter(p);
 
                     if (pCharacter != null) {
@@ -417,7 +447,7 @@ public class PersonalityCommands {
                 return errorMsg(context);
             }
         } else {
-            String characterUUID = getString(context, "uuid");
+            String characterUUID = getString(context, "character_uuid");
 
             c.getKnownCharacters().put(characterUUID, new KnownCharacter(c.getUUID(), characterUUID));
         }
@@ -438,7 +468,7 @@ public class PersonalityCommands {
             return msg(context, c.getName() + " is now Dead! [UUID: " + c.getUUID() + "]");
         } else {
             try {
-                Collection<ServerPlayerEntity> players = getPlayers(context, "players");
+                Collection<ServerPlayerEntity> players = getPlayers(context, PLAYERS_KEY);
 
                 Set<Character> charactersKilled = new HashSet<>();
 
@@ -501,10 +531,20 @@ public class PersonalityCommands {
         return errorMsg(context);
     }
 
-    private static int openCharacterScreen(CommandContext<ServerCommandSource> context, int characterSelectionType, CharacterScreenMode mode){
-        PlayerEntity player = context.getSource().getPlayer();
+    private static int openCharacterScreen(CommandContext<ServerCommandSource> context, int characterSelectionType, CharacterScreenMode mode, boolean gatherPlayer){
+        PlayerEntity player;
 
-        if (player == null) msg(context, "");
+        if(gatherPlayer) {
+            try {
+                player = getPlayer(context, "target_player");
+            } catch (CommandSyntaxException e){
+                return msg(context, "Could not find the target person to open the screen for!");
+            }
+        } else {
+            player = context.getSource().getPlayer();
+        }
+
+        if (player == null) msg(context, "Command requires a target player to open the screen for!");
 
         Character character = getCharacter(context, characterSelectionType);
 
@@ -517,6 +557,11 @@ public class PersonalityCommands {
 
     //Helpers:
 
+    private static String getUUID(CommandContext<ServerCommandSource> context, String name){
+        return UuidArgumentType.getUuid(context, name).toString();
+    }
+
+
     private static CompletableFuture<Suggestions> suggestions(SuggestionsBuilder builder, String... suggestions) {
         for (String suggestion : suggestions) builder.suggest(suggestion);
 
@@ -528,8 +573,8 @@ public class PersonalityCommands {
         try {
             return switch (characterSelectionType) {
                 case 0 -> ServerCharacters.INSTANCE.getCharacter(context.getSource().getPlayer());
-                case 1 -> ServerCharacters.INSTANCE.getCharacter(getPlayer(context, "player"));
-                case 2 -> ServerCharacters.INSTANCE.getCharacter(getString(context, "uuid"));
+                case 1 -> ServerCharacters.INSTANCE.getCharacter(getPlayer(context, PLAYER_KEY));
+                case 2 -> ServerCharacters.INSTANCE.getCharacter(getUUID(context, CHARACTER_UUID_KEY));
                 default -> null;
             };
         } catch (Exception e) { e.printStackTrace(); }
@@ -557,6 +602,10 @@ public class PersonalityCommands {
     private static int msg(CommandContext<ServerCommandSource> context, String msg) {
         context.getSource().sendFeedback(Text.literal("§2WJR: §a" + msg), false);
         return 1;
+    }
+
+    private static int requiresPlayerOperatorMsg(CommandContext<ServerCommandSource> context){
+        return msg(context, "§cCommand can only be called by a Player!.");
     }
 
     private static int errorMsg(CommandContext<ServerCommandSource> context){

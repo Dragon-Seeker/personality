@@ -5,7 +5,6 @@ import com.google.common.collect.HashBiMap;
 import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.utils.PlayerAccess;
-import io.blodhgarm.personality.client.gui.builders.EnhancedGridLayout;
 import io.blodhgarm.personality.api.reveal.RevelInfoManager;
 import io.blodhgarm.personality.utils.DebugCharacters;
 import io.blodhgarm.personality.utils.ReflectionUtils;
@@ -111,8 +110,8 @@ public abstract class CharacterManager<P extends PlayerEntity> implements RevelI
     /**
      * Attempt to get the Character based on the player's UUID
      *
-     * @param UUID The Possible UUID of a player for a Character
-     * @return If a Character for a player or null if none are found
+     * @param UUID The Possible UUID of a Character
+     * @return A Character linked to the given UUID
      */
     @Nullable
     public Character getCharacter(String UUID){
@@ -183,11 +182,17 @@ public abstract class CharacterManager<P extends PlayerEntity> implements RevelI
      *
      * @param cUUID Characters UUID
      * @param playerUUID Player UUID
+     *
+     * @return if the character was found within the {@link #characterLookupMap()}
      */
-    public void associateCharacterToPlayer(String cUUID, String playerUUID){
+    public boolean associateCharacterToPlayer(String cUUID, String playerUUID){
+        if(!characterLookupMap().containsKey(cUUID)) return false;
+
         playerToCharacterReferences().put(playerUUID, cUUID);
 
         applyAddons(cUUID);
+
+        return true;
     }
 
     public void applyAddons(String characterUUID){
@@ -220,16 +225,17 @@ public abstract class CharacterManager<P extends PlayerEntity> implements RevelI
     /**
      * Remove the given UUID (Player or Character) from the Player Character Reference Map
      *
-     * @return Player UUID which was removed
+     * @return Player UUID removed if found within the map
      */
+    @Nullable
     public String dissociateUUID(String UUID, boolean isCharacterUUID){
-        if(isCharacterUUID){
-            return playerToCharacterReferences().inverse().remove(UUID);
-        } else {
-            playerToCharacterReferences().remove(UUID);
+        BiMap<String, String> map = isCharacterUUID ? playerToCharacterReferences().inverse() : playerToCharacterReferences();
 
-            return UUID;
-        }
+        if(!map.containsKey(UUID)) return null;
+
+        String valueRemoved = map.remove(UUID);
+
+        return isCharacterUUID ? valueRemoved : UUID;
     }
 
     public void removeCharacter(String characterUUID){

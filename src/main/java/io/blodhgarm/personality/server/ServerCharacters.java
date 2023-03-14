@@ -100,31 +100,36 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     }
 
     @Override
-    public void associateCharacterToPlayer(String characterUUID, String playerUUID){
-        if(playerToCharacterReferences().containsKey(playerUUID)){
-            this.dissociateUUID(playerUUID, false);
-        } else if(playerToCharacterReferences().inverse().containsKey(characterUUID)){
-            this.dissociateUUID(characterUUID, true);
-        }
+    public boolean associateCharacterToPlayer(String characterUUID, String playerUUID){
+        //Make sure there is no association already existing and if so do the proper operations
+        this.dissociateUUID(playerUUID, false);
+        this.dissociateUUID(characterUUID, true);
 
-        super.associateCharacterToPlayer(characterUUID, playerUUID);
+        if(!super.associateCharacterToPlayer(characterUUID, playerUUID)) return false;
 
         Networking.sendToAll(new SyncS2CPackets.Association(characterUUID, playerUUID));
 
         saveCharacterReference();
+
+        return true;
     }
 
     @Override
+    @Nullable
     public String dissociateUUID(String UUID, boolean isCharacterUUID) {
-        ServerPlayerEntity player = getPlayerFromServer(super.dissociateUUID(UUID, isCharacterUUID));
+        String playerUUID = super.dissociateUUID(UUID, isCharacterUUID);
 
-        Networking.sendToAll(new SyncS2CPackets.Dissociation(UUID, isCharacterUUID));
+        if(playerUUID != null) {
+            Networking.sendToAll(new SyncS2CPackets.Dissociation(UUID, isCharacterUUID));
 
-        AddonRegistry.INSTANCE.checkAndDefaultPlayerAddons(player);
+            ServerPlayerEntity player = getPlayerFromServer(playerUUID);
 
-        saveCharacterReference();
+            if (player != null) AddonRegistry.INSTANCE.checkAndDefaultPlayerAddons(player);
 
-        return player.getUuidAsString();
+            saveCharacterReference();
+        }
+
+        return playerUUID;
     }
 
     @Override
@@ -138,6 +143,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
     //----------------------------------------------------
 
+    @Nullable
     public static ServerPlayerEntity getPlayerFromServer(String playerUUID) {
         return Owo.currentServer().getPlayerManager().getPlayer(UUID.fromString(playerUUID));
     }
