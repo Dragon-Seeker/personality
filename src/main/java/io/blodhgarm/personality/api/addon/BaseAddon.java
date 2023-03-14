@@ -41,5 +41,7 @@ public abstract class BaseAddon {
 
     public abstract boolean isEqualToPlayer(PlayerEntity player);
 
-//    public abstract boolean isDefaultAddon(BaseAddon addon);
+    public abstract boolean equals(Object obj);
+
+    //    public abstract boolean isDefaultAddon(BaseAddon addon);
 }
