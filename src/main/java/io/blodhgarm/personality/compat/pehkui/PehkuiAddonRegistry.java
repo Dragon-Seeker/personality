@@ -29,6 +29,7 @@ public class PehkuiAddonRegistry implements PersonalityEntrypoint {
                         .defaultBaseScale(1)
                         .defaultTickDelay(100)
                         .affectsDimensions()
+                        .defaultPersistence(true)
                         .addDependentModifier(CHARACTER_MODIFIER)
                         .build()
         );
