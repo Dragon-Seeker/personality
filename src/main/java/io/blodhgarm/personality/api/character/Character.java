@@ -61,6 +61,10 @@ public class Character implements BaseCharacter {
     }
 
     public Character(String uuid, String playerUUID, String name, String gender, String description, String biography, int ageOffset, int activityOffset) {
+        this(uuid, System.currentTimeMillis(), playerUUID, name, gender, description, biography, ageOffset, activityOffset);
+    }
+
+    public Character(String uuid, Long created, String playerUUID, String name, String gender, String description, String biography, int ageOffset, int activityOffset) {
         this.uuid = uuid;
         this.playerUUID = playerUUID;
 
@@ -69,7 +73,7 @@ public class Character implements BaseCharacter {
         this.description = description;
         this.biography = biography;
         this.ageOffset = ageOffset;
-        this.created = System.currentTimeMillis();
+        this.created = created;
         this.playtimeOffset = activityOffset;
         this.isDead = false;
     }

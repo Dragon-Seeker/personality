@@ -18,6 +18,8 @@ import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
 
+import java.util.List;
+
 /**
  * This is manly a copy of EditBoxWidget with certain changes to how it functions for Personality
  */
@@ -263,12 +265,26 @@ public class EditBoxComponent extends EditBoxWidget implements ComponentStub {
     public String convertTextBox(){
         StringBuilder builder = new StringBuilder();
 
-        for(EditBox.Substring substring : this.editBox.getLines()){
+        List<EditBox.Substring> substrings = (List<EditBox.Substring>) this.editBox.getLines();
+
+        if(substrings.isEmpty() || substrings.stream().filter(substring -> substring != EditBox.Substring.EMPTY).toList().isEmpty()){
+            return "";
+        }
+
+        for(int i = 0; i < substrings.size(); i++){
+            EditBox.Substring substring = substrings.get(i);
+
+            boolean addNewLineIfNeeded = true;
+
             if(substring != EditBox.Substring.EMPTY){
-                builder.append(this.editBox.getText(), substring.beginIndex(), substring.endIndex());
+                String text = this.editBox.getText().substring(substring.beginIndex(), substring.endIndex());
+
+                if(text.contains("\n")) addNewLineIfNeeded = false;
+
+                builder.append(text);
             }
 
-            builder.append("\n");
+            if(i + 1 != substrings.size() && addNewLineIfNeeded) builder.append("\n");
         }
 
         return builder.toString();

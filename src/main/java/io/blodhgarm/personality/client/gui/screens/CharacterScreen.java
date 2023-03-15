@@ -1,8 +1,10 @@
 package io.blodhgarm.personality.client.gui.screens;
 
 import com.mojang.logging.LogUtils;
+import com.mojang.serialization.RecordBuilder;
 import io.blodhgarm.personality.Networking;
 import io.blodhgarm.personality.PersonalityMod;
+import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.api.character.BaseCharacter;
 import io.blodhgarm.personality.api.character.Character;
 import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddon;
@@ -41,12 +43,14 @@ import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Util;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.function.Supplier;
 
 public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonObservable {
 
@@ -149,7 +153,6 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
         //-- Name Property --
         FlowLayout namePropertyLayout = Containers.horizontalFlow(Sizing.content(), Sizing.content());
 
-
         MutableText nameLabel = Text.empty();
 
         nameLabel.append(isModifiable ? requiredText.copy() : Text.empty())
@@ -158,6 +161,7 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
 
         namePropertyLayout.child(
                 Components.label(nameLabel)
+                        .maxWidth(144)
                         .color(ThemeHelper.dynamicColor())
         );
 
@@ -168,7 +172,7 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
                                     .bqColor(Color.ofArgb(0xFF555555))
                                     .configure(component -> {
                                         if(component instanceof ColorableTextBoxComponent widget){
-                                            widget.setMaxLength(100);
+                                            widget.setMaxLength(40);
                                         }
                                     })
                                     .id("character_name")
@@ -562,21 +566,70 @@ public class CharacterScreen extends BaseOwoScreen<FlowLayout> implements AddonO
 
         int activityOffset = entity.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME));
 
-        Character character = new Character(entity.getUuidAsString(), name, gender, description, biography, age, activityOffset);
+        //-----------------------------Addon Data-----------------------------
 
-        //Addon Data
-
-        Map<Identifier, String> addonData = new HashMap<>();
+        Map<Identifier, BaseAddon> addonData = new HashMap<>();
 
         for(Map.Entry<Identifier, PersonalityScreenAddon> entry : screenAddons.entrySet()){
             PersonalityScreenAddon addon = entry.getValue();
 
             if(addon.isDataEmpty(rootComponent) && addon.requiresUserInput()) return false;
 
-            addon.getAddonData().forEach((addonId, baseAddon) -> addonData.put(addonId, PersonalityMod.GSON.toJson(baseAddon)));
+            addonData.putAll(addon.getAddonData());
         }
 
-        Networking.sendC2S(new SyncC2SPackets.NewCharacter(PersonalityMod.GSON.toJson(character), addonData, true));
+        Map<Identifier, String> addonDataJson = Util.make(new HashMap<>(), map -> addonData.forEach((id, addon) -> map.put(id, PersonalityMod.GSON.toJson(addon))));
+
+        Character character = new Character(this.currentCharacter != null ? this.currentCharacter.getUUID() : UUID.randomUUID().toString(), entity.getUuidAsString(), name, gender, description, biography, age, activityOffset);
+
+        if(this.currentMode == CharacterScreenMode.EDITING){
+            if(this.currentCharacter == null) return false;
+
+            List<String> changedValues = new ArrayList<>();
+
+            Map<String, Supplier<Boolean>> mapInteraction = Map.of(
+                    "gender", () -> this.currentCharacter.getGender().equals(gender),
+                    "name", () -> this.currentCharacter.getName().equals(name),
+                    "description", () -> this.currentCharacter.getDescription().equals(description),
+                    "biography", () -> this.currentCharacter.getBiography().equals(biography),
+                    "age", () -> this.currentCharacter.getAge() == age
+            );
+
+            boolean baseCharacterDataChanged = false;
+
+            for (Map.Entry<String, Supplier<Boolean>> entry : mapInteraction.entrySet()) {
+                if(!entry.getValue().get()){
+                    baseCharacterDataChanged = true;
+                    changedValues.add(entry.getKey());
+                }
+            }
+
+            boolean addonDataChanged = false;
+
+            for(Map.Entry<Identifier, BaseAddon> entry : addonData.entrySet()){
+                BaseAddon addon = this.currentCharacter.getAddon(entry.getKey());
+
+                if(!entry.getValue().equals(addon)) {
+                    addonDataChanged = true;
+
+                    changedValues.add(entry.getKey().toString());
+                }
+            }
+
+            //Nothing to change so return
+            if(!(baseCharacterDataChanged || addonDataChanged)) return true;
+
+            if(baseCharacterDataChanged && addonDataChanged){
+                Networking.sendC2S(new SyncC2SPackets.ModifyEntireCharacter(PersonalityMod.GSON.toJson(character), character.getUUID(), addonDataJson, changedValues));
+            } else if(baseCharacterDataChanged){
+                Networking.sendC2S(new SyncC2SPackets.ModifyBaseCharacterData(PersonalityMod.GSON.toJson(character), changedValues));
+            } else if(addonDataChanged){
+                Networking.sendC2S(new SyncC2SPackets.ModifyAddonData(character.getUUID(), addonDataJson, changedValues));
+            }
+
+        } else {
+            Networking.sendC2S(new SyncC2SPackets.NewCharacter(PersonalityMod.GSON.toJson(character), addonDataJson, true));
+        }
 
         return true;
     }

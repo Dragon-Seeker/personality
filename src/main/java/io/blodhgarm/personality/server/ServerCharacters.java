@@ -37,24 +37,29 @@ import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class ServerCharacters extends CharacterManager<ServerPlayerEntity> implements FinalizedPlayerConnectionEvent.Finish, ServerWorldEvents.Load {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting()
+            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeTypeAdapter())
+            .create();
     private static final Type REF_MAP_TYPE = new TypeToken<Map<String, String>>() {}.getType();
 
     public static ServerCharacters INSTANCE = new ServerCharacters();
 
+    private static final Type EDITOR_MAP_TYPE = new TypeToken<Map<String, ArrayList<EditorHistory>>>() {}.getType();
+    private Map<String, List<EditorHistory>> characterUUIDToEditInfo = new HashMap<>();
+
     private static Path BASE_PATH;
     private static Path CHARACTER_PATH;
     private static Path REFERENCE_PATH;
+    private static Path EDITOR_PATH;
 
     public ServerCharacters() {
         super("server");
@@ -79,7 +84,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
                 sortCharacterLookupMap();
 
-                Networking.sendToAll(new SyncS2CPackets.SyncCharacter(characterJson, AddonRegistry.INSTANCE.loadAddonsFromDisc(c, true)));
+                Networking.sendToAll(new SyncS2CPackets.SyncBaseCharacterData(characterJson, AddonRegistry.INSTANCE.loadAddonsFromDisc(c, true)));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -235,7 +240,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
         String characterJson = GSON.toJson(character);
 
-        if(syncCharacter) Networking.sendToAll(new SyncS2CPackets.SyncCharacter(characterJson, Map.of()));
+        if(syncCharacter) Networking.sendToAll(new SyncS2CPackets.SyncBaseCharacterData(characterJson, Map.of()));
 
         try {
             File characterFile = getCharacterInfo(character.getUUID()).toAbsolutePath().toFile();
@@ -319,15 +324,21 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
         CHARACTER_PATH = BASE_PATH.resolve("characters");
         REFERENCE_PATH = BASE_PATH.resolve("reference.json");
+        EDITOR_PATH = BASE_PATH.resolve("characterEditHistory.json");
 
         playerIDToCharacterID.clear();
         characterIDToCharacter.clear();
+        characterUUIDToEditInfo.clear();
 
         try {
             if(!Files.exists(CHARACTER_PATH)) Files.createDirectories(CHARACTER_PATH);
 
-            JsonObject o = GSON.fromJson(Files.readString(REFERENCE_PATH), JsonObject.class);
-            playerIDToCharacterID = HashBiMap.create(GSON.fromJson(o.getAsJsonObject("player_to_character"), REF_MAP_TYPE));
+            JsonObject refJsonObject = GSON.fromJson(Files.readString(REFERENCE_PATH), JsonObject.class);
+            playerIDToCharacterID = HashBiMap.create(GSON.fromJson(refJsonObject.getAsJsonObject("player_to_character"), REF_MAP_TYPE));
+
+            JsonObject editorJsonObject = GSON.fromJson(Files.readString(EDITOR_PATH), JsonObject.class);
+            characterUUIDToEditInfo = new HashMap<>(GSON.fromJson(refJsonObject.getAsJsonObject("history"), EDITOR_MAP_TYPE));
+
         } catch (IOException e) {
             if (e instanceof NoSuchFileException) {
                 saveCharacterReference();
@@ -351,6 +362,26 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void saveEditorMap() {
+        try {
+            JsonObject json = new JsonObject();
+            json.addProperty("format", 1);
+            json.add("history", GSON.toJsonTree(characterUUIDToEditInfo, EDITOR_MAP_TYPE));
+
+            Files.writeString(EDITOR_PATH, GSON.toJson(json));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void logCharacterEditing(ServerPlayerEntity editor, Character c, List<String> elementsChanges){
+        List<EditorHistory> history = characterUUIDToEditInfo.computeIfAbsent(c.getUUID(), s -> new ArrayList<>());
+
+        history.add(new EditorHistory(editor.getUuidAsString(), LocalDateTime.now(), elementsChanges));
+
+        saveEditorMap();
     }
 
     //----------------------------------------------------------------------------
@@ -397,4 +428,6 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
         Networking.sendS2C(handler.player, new SyncS2CPackets.Initial(characters, playerToCharacterReferences()));
     }
+
+    public record EditorHistory(String editorUUID, LocalDateTime dateOfEdit, List<String> elementsChanges){}
 }

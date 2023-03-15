@@ -15,7 +15,7 @@ public class Networking {
         CHANNEL.registerClientboundDeferred(OpenPersonalityScreenS2CPacket.class);
 
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.Initial.class);
-        CHANNEL.registerClientboundDeferred(SyncS2CPackets.SyncCharacter.class);
+        CHANNEL.registerClientboundDeferred(SyncS2CPackets.SyncBaseCharacterData.class);
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.SyncAddonData.class);
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.RemoveCharacter.class);
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.Association.class);
@@ -27,8 +27,12 @@ public class Networking {
         CHANNEL.registerClientboundDeferred(UpdateDelayedRegistry.class);
 
         //C2S - Client to Server
-        CHANNEL.registerServerbound(SyncC2SPackets.ModifyCharacter.class, SyncC2SPackets.ModifyCharacter::modifyCharacter);
+        CHANNEL.registerServerbound(SyncC2SPackets.ModifyBaseCharacterData.class, SyncC2SPackets.ModifyBaseCharacterData::modifyCharacter);
+        CHANNEL.registerServerbound(SyncC2SPackets.ModifyAddonData.class, SyncC2SPackets.ModifyAddonData::modifyAddons);
+        CHANNEL.registerServerbound(SyncC2SPackets.ModifyEntireCharacter.class, SyncC2SPackets.ModifyEntireCharacter::modifyEntireCharacter);
+
         CHANNEL.registerServerbound(SyncC2SPackets.NewCharacter.class, SyncC2SPackets.NewCharacter::newCharacter);
+
         CHANNEL.registerServerbound(SyncC2SPackets.AssociatePlayerToCharacter.class, SyncC2SPackets.AssociatePlayerToCharacter::associate);
         CHANNEL.registerServerbound(SyncC2SPackets.RegistrySync.class, SyncC2SPackets.RegistrySync::registrySync);
 
@@ -40,7 +44,7 @@ public class Networking {
         CHANNEL.registerClientbound(OpenPersonalityScreenS2CPacket.class, OpenPersonalityScreenS2CPacket::openScreen);
 
         CHANNEL.registerClientbound(SyncS2CPackets.Initial.class, SyncS2CPackets.Initial::initialSync);
-        CHANNEL.registerClientbound(SyncS2CPackets.SyncCharacter.class, SyncS2CPackets.SyncCharacter::syncCharacter);
+        CHANNEL.registerClientbound(SyncS2CPackets.SyncBaseCharacterData.class, SyncS2CPackets.SyncBaseCharacterData::syncCharacter);
         CHANNEL.registerClientbound(SyncS2CPackets.SyncAddonData.class, SyncS2CPackets.SyncAddonData::syncAddons);
         CHANNEL.registerClientbound(SyncS2CPackets.RemoveCharacter.class, SyncS2CPackets.RemoveCharacter::removeCharacter);
         CHANNEL.registerClientbound(SyncS2CPackets.Association.class, SyncS2CPackets.Association::syncAssociation);

@@ -48,10 +48,10 @@ public class SyncS2CPackets {
 
     public record CharacterData(String characterData, Map<Identifier, String> addonData){}
 
-    public record SyncCharacter(String characterJson, Map<Identifier, String> addonJsons) {
+    public record SyncBaseCharacterData(String characterJson, Map<Identifier, String> addonJsons) {
 
         @Environment(EnvType.CLIENT)
-        public static void syncCharacter(SyncCharacter message, ClientAccess access) {
+        public static void syncCharacter(SyncBaseCharacterData message, ClientAccess access) {
             Character c = PersonalityMod.GSON.fromJson(message.characterJson, Character.class);
 
             if(!message.addonJsons.isEmpty()) {

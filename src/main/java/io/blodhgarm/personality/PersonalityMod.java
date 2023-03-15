@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
 import com.jthemedetecor.OsThemeDetector;
-import dev.emi.trinkets.api.TrinketItem;
 import io.blodhgarm.personality.api.PersonalityEntrypoint;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.addon.BaseAddon;
@@ -16,29 +15,20 @@ import io.blodhgarm.personality.compat.origins.OriginsAddonRegistry;
 import io.blodhgarm.personality.compat.pehkui.PehkuiAddonRegistry;
 import io.blodhgarm.personality.compat.trinkets.TrinketsGlasses;
 import io.blodhgarm.personality.item.WalkingStick;
-import io.blodhgarm.personality.misc.config.PersonalityConfigModel;
 import io.blodhgarm.personality.server.CharacterTick;
 import io.blodhgarm.personality.server.ServerCharacters;
 import io.blodhgarm.personality.misc.PersonalityCommands;
 import io.blodhgarm.personality.misc.config.PersonalityConfig;
 import io.blodhgarm.personality.utils.DebugCharacters;
-import io.wispforest.owo.config.ConfigWrapper;
-import io.wispforest.owo.config.Option;
 import io.wispforest.owo.registration.reflect.FieldRegistrationHandler;
 import io.wispforest.owo.registration.reflect.ItemRegistryContainer;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.item.AxeItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ToolMaterial;
-import net.minecraft.recipe.Ingredient;
 import net.minecraft.util.Identifier;
-
-import java.lang.reflect.Field;
 
 public class PersonalityMod implements ModInitializer, PersonalityEntrypoint, ItemRegistryContainer {
 
