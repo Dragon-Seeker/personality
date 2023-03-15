@@ -7,7 +7,8 @@ import io.blodhgarm.personality.api.reveal.KnownCharacter;
 import io.blodhgarm.personality.client.ClientCharacters;
 import io.blodhgarm.personality.client.gui.ThemeHelper;
 import io.blodhgarm.personality.client.gui.CharacterScreenMode;
-import io.blodhgarm.personality.client.gui.builders.EnhancedGridLayout;
+import io.blodhgarm.personality.client.gui.components.owo.character.CharacterGridLayout;
+import io.blodhgarm.personality.client.gui.components.owo.LabeledGridLayout;
 import io.blodhgarm.personality.client.gui.utils.CustomSurfaces;
 import io.blodhgarm.personality.utils.DebugCharacters;
 import io.wispforest.owo.ui.base.BaseParentComponent;
@@ -83,12 +84,15 @@ public class CharacterInfoScreen extends TabbedScreen {
         ScrollContainer<FlowLayout> knownCharacterContainer = Containers.verticalScroll(Sizing.content(), Sizing.fill(85), knownCharacterLayout);
 
         knownCharacterLayout.child(
-            new EnhancedGridLayout(Sizing.content(), Sizing.content(),this)
-//                    .changeDirection(((ScrollContainerAccessor) knownCharacterContainer).personality$direction() == ScrollContainer.ScrollDirection.VERTICAL)
+            new CharacterGridLayout(Sizing.content(), Sizing.content(),this)
+//                    .changeDirection(((ScrollContainerAccessor) knownCharacterContainer).personality$direction() == ScrollContainer.ScrollDirection.VERTICAL)'
+                    .addBuilder(
+                            Text.of("Friendliness"),
+                            (baseCharacter, mode, isParentVertical) -> Components.label(((KnownCharacter) baseCharacter).level.getTranslation())
+                    )
                     .setRowDividingLine(1)
                     .setColumnDividingLine(1)
-                    .addCharacters(knownCharacters)
-                    .addBuilder(Text.of("Friendliness"), (baseCharacter, mode, isParentVertical) -> Components.label(((KnownCharacter) baseCharacter).level.getTranslation()))
+                    .addEntries(knownCharacters)
                     .id("knownCharacterList")
         );
 
@@ -107,7 +111,7 @@ public class CharacterInfoScreen extends TabbedScreen {
                         .configure(component -> {
                             ((TextBoxComponent) component).onChanged()
                                     .subscribe(value -> {
-                                        EnhancedGridLayout listLayout = layout.childById(EnhancedGridLayout.class, "knownCharacterList");
+                                        LabeledGridLayout listLayout = layout.childById(LabeledGridLayout.class, "knownCharacterList");
 
                                         Predicate<BaseCharacter> filter = null;
 
@@ -124,7 +128,7 @@ public class CharacterInfoScreen extends TabbedScreen {
                                             System.out.println("weeeeeeeeeeeeeeeeeeeeeee");
                                         }
 
-                                        listLayout.filterCharacters(filter);
+                                        listLayout.filterEntries(filter);
                                     });
                         })
                         .margins(Insets.vertical(3))

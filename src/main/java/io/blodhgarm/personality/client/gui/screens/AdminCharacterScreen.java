@@ -5,19 +5,27 @@ import io.blodhgarm.personality.api.character.Character;
 import io.blodhgarm.personality.api.character.CharacterManager;
 import io.blodhgarm.personality.client.ClientCharacters;
 import io.blodhgarm.personality.client.gui.ThemeHelper;
-import io.blodhgarm.personality.client.gui.builders.EnhancedGridLayout;
+import io.blodhgarm.personality.client.gui.components.owo.character.CharacterGridLayout;
+import io.blodhgarm.personality.client.gui.components.owo.LabeledGridLayout;
 import io.blodhgarm.personality.client.gui.components.ButtonAddon;
+import io.blodhgarm.personality.client.gui.components.owo.CustomButtonComponent;
+import io.blodhgarm.personality.client.gui.components.owo.MultiToggleButton;
 import io.blodhgarm.personality.client.gui.utils.CustomSurfaces;
 import io.blodhgarm.personality.client.gui.utils.ModifiableCollectionHelper;
 import io.blodhgarm.personality.client.gui.utils.owo.VariantButtonSurface;
 import io.blodhgarm.personality.misc.pond.owo.ButtonAddonDuck;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
+import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.component.LabelComponent;
 import io.wispforest.owo.ui.component.TextBoxComponent;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.*;
+import io.wispforest.owo.ui.util.Drawer;
+import me.xdrop.fuzzywuzzy.FuzzySearch;
+import me.xdrop.fuzzywuzzy.ToStringFunction;
+import me.xdrop.fuzzywuzzy.model.BoundExtractedResult;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
@@ -28,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -43,11 +52,12 @@ public class AdminCharacterScreen extends BaseOwoScreen<FlowLayout> implements M
     private final List<Character> defaultCharacterView = List.copyOf(ClientCharacters.INSTANCE.characterLookupMap().valueList());
     private final List<Character> characterView = new ArrayList<>();
 
-    @Nullable
-    private Predicate<Character> cached_filter = null;
+    private List<Character> selectedCharacters = new ArrayList<>();
 
-    @Nullable
-    private Comparator<Character> cached_comparator = null;
+    private SearchType type = SearchType.STRICT;
+
+    @Nullable private FilterFunc<Character> cached_filter = null;
+    @Nullable private Comparator<Character> cached_comparator = null;
 
     @Override
     protected @NotNull OwoUIAdapter<FlowLayout> createAdapter() {
@@ -66,9 +76,7 @@ public class AdminCharacterScreen extends BaseOwoScreen<FlowLayout> implements M
                     buildPageBar(this.uiAdapter.rootComponent);
 
                     travelToSelectPage(1);
-                } catch (NumberFormatException e) {
-                    throw new RuntimeException(e);
-                }
+                } catch (NumberFormatException e) { throw new RuntimeException(e); }
             }
 
             waitTimeToUpdatePages = -1;
@@ -88,66 +96,153 @@ public class AdminCharacterScreen extends BaseOwoScreen<FlowLayout> implements M
                             .padding(Insets.of(4));
                 });
 
-        FlowLayout topActionBar = Containers.horizontalFlow(Sizing.content(), Sizing.content());
+        FlowLayout topActionBar = Containers.horizontalFlow(Sizing.content(), Sizing.content())
+                .configure(layout -> {
+                    layout.verticalAlignment(VerticalAlignment.CENTER);
+                });
 
         topActionBar.child(
                 Components.textBox(Sizing.fixed(200), "")
-                        .configure(component -> {
-                            ((TextBoxComponent) component).onChanged()
+                        .configure((TextBoxComponent component) -> {
+                            component.onChanged()
                                     .subscribe(value -> {
-                                        Predicate<Character> filter = null;
+                                        type.filterAndSort(value, Character::getName, this);
 
-                                        if(!value.isEmpty()) {
-                                            String regex = Arrays.stream(value.toLowerCase()
-                                                            .split(" "))
-                                                    .filter(s -> !s.trim().equals(""))
-                                                    .collect(Collectors.joining("|"));
-
-                                            var pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
-
-                                            filter = character -> pattern.asPredicate().test(character.getName());
-                                        }
-
-                                        this.filterCharacters(filter);
+                                        updateCharacterListComponent();
                                     });
                         })
+                        .id("main_search_box")
                         .margins(Insets.of(3, 3, 4, 4))
         );
 
+        topActionBar.child(
+                new CustomButtonComponent(Text.of(""), buttonComponent -> {
+                    type = type.getNextType();
+                    type.setButtonTextForNext(buttonComponent);
+
+                    type.filterAndSort(rootComponent.childById(TextBoxComponent.class, "main_search_box").getText(), Character::getName, this);
+
+                    updateCharacterListComponent();
+                }).configure((CustomButtonComponent c) -> {
+                    c.sizing(Sizing.fixed(11), Sizing.fixed(11));
+
+                    type.setButtonTextForNext(c);
+
+                    c.setYTextOffset(2);
+                    c.setFloatPrecision(true);
+                })
+        );
+
         //TODO: Future development to add functionality to the Screen with the similar functions to the already existing commands
-        if(CharacterManager.hasModerationPermissions(MinecraftClient.getInstance().player)){}
-        if(CharacterManager.hasAdministrationPermissions(MinecraftClient.getInstance().player)){}
+        if(CharacterManager.hasModerationPermissions(MinecraftClient.getInstance().player)){
+            //Associate
+            //Disassociate
+        }
+
+        if(CharacterManager.hasAdministrationPermissions(MinecraftClient.getInstance().player)){
+            //Edit
+            //Kill
+            //Delete
+        }
 
         mainLayout.child(topActionBar);
 
+        List<MultiToggleButton> buttons = new ArrayList<>();
+
         mainLayout.child(Containers.verticalScroll(Sizing.content(), Sizing.fixed(155),
-                new EnhancedGridLayout(Sizing.content(), Sizing.content(), this, (characterScreenMode, baseCharacter) -> new CharacterScreen(characterScreenMode, null, baseCharacter, true))
-                        .addBuilder(Text.of("Created By"), (character, mode, isParentVertical) -> {
-                            MutableText name;
+                new CharacterGridLayout(Sizing.content(), Sizing.content(), this, (mode, baseCharacter) -> new CharacterScreen(mode, null, baseCharacter, true))
+                        .addBuilder(0,
+                            isParentVertical -> {
+                                return Containers.horizontalFlow(Sizing.content(), Sizing.content())
+                                        .child(buildButton(
+                                            buttons,
+                                            component -> {
+                                                this.sortEntries(null);
+                                            },
+                                            component -> {
+                                                this.sortEntries((ch1, ch2) -> {
+                                                    boolean character1Selected = this.selectedCharacters.contains(ch1);
+                                                    boolean character2Selected = this.selectedCharacters.contains(ch2);
 
-                            AtomicBoolean hasErrored = new AtomicBoolean(false);
+                                                    int compValue = 1;
 
-                            try {
-                                GameProfile profile = MinecraftClient.getInstance().getSessionService()
-                                        .fillProfileProperties(new GameProfile(UUID.fromString(character.getPlayerUUID()), ""), false);
+                                                    if(character1Selected == character2Selected) compValue = 0;
+                                                    if(character1Selected) compValue = -1;
 
-                                name = Text.literal(profile.getName());
-                            } catch (IllegalArgumentException ignored){
-                                hasErrored.set(true);
+                                                    return compValue;
+                                                });
+                                            },
+                                            component -> {
+                                                this.sortEntries((ch1, ch2) -> {
+                                                    boolean character1Selected = this.selectedCharacters.contains(ch1);
+                                                    boolean character2Selected = this.selectedCharacters.contains(ch2);
 
-                                name = (!character.getPlayerUUID().isBlank()
-                                        ? Text.literal(character.getPlayerUUID())
-                                        : Text.literal("Error: Character missing Player UUID Info!"))
-                                            .formatted(Formatting.RED);
+                                                    int compValue = -1;
+
+                                                    if(character1Selected == character2Selected) compValue = 0;
+                                                    if(character1Selected) compValue = 1;
+
+                                                    return compValue;
+                                                });
+                                            }
+                                        ));
+                            },
+                            (character, mode, isParentVertical) -> {
+                                return Components.button(Text.of(""), buttonComponent -> {
+                                        if(!selectedCharacters.contains(character)) {
+                                            selectedCharacters.add((Character) character);
+                                        } else {
+                                            selectedCharacters.remove((Character) character);
+                                        }
+                                    }).renderer((matrices, button, delta) -> {
+                                        boolean isSelected = selectedCharacters.contains(character);
+
+                                        ButtonComponent.Renderer.VANILLA.draw(matrices, button, delta);
+
+                                        if(isSelected) {
+                                            Drawer.drawRectOutline(matrices, button.x + 2, button.y + 2, button.width() - 4, button.height() - 4, new Color(0.95f, 0.95f, 0.95f).argb());
+                                        }
+                                    })
+                                    .sizing(Sizing.fixed(8));
                             }
+                        )
+                        .addBuilder(
+                            isParentVertical -> {
+                                return Components.label(Text.of("Created By"));
+                            },
+                            (character, mode, isParentVertical) -> {
+                                MutableText name = Text.literal("");
 
-                            return Components.label(name)
-                                    .maxWidth(100)
-                                    .margins(Insets.of(2))
-                                    .configure(component -> {
-                                        if(hasErrored.get()) component.tooltip(Text.of("Could not find the given Players name, showing UUID"));
-                                    });
-                        })
+                                AtomicBoolean wasSuccessful = new AtomicBoolean();
+
+                                try {
+                                    GameProfile profile = MinecraftClient.getInstance().getSessionService()
+                                            .fillProfileProperties(new GameProfile(UUID.fromString(character.getPlayerUUID()), ""), false);
+
+                                    String playerNameString = profile.getName();
+
+                                    if(!playerNameString.isBlank()){
+                                        name = Text.literal(playerNameString);
+
+                                        wasSuccessful.set(true);
+                                    }
+                                } catch (IllegalArgumentException ignored){}
+
+                                if(!wasSuccessful.get()){
+                                    name = (!character.getPlayerUUID().isBlank()
+                                            ? Text.literal(character.getPlayerUUID())
+                                            : Text.literal("Error: Character missing Player UUID Info!"))
+                                            .formatted(Formatting.RED);
+                                }
+
+                                return Components.label(name)
+                                        .maxWidth(125)
+                                        .margins(Insets.of(2))
+                                        .configure(component -> {
+                                            if(!wasSuccessful.get()) component.tooltip(Text.of("Could not find the given Players name, showing UUID"));
+                                        });
+                            }
+                        )
                         .setRowDividingLine(1)
                         .setColumnDividingLine(1)
                         .id("character_list")
@@ -241,15 +336,15 @@ public class AdminCharacterScreen extends BaseOwoScreen<FlowLayout> implements M
     }
 
     public void travelToSelectPage(int newPageNumber){
-        EnhancedGridLayout gridLayout = this.uiAdapter.rootComponent.childById(EnhancedGridLayout.class, "character_list");
+        LabeledGridLayout gridLayout = this.uiAdapter.rootComponent.childById(LabeledGridLayout.class, "character_list");
 
         int startingIndex = (newPageNumber - 1) * this.charactersPerPage;
         int endingIndex = Math.min(startingIndex + this.charactersPerPage, this.characterView.size());
 
-        gridLayout.clearCharacters();
+        gridLayout.clearEntries();
 
         if(this.characterView.size() > 0) {
-            gridLayout.addCharacters(this.characterView
+            gridLayout.addEntries(this.characterView
                     .subList(startingIndex, endingIndex));
         }
 
@@ -267,25 +362,98 @@ public class AdminCharacterScreen extends BaseOwoScreen<FlowLayout> implements M
         this.currentPageNumber = newPageNumber;
     }
 
+    @SafeVarargs
+    private MultiToggleButton buildButton(List<MultiToggleButton> buttons, Consumer<ButtonComponent> ...onToggleEvents){
+        return (MultiToggleButton) MultiToggleButton.of(
+                List.of(
+                    new MultiToggleButton.ToggleVariantInfo("-", "Normal Order", onToggleEvents[0]),
+                    new MultiToggleButton.ToggleVariantInfo("⏶", "Sort Up", onToggleEvents[1]),
+                    new MultiToggleButton.ToggleVariantInfo("⏷", "Sort Down", onToggleEvents[2])
+                )
+        ).linkButton(buttons)
+                .sizing(Sizing.fixed(9), Sizing.fixed(9)); //12
+    }
 
     //-------------------------------------------------------
 
 
-    @Override public void setFilter(Predicate<Character> filter) { this.cached_filter = filter; }
-    @Override public Predicate<Character> getFilter() { return this.cached_filter; }
+    @Override public void setFilter(FilterFunc<Character> filter) { this.cached_filter = filter; }
+    @Override public FilterFunc<Character> getFilter() { return this.cached_filter; }
 
     @Override public void setComparator(Comparator<Character> comparator) { this.cached_comparator = comparator; }
     @Override public Comparator<Character> getComparator() { return this.cached_comparator; }
 
-    @Override
-    public void applyFiltersAndSorting() {
-        ModifiableCollectionHelper.super.applyFiltersAndSorting();
-
+    public void updateCharacterListComponent(){
         buildPageBar(this.uiAdapter.rootComponent);
 
         travelToSelectPage(1);
     }
 
+    @Override
+    public void applyFiltersAndSorting() {
+        ModifiableCollectionHelper.super.applyFiltersAndSorting();
+
+        updateCharacterListComponent();
+    }
+
     @Override public List<Character> getList() { return this.characterView; }
     @Override public List<Character> getDefaultList() { return this.defaultCharacterView; }
+
+    public enum SearchType {
+        STRICT("*", "Toggle Strict Filtering"),
+        FUZZY("~", "Toggle Fuzzy Filtering");
+
+        public final String buttonText;
+        public final String tooltipText;
+
+        SearchType(String buttonText, String tooltipText){
+            this.buttonText = buttonText;
+            this.tooltipText = tooltipText;
+        }
+
+        public <V> void filterAndSort(String query, ToStringFunction<V> toStringFunc, ModifiableCollectionHelper<?, V> helper){
+            switch (this){
+                case STRICT -> {
+                    Predicate<V> filter = null;
+
+                    if(!query.isEmpty()) {
+                        String regex = Arrays.stream(query.toLowerCase().split(" "))
+                                .filter(s -> !s.trim().equals(""))
+                                .collect(Collectors.joining("|"));
+
+                        filter = v -> Pattern.compile(regex, Pattern.CASE_INSENSITIVE)
+                                .asPredicate()
+                                .test(toStringFunc.apply(v));
+                    }
+
+                    helper.filterEntries(filter);
+                }
+                case FUZZY -> {
+                    helper.filterEntriesFunc(!query.isEmpty()
+                            ? helper1 -> FuzzySearch.extractAll(query, helper.getDefaultList(), toStringFunc, 60)
+                                    .stream()
+                                    .map(BoundExtractedResult::getReferent)
+                                    .toList()
+                            : null);
+                }
+            }
+        };
+
+        public SearchType getNextType(){
+            SearchType[] types = SearchType.values();
+
+            int nextIndex = this.ordinal() + 1;
+
+            if(nextIndex >= types.length) nextIndex = 0;
+
+            return types[nextIndex];
+        }
+
+        public void setButtonTextForNext(ButtonComponent component){
+            SearchType nextType = getNextType();
+
+            component.setMessage(Text.of(nextType.buttonText));
+            component.tooltip(Text.of(nextType.tooltipText));
+        }
+    }
 }

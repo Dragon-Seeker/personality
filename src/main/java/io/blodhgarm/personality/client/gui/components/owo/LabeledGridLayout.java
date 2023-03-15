@@ -1,24 +1,16 @@
-package io.blodhgarm.personality.client.gui.builders;
+package io.blodhgarm.personality.client.gui.components.owo;
 
 import com.mojang.logging.LogUtils;
-import io.blodhgarm.personality.api.character.BaseCharacter;
-import io.blodhgarm.personality.client.gui.CharacterScreenMode;
+import io.blodhgarm.personality.client.gui.builders.LabeledObjectToComponent;
+import io.blodhgarm.personality.client.gui.builders.ObjectToComponent;
 import io.blodhgarm.personality.client.gui.components.LineComponent;
-import io.blodhgarm.personality.client.gui.components.owo.CustomEntityComponent;
-import io.blodhgarm.personality.client.gui.screens.CharacterScreen;
 import io.blodhgarm.personality.client.gui.utils.ListWithinListView;
 import io.blodhgarm.personality.client.gui.utils.ModifiableCollectionHelper;
 import io.blodhgarm.personality.client.gui.utils.owo.LineEvent;
 import io.blodhgarm.personality.misc.pond.owo.LineManageable;
 import io.blodhgarm.personality.utils.ReflectionUtils;
 import io.wispforest.owo.ui.base.BaseParentComponent;
-import io.wispforest.owo.ui.component.ButtonComponent;
-import io.wispforest.owo.ui.component.Components;
-import io.wispforest.owo.ui.container.Containers;
-import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.*;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
 import org.apache.commons.collections4.map.ListOrderedMap;
@@ -26,33 +18,20 @@ import org.apache.commons.lang3.mutable.MutableInt;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
-import java.lang.reflect.Field;
 import java.util.*;
-import java.util.function.BiFunction;
-import java.util.function.Predicate;
 
-public class EnhancedGridLayout extends BaseParentComponent implements LineManageable<EnhancedGridLayout>, ModifiableCollectionHelper<EnhancedGridLayout, BaseCharacter> {
+public class LabeledGridLayout<T> extends BaseParentComponent implements LineManageable<LabeledGridLayout<T>>, ModifiableCollectionHelper<LabeledGridLayout<T>, T> {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
     //--------------------------------------------------------------------
 
-    protected final List<PerCharacterComponentHelper> builders = new ArrayList<>();
+    protected final List<LabeledObjectToComponent<T>> builders = new ArrayList<>();
 
-    protected final ListOrderedMap<BaseCharacter, List<Component>> characterToComponents = new ListOrderedMap<>();
-    protected final List<BaseCharacter> originalCharactersList = new ArrayList<>();
+    protected final ListOrderedMap<T, List<Component>> entryToComponents = new ListOrderedMap<>();
+    protected final List<T> originalEntriesList = new ArrayList<>();
 
     public boolean builtYet = false;
-
-    private CharacterScreenMode mode = CharacterScreenMode.VIEWING;
-
-    private BiFunction<CharacterScreenMode, BaseCharacter, CharacterScreen> screenBuilder = (characterScreenMode, baseCharacter) -> {
-        return new CharacterScreen(characterScreenMode, null, baseCharacter);
-    };
-
-    private Screen originScreen;
 
     private boolean isVertical = true;
 
@@ -62,8 +41,8 @@ public class EnhancedGridLayout extends BaseParentComponent implements LineManag
     protected Color rowDividingLineColor = Color.BLACK;
     protected Color columnDividingLineColor = Color.BLACK;
 
-    @Nullable protected Predicate<BaseCharacter> cached_filter = null;
-    @Nullable protected Comparator<BaseCharacter> cached_comparator = null;
+    @Nullable protected FilterFunc<T> cached_filter = null;
+    @Nullable protected Comparator<T> cached_comparator = null;
 
     //--------------------------------------------------------------------
 
@@ -78,89 +57,43 @@ public class EnhancedGridLayout extends BaseParentComponent implements LineManag
     public int[] prevColumnSizes = new int[]{};
     public int[] prevRowSizes = new int[]{};
 
-    protected final ListWithinListView<Component> gridChildrenView = new ListWithinListView<>(characterToComponents.valueList());
+    protected final ListWithinListView<Component> gridChildrenView = new ListWithinListView<>(entryToComponents.valueList());
     protected final ListWithinListView<Component> finalChildrenView = new ListWithinListView<>();
 
     protected Size contentSize = Size.zero();
 
     //--------------------------------------------------------------------
 
-    public EnhancedGridLayout(Sizing horizontalSizing, Sizing verticalSizing, Screen originScreen, BiFunction<CharacterScreenMode, BaseCharacter, CharacterScreen> screenBuilder) {
-        this(horizontalSizing, verticalSizing, originScreen);
-
-        this.screenBuilder = screenBuilder;
-    }
-
-    public EnhancedGridLayout(Sizing horizontalSizing, Sizing verticalSizing, Screen originScreen) {
+    public LabeledGridLayout(Sizing horizontalSizing, Sizing verticalSizing) {
         super(horizontalSizing, verticalSizing);
 
-        this.originScreen = originScreen;
-
-        this.characterToComponents.put(null, new ArrayList<>());
+        this.entryToComponents.put(null, new ArrayList<>());
 
         finalChildrenView.addList(gridChildrenView);
         finalChildrenView.addList(lines);
-
-        builders.add(PerCharacterComponentHelper.of(Text.empty(),
-                        (character, mode, isParentVertical) ->{
-                                FlowLayout mainLayout = Containers.verticalFlow(Sizing.fixed(28), Sizing.fixed(24));
-
-                                mainLayout.child(Components.button(Text.of(mode.isModifiableMode() ? "✎" : "☉"), (ButtonComponent component) -> {
-                                                    CharacterScreen screen = screenBuilder.apply(this.mode, character);
-
-                                                    screen.originScreen = this.originScreen;
-
-                                                    MinecraftClient.getInstance().setScreen(screen);
-                                                }).sizing(Sizing.fixed(10)) //13
-                                                .positioning(Positioning.absolute(16, 1))
-                                                .zIndex(10)
-                                );
-
-                                mainLayout.child(CustomEntityComponent.playerEntityComponent(Sizing.fixed(20), null)
-                                        .scale(0.4f)
-                                        .allowMouseRotation(true)
-//                                        .tooltip(character.getFormattedName())
-                                        .margins(Insets.of(4,0,4,0))
-                                );
-
-                                return mainLayout;
-//                                        .margins(Insets.of(2));
-                        }
-                )
-        );
-
-        builders.add(PerCharacterComponentHelper.of(Text.of("Name"),
-                        (character, mode1, isParentVertical) -> Containers.verticalFlow(Sizing.fixed(96), Sizing.content())
-                                .child(Components.label(character.getFormattedName())
-                                        .maxWidth(100)
-                                        .margins(Insets.of(2))
-                                )
-//                                .margins(Insets.of(2))
-                ).onlyAllowWhenVertical(true)
-        );
     }
 
     //-----
 
-    public EnhancedGridLayout setRowDividingLine(int width){
+    public LabeledGridLayout<T> setRowDividingLine(int width){
         this.rowDividingLineWidth = width;
 
         return this;
     }
 
-    public EnhancedGridLayout setColumnDividingLine(int width){
+    public LabeledGridLayout<T> setColumnDividingLine(int width){
         this.columnDividingLineWidth = width;
 
         return this;
     }
 
-    public EnhancedGridLayout setRowDividingLineColor(Color color){
+    public LabeledGridLayout<T> setRowDividingLineColor(Color color){
         this.rowDividingLineColor = color;
 
         return this;
     }
 
-    public EnhancedGridLayout setColumnDividingLineColor(Color color){
+    public LabeledGridLayout<T> setColumnDividingLineColor(Color color){
         this.columnDividingLineColor = color;
 
         return this;
@@ -168,85 +101,81 @@ public class EnhancedGridLayout extends BaseParentComponent implements LineManag
 
     //-----
 
-    public EnhancedGridLayout changeMode(CharacterScreenMode mode){
-        this.mode = mode;
-
-        return this;
-    }
-
-    public EnhancedGridLayout changeDirection(boolean vertical){
+    public LabeledGridLayout<T> changeDirection(boolean vertical){
         this.isVertical = vertical;
 
         return this;
     }
 
-    public EnhancedGridLayout addBuilder(Text text, PerCharacterComponentHelper.PerCharacterBuilder builder){
-        this.builders.add(PerCharacterComponentHelper.of(text, builder));
-
-        return this;
+    public LabeledGridLayout<T> addBuilder(Text text, ObjectToComponent<T> builder){
+        return addBuilder(-1, text, builder);
     }
 
-    public EnhancedGridLayout addBuilder(PerCharacterComponentHelper builder){
-        this.builders.add(builder);
-
-        return this;
+    public LabeledGridLayout<T> addBuilder(int index, Text text, ObjectToComponent<T> builder){
+        return addBuilder(index, LabeledObjectToComponent.of(text, builder));
     }
 
-    public EnhancedGridLayout addCharacter(BaseCharacter character){
-        if(character != null) {
-            List<Component> characterComponents = new ArrayList<>();
-
-            this.characterToComponents.put(character, characterComponents);
-
-            this.originalCharactersList.add(character);
+    public LabeledGridLayout<T> addBuilder(int index, LabeledObjectToComponent<T> builder){
+        if(index != -1){
+            this.builders.add(index, builder);
+        } else {
+            this.builders.add(builder);
         }
 
         return this;
     }
 
-    public <T extends BaseCharacter> EnhancedGridLayout removeCharacter(T character){
-        List<Component> characterComponents = this.characterToComponents.remove(character);
-
-        this.originalCharactersList.remove(character);
-
-        return this;
-    }
-
-    public <T extends BaseCharacter> EnhancedGridLayout addCharacters(Collection<T> characters){
-        for(BaseCharacter character : characters) addCharacter(character);
+    public LabeledGridLayout<T> addEntry(T entry){
+        if(entry != null) {
+            this.entryToComponents.put(entry, new ArrayList<>());
+            this.originalEntriesList.add(entry);
+        }
 
         return this;
     }
 
-    public <T extends BaseCharacter> EnhancedGridLayout removeCharacters(Collection<T> characters){
-        for(BaseCharacter character : characters) removeCharacter(character);
+    public LabeledGridLayout<T> removeEntry(T entry){
+        this.entryToComponents.remove(entry);
+        this.originalEntriesList.remove(entry);
 
         return this;
     }
 
-    public EnhancedGridLayout clearCharacters(){
-        this.characterToComponents.valueList().forEach(components -> {
+    public LabeledGridLayout<T> addEntries(Collection<T> entries){
+        for(T entry : entries) addEntry(entry);
+
+        return this;
+    }
+
+    public LabeledGridLayout<T> removeEntries(Collection<T> entries){
+        for(T entry : entries) removeEntry(entry);
+
+        return this;
+    }
+
+    public LabeledGridLayout<T> clearEntries(){
+        this.entryToComponents.valueList().forEach(components -> {
             components.forEach(component -> component.dismount(DismountReason.REMOVED));
         });
 
-        List<Component> headerInfo = this.characterToComponents.get(null);
+        List<Component> headerInfo = this.entryToComponents.get(null);
 
-        this.characterToComponents.clear();
+        this.entryToComponents.clear();
 
-        this.characterToComponents.put(null, headerInfo);
+        this.entryToComponents.put(null, headerInfo);
 
         this.updateLayout();
 
         return this;
     }
 
-    @Override public void setFilter(Predicate<BaseCharacter> filter) { this.cached_filter = filter; }
-    @Override public Predicate<BaseCharacter> getFilter() { return this.cached_filter; }
-    @Override public void setComparator(Comparator<BaseCharacter> comparator) { this.cached_comparator = comparator; }
-    @Override public Comparator<BaseCharacter> getComparator() { return this.cached_comparator; }
+    @Override public void setFilter(FilterFunc<T> filter) { this.cached_filter = filter; }
+    @Override public FilterFunc<T> getFilter() { return this.cached_filter; }
+    @Override public void setComparator(Comparator<T> comparator) { this.cached_comparator = comparator; }
+    @Override public Comparator<T> getComparator() { return this.cached_comparator; }
 
-    @Override public List<BaseCharacter> getList() { return getMapInsertOrder();}
-    @Override public List<BaseCharacter> getDefaultList() { return originalCharactersList; }
+    @Override public List<T> getList() { return getMapInsertOrder();}
+    @Override public List<T> getDefaultList() { return originalEntriesList; }
 
     @Override
     public void applyFiltersAndSorting(){
@@ -259,8 +188,8 @@ public class EnhancedGridLayout extends BaseParentComponent implements LineManag
         this.updateLayout();
     }
 
-    protected List<BaseCharacter> getMapInsertOrder(){
-        return ReflectionUtils.getMapInsertOrder(this.characterToComponents);
+    protected List<T> getMapInsertOrder(){
+        return ReflectionUtils.getMapInsertOrder(this.entryToComponents);
     }
 
     //--------------------------------------------------------------------
@@ -282,26 +211,24 @@ public class EnhancedGridLayout extends BaseParentComponent implements LineManag
             this.horizontalAlignment(HorizontalAlignment.CENTER);
         }
 
-        List<PerCharacterComponentHelper> builders = this.builders.stream()
-                .filter(wrapper -> !wrapper.onlyShowWhenVertical || isVertical)
-                .toList();
+        List<Component> labelComponents = entryToComponents.get(null);
 
-        builders.forEach(helper -> {
-            characterToComponents.get(null).add(helper.buildLabel(false));
-        });
+        if(labelComponents.isEmpty()) {
+            builders.forEach(helper -> labelComponents.add(helper.buildLabel(false)));
+        }
 
-        characterToComponents.forEach((character, components) -> {
-            if(character != null) components.addAll(characterComponent(builders, character, isVertical));
+        entryToComponents.forEach((entry, components) -> {
+            if(entry != null) components.addAll(gatherComponentsForObject(builders, entry, isVertical));
         });
 
         this.builtYet = true;
     }
 
-    public List<Component> characterComponent(List<PerCharacterComponentHelper> wrappers, BaseCharacter character, boolean isParentVertical){
+    public List<Component> gatherComponentsForObject(List<LabeledObjectToComponent<T>> wrappers, T entry, boolean isParentVertical){
         List<Component> mainComponentList = new ArrayList<>();
 
         wrappers.forEach(componentBuilder -> {
-            mainComponentList.add(componentBuilder.buildPerCharacterComponent(character, this.mode, isParentVertical));
+            mainComponentList.add(componentBuilder.build(entry, isParentVertical));
         });
 
         return mainComponentList;
@@ -503,7 +430,7 @@ public class EnhancedGridLayout extends BaseParentComponent implements LineManag
     }
 
     protected @Nullable Component getChild(int row, int column) {
-        return this.characterToComponents.getValue(isVertical ? row : column).get(isVertical ? column : row);
+        return this.entryToComponents.getValue(isVertical ? row : column).get(isVertical ? column : row);
     }
 
     protected void determineSizes(int[] sizes, boolean rows) {
@@ -526,7 +453,7 @@ public class EnhancedGridLayout extends BaseParentComponent implements LineManag
     }
 
     @Override
-    public EnhancedGridLayout removeChild(Component child) {
+    public LabeledGridLayout<T> removeChild(Component child) {
         return this;
     }
 

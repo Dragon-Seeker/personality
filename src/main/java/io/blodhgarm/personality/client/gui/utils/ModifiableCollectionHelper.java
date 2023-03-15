@@ -1,18 +1,22 @@
 package io.blodhgarm.personality.client.gui.utils;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public interface ModifiableCollectionHelper<T, V> {
 
-    void setFilter(Predicate<V> filter);
+    void setFilter(FilterFunc<V> filter);
     void setComparator(Comparator<V> comparator);
 
-    Predicate<V> getFilter();
+    FilterFunc<V> getFilter();
     Comparator<V> getComparator();
 
-    default T sortAndFilterCharacters(Comparator<V> comparator, Predicate<V> filter){
+    default T sortAndFilterEntries(Comparator<V> comparator, FilterFunc<V> filter){
         boolean updateListFromComp = !(comparator == null && getComparator() == null);
         boolean updateListFromFilter = !(filter == null && getFilter() == null);
 
@@ -24,7 +28,7 @@ public interface ModifiableCollectionHelper<T, V> {
         return (T) this;
     }
 
-    default T sortCharacters(Comparator<V> comparator){
+    default T sortEntries(@Nullable Comparator<V> comparator){
         boolean updateList = !(comparator == null && this.getComparator() == null);
 
         this.setComparator(comparator);
@@ -34,7 +38,14 @@ public interface ModifiableCollectionHelper<T, V> {
         return (T) this;
     }
 
-    default T filterCharacters(Predicate<V> filter){
+    default T filterEntries(@Nullable Predicate<V> filter){
+        return filterEntriesFunc(filter != null
+                ? (helper) -> helper.getDefaultList().stream().filter(filter).toList()
+                : null
+        );
+    }
+
+    default T filterEntriesFunc(@Nullable FilterFunc<V> filter){
         boolean updateList = !(filter == null && this.getFilter() == null);
 
         this.setFilter(filter);
@@ -48,7 +59,7 @@ public interface ModifiableCollectionHelper<T, V> {
         getList().clear();
 
         List<V> filteredList = (this.getFilter() != null)
-                ? getDefaultList().stream().filter(this.getFilter()).toList()
+                ? this.getFilter().filter(this)
                 : getDefaultList();
 
         getList().addAll(filteredList);
@@ -58,4 +69,8 @@ public interface ModifiableCollectionHelper<T, V> {
 
     List<V> getList();
     List<V> getDefaultList();
+
+    interface FilterFunc<V> {
+        List<V> filter(ModifiableCollectionHelper<?, V> helper);
+    }
 }

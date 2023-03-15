@@ -430,7 +430,7 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
 //                                .margins(Insets.right(2))
                 )
                 .child(
-                        Components.button(Text.of(this.mode.isModifiableMode() ? "✎" : "☉"),
+                        Components.button(Text.of(this.mode.isModifiableMode() ? "✎" : "♢"),
                                         (ButtonComponent component) -> getObserver().pushScreenAddon(this)
                                 )
                                 .sizing(Sizing.fixed(12))
