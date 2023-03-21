@@ -19,6 +19,7 @@ import io.blodhgarm.personality.packets.IntroductionPackets;
 import io.blodhgarm.personality.packets.SyncS2CPackets;
 import io.blodhgarm.personality.utils.DebugCharacters;
 import io.wispforest.owo.Owo;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.loader.api.FabricLoader;
@@ -38,13 +39,10 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
 
-public class ServerCharacters extends CharacterManager<ServerPlayerEntity> implements FinalizedPlayerConnectionEvent.Finish, ServerWorldEvents.Load {
-
-    private static final Logger LOGGER = LogUtils.getLogger();
+public class ServerCharacters extends CharacterManager<ServerPlayerEntity> implements FinalizedPlayerConnectionEvent.Finish, ServerLifecycleEvents.ServerStarted, ServerLifecycleEvents.ServerStopped {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeTypeAdapter())
@@ -319,7 +317,10 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
         return CHARACTER_PATH.resolve(uuid + "/info.json");
     }
 
-    public void loadCharacterReference() {
+    /**
+     * Method used to load both the character references and the edit history
+     */
+    public void loadGeneralInformation() {
         BASE_PATH = Owo.currentServer().getSavePath(WorldSavePath.ROOT).resolve("mod_data/personality");
 
         CHARACTER_PATH = BASE_PATH.resolve("characters");
@@ -332,24 +333,29 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
         try {
             if(!Files.exists(CHARACTER_PATH)) Files.createDirectories(CHARACTER_PATH);
+        } catch (IOException e){ e.printStackTrace(); }
 
+        try {
             JsonObject refJsonObject = GSON.fromJson(Files.readString(REFERENCE_PATH), JsonObject.class);
             playerIDToCharacterID = HashBiMap.create(GSON.fromJson(refJsonObject.getAsJsonObject("player_to_character"), REF_MAP_TYPE));
+        }
+        catch (NoSuchFileException fileException) { saveCharacterReference(); }
+        catch (IOException e) { e.printStackTrace(); }
 
+        try {
             JsonObject editorJsonObject = GSON.fromJson(Files.readString(EDITOR_PATH), JsonObject.class);
-            characterUUIDToEditInfo = new HashMap<>(GSON.fromJson(refJsonObject.getAsJsonObject("history"), EDITOR_MAP_TYPE));
+            characterUUIDToEditInfo = new HashMap<>(GSON.fromJson(editorJsonObject.getAsJsonObject("history"), EDITOR_MAP_TYPE));
 
-        } catch (IOException e) {
-            if (e instanceof NoSuchFileException) {
-                saveCharacterReference();
-            } else {
-                e.printStackTrace();
+            for (Map.Entry<String, List<EditorHistory>> entry : characterUUIDToEditInfo.entrySet()){
+                System.out.println(entry.getKey());
+                for (EditorHistory history : entry.getValue()) System.out.println("  ^--> " + history);
+                System.out.println();
             }
         }
+        catch (NoSuchFileException fileException) { saveEditorMap(); }
+        catch (IOException e) { e.printStackTrace(); }
 
-        if(FabricLoader.getInstance().isDevelopmentEnvironment()){
-            DebugCharacters.loadDebugCharacters(this);
-        }
+        if(FabricLoader.getInstance().isDevelopmentEnvironment()) DebugCharacters.loadDebugCharacters(this);
     }
 
     public void saveCharacterReference() {
@@ -359,9 +365,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
             json.add("player_to_character", GSON.toJsonTree(playerToCharacterReferences(), REF_MAP_TYPE));
 
             Files.writeString(REFERENCE_PATH, GSON.toJson(json));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        } catch (IOException e) { e.printStackTrace(); }
     }
 
     public void saveEditorMap() {
@@ -371,9 +375,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
             json.add("history", GSON.toJsonTree(characterUUIDToEditInfo, EDITOR_MAP_TYPE));
 
             Files.writeString(EDITOR_PATH, GSON.toJson(json));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        } catch (IOException e) { e.printStackTrace(); }
     }
 
     public void logCharacterEditing(ServerPlayerEntity editor, Character c, List<String> elementsChanges){
@@ -387,8 +389,10 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     //----------------------------------------------------------------------------
 
     @Override
-    public void onWorldLoad(MinecraftServer server, ServerWorld world) {
-        loadCharacterReference();
+    public void onServerStarted(MinecraftServer server) {
+        if(FabricLoader.getInstance().isDevelopmentEnvironment()) System.out.println("Event[ServerStarted]: Loading Server Character Data");
+
+        loadGeneralInformation();
 
         File[] folders = CHARACTER_PATH.toFile().listFiles();
 
@@ -398,15 +402,13 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
             try {
                 Path path = folderEntry.toPath().resolve("info.json");
 
-                if (Files.exists(path)) {
-                    String characterJson = Files.readString(path);
+                if (!Files.exists(path)) continue;
 
-                    Character c = GSON.fromJson(characterJson, Character.class);
+                Character c = GSON.fromJson(Files.readString(path), Character.class);
 
-                    characterLookupMap().put(c.getUUID(), c);
+                characterLookupMap().put(c.getUUID(), c);
 
-                    AddonRegistry.INSTANCE.loadAddonsFromDisc(c, false);
-                }
+                AddonRegistry.INSTANCE.loadAddonsFromDisc(c, false);
             } catch (IOException e) {
                 LOGGER.error("[Server Character]: A character was unable to be loaded from the disc, such will be skipped [Path: {}]", folderEntry.getPath());
                 e.printStackTrace();
@@ -426,7 +428,21 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
             characters.put(GSON.toJson(c), AddonRegistry.INSTANCE.serializesAddons(c)); //GSON.toJson(c.getAddons())
         }
 
-        Networking.sendS2C(handler.player, new SyncS2CPackets.Initial(characters, playerToCharacterReferences()));
+        boolean loadRegistries = true;
+
+        //Prevent Integrated player from receiving the message to load addon registries
+        if(!server.isDedicated() && server.isHost(handler.player.getGameProfile())) loadRegistries = false;
+
+        Networking.sendS2C(handler.player, new SyncS2CPackets.Initial(characters, playerToCharacterReferences(), loadRegistries));
+    }
+
+    @Override
+    public void onServerStopped(MinecraftServer server) {
+        this.clearRegistries();
+
+        this.characterUUIDToEditInfo.clear();
+
+        if(FabricLoader.getInstance().isDevelopmentEnvironment()) LOGGER.info("[Server-CharacterManager]: Manager has been cleared!");
     }
 
     public record EditorHistory(String editorUUID, LocalDateTime dateOfEdit, List<String> elementsChanges){}

@@ -2,6 +2,7 @@ package io.blodhgarm.personality.api.character;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.utils.PlayerAccess;
@@ -15,6 +16,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.world.World;
 import org.apache.commons.collections4.map.ListOrderedMap;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 
 import javax.annotation.Nonnull;
 import java.util.*;
@@ -25,6 +27,8 @@ import java.util.function.Supplier;
  * @param <P> Is a version of player either {@link ClientPlayerEntity} or {@link ServerPlayerEntity}
  */
 public abstract class CharacterManager<P extends PlayerEntity> implements RevelInfoManager<P> {
+
+    protected static final Logger LOGGER = LogUtils.getLogger();
 
     private static final Map<String, CharacterManager<?>> MANAGER_REGISTRY = new HashMap<>();
 
@@ -85,6 +89,11 @@ public abstract class CharacterManager<P extends PlayerEntity> implements RevelI
     @Nonnull
     public ListOrderedMap<String, Character> characterLookupMap(){
         return characterIDToCharacter;
+    }
+
+    public void clearRegistries(){
+        this.characterIDToCharacter.clear();
+        this.playerIDToCharacterID.clear();
     }
 
     public void sortCharacterLookupMap(){

@@ -7,7 +7,6 @@
   "mixins": [
     "HungerManagerMixin",
     "LivingEntityMixin",
-    "MinecraftServerMixin",
     "OriginLayerAccessor",
     "PlayerEntityMixin",
     "PlayerManagerMixin",

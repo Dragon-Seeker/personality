@@ -1,13 +1,11 @@
 package io.blodhgarm.personality.api.reveal;
 
-import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.PersonalityMod;
-import io.blodhgarm.personality.api.core.DelayedRegistry;
+import io.blodhgarm.personality.api.core.BaseRegistry;
 import io.blodhgarm.personality.api.utils.InfoRevealResult;
-import net.minecraft.server.MinecraftServer;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.Identifier;
 import org.apache.commons.collections4.map.LinkedMap;
-import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -16,13 +14,9 @@ import java.util.function.Consumer;
 /**
  * Registry used for Registering Obfuscated replacements for given Info about a Character
  */
-public class InfoRevealRegistry extends DelayedRegistry {
-
-    private static Logger LOGGER = LogUtils.getLogger();
+public class InfoRevealRegistry extends BaseRegistry {
 
     public static InfoRevealRegistry INSTANCE = new InfoRevealRegistry();
-
-    public List<Consumer<InfoRevealRegistry>> DELAYED_REGISTERS = new ArrayList<>();
 
     public final LinkedMap<InfoRevealLevel, List<Identifier>> REGISTRY = new LinkedMap<>();
 
@@ -60,21 +54,6 @@ public class InfoRevealRegistry extends DelayedRegistry {
         return this;
     }
 
-    /**
-     * Method allowing for delayed registry of Info Reveal Data if your mod requires loading of DataPacks and such (See {@link #onServerStarted(MinecraftServer)}
-     * @param registerConsumer A consumer with used to register your methods at a later time
-     */
-    public InfoRevealRegistry registerDelayedInfoRevealing(Consumer<InfoRevealRegistry> registerConsumer){
-        DELAYED_REGISTERS.add(registerConsumer);
-
-        return this;
-    }
-
-    @Override
-    public void runDelayedRegistration() {
-        DELAYED_REGISTERS.forEach(infoRevealLevelConsumer -> infoRevealLevelConsumer.accept(this));
-    }
-
     public boolean showInformation(InfoRevealLevel level, Identifier identifier){
         if(REGISTRY.get(level).contains(identifier)) return true;
 
@@ -108,6 +87,14 @@ public class InfoRevealRegistry extends DelayedRegistry {
 
     public interface ObfuscatedReplacement<T> {
         T getReplacement();
+    }
+
+    @Override
+    public void clearRegistry() {
+        this.REGISTRY.forEach((level, listOfIds) -> listOfIds.clear());
+        this.OBFUSCATED_REPLACEMENT.clear();
+
+        if(FabricLoader.getInstance().isDevelopmentEnvironment()) LOGGER.info("[" + this.getRegistryId() + "]: Registry has been cleared!");
     }
 
     @Override

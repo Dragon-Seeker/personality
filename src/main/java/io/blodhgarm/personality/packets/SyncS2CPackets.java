@@ -1,12 +1,13 @@
 package io.blodhgarm.personality.packets;
 
 import com.mojang.logging.LogUtils;
+import io.blodhgarm.personality.Networking;
 import io.blodhgarm.personality.PersonalityMod;
-import io.blodhgarm.personality.api.character.Character;
-import io.blodhgarm.personality.api.utils.PlayerAccess;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.addon.BaseAddon;
-import io.blodhgarm.personality.api.core.DelayedRegistry;
+import io.blodhgarm.personality.api.character.Character;
+import io.blodhgarm.personality.api.core.BaseRegistry;
+import io.blodhgarm.personality.api.utils.PlayerAccess;
 import io.blodhgarm.personality.client.ClientCharacters;
 import io.wispforest.owo.network.ClientAccess;
 import net.fabricmc.api.EnvType;
@@ -24,15 +25,20 @@ public class SyncS2CPackets {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    public record Initial(List<CharacterData> characters, Map<String, String> associations) {
+    public record Initial(List<CharacterData> characters, Map<String, String> associations, boolean loadBaseRegistries) {
 
-        public Initial(Map<String, Map<Identifier, String>> characters, Map<String, String> associations){
-            this(characters.entrySet().stream().map(entry -> new CharacterData(entry.getKey(), entry.getValue())).toList(), associations);
+        public Initial(Map<String, Map<Identifier, String>> characters, Map<String, String> associations, boolean loadBaseRegistries){
+            this(characters.entrySet().stream().map(entry -> new CharacterData(entry.getKey(), entry.getValue())).toList(), associations, loadBaseRegistries);
         }
 
         @Environment(EnvType.CLIENT)
         public static void initialSync(Initial message, ClientAccess access) {
-            DelayedRegistry.runAllDelayedRegistries();
+            if(message.loadBaseRegistries){
+                PersonalityMod.loadRegistries("InitialSync");
+
+                //This may be a faulty approach to confirming registries are synced due to its placement as if the packet is lost, it would allow the client to connect and issues may happen
+                Networking.sendC2S(new SyncC2SPackets.RegistrySync(BaseRegistry.REGISTRIES));
+            }
 
             ClientCharacters.INSTANCE.init(message.characters, message.associations);
 
@@ -40,9 +46,7 @@ public class SyncS2CPackets {
 
             Character clientC = ClientCharacters.INSTANCE.getCharacter(MinecraftClient.getInstance().player);
 
-            if(clientC != null){
-                ClientCharacters.INSTANCE.setKnownCharacters(new PlayerAccess<>(access.player()), clientC.getUUID());
-            }
+            if(clientC != null) ClientCharacters.INSTANCE.setKnownCharacters(new PlayerAccess<>(access.player()), clientC.getUUID());
         }
     }
 

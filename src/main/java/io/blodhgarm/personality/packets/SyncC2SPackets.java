@@ -106,21 +106,32 @@ public class SyncC2SPackets {
         }
     }
 
-    public record RegistrySync(Identifier registryId, List<Identifier> registryIds){
-        public static void registrySync(RegistrySync message, ServerAccess access){
+    public record RegistrySync(List<DelayedRegistryData> registryData){
+
+        public RegistrySync(Map<Identifier, BaseRegistry> registriesLoaded){
+            this(registriesLoaded.entrySet().stream().map(entry -> new DelayedRegistryData(entry.getKey(), entry.getValue().getRegisteredIds())).toList());
+        }
+
+        public static void registriesSync(RegistrySync message, ServerAccess access){
+            message.registryData().forEach(data -> {
+                registrySync(data.registryId, data.registryIds, access);
+            });
+        }
+
+        public static void registrySync(Identifier registryId, List<Identifier> registryIds,  ServerAccess access){
             if(access.runtime().isHost(access.player().getGameProfile())) return;
 
-            BaseRegistry serverRegistry = BaseRegistry.getRegistry(message.registryId());
+            BaseRegistry serverRegistry = BaseRegistry.getRegistry(registryId);
 
             if(serverRegistry == null) {
-                access.netHandler().disconnect(Text.of("A Registry sync was attempted and found the server lacking the given client registry! [RegistryId: " +  message.registryId() + "]"));
+                access.netHandler().disconnect(Text.of("A Registry sync was attempted and found the server lacking the given client registry! [RegistryId: " +  registryId + "]"));
 
                 return;
             }
 
             List<Identifier> serverRegistryIds = serverRegistry.getRegisteredIds();
 
-            if(serverRegistryIds.hashCode() != message.registryIds().hashCode()){
+            if(serverRegistryIds.hashCode() != registryIds.hashCode()){
                 MutableText mainText = Text.literal("Personality Addon Registry seems to contain a mismatch: \n\n");
 
                 MutableText serverAddonMismatch = Text.empty().append(
@@ -132,7 +143,7 @@ public class SyncC2SPackets {
                 AtomicBoolean appendToMainText1 = new AtomicBoolean(false);
 
                 serverRegistryIds.forEach(identifier -> {
-                    if(!message.registryIds().contains(identifier)){
+                    if(!registryIds.contains(identifier)){
                         serverAddonMismatch.append(identifier.toString() + "\n");
 
                         appendToMainText1.set(true);
@@ -153,7 +164,7 @@ public class SyncC2SPackets {
                 );
                 AtomicBoolean appendToMainText2 = new AtomicBoolean(false);
 
-                message.registryIds().forEach(identifier -> {
+                registryIds.forEach(identifier -> {
                     if(!serverRegistryIds.contains(identifier)){
                         clientAddonMismatch.append(identifier.toString() + "\n");
 
@@ -170,5 +181,7 @@ public class SyncC2SPackets {
             }
         }
     }
+
+    public record DelayedRegistryData(Identifier registryId, List<Identifier> registryIds){};
 
 }

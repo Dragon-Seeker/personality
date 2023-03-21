@@ -12,15 +12,17 @@ import io.blodhgarm.personality.api.reveal.InfoRevealLevel;
 import io.blodhgarm.personality.api.reveal.KnownCharacter;
 import io.blodhgarm.personality.packets.SyncS2CPackets;
 import io.blodhgarm.personality.utils.DebugCharacters;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
+import net.minecraft.client.network.ClientPlayNetworkHandler;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Consumer;
 
-public class ClientCharacters extends CharacterManager<AbstractClientPlayerEntity> implements KnownCharacterLookup {
+public class ClientCharacters extends CharacterManager<AbstractClientPlayerEntity> implements KnownCharacterLookup, ClientPlayConnectionEvents.Disconnect {
 
     public static ClientCharacters INSTANCE = new ClientCharacters();
 
@@ -162,5 +164,14 @@ public class ClientCharacters extends CharacterManager<AbstractClientPlayerEntit
     @Nullable
     public BaseCharacter getKnownCharacter(String UUID) {
         return this.clientKnownCharacterMap.get(UUID);
+    }
+
+    @Override
+    public void onPlayDisconnect(ClientPlayNetworkHandler handler, MinecraftClient client) {
+        this.clearRegistries();
+
+        clientKnownCharacterMap.clear();
+
+        if(FabricLoader.getInstance().isDevelopmentEnvironment()) LOGGER.info("[Client-CharacterManager]: Manager has been cleared!");
     }
 }

@@ -386,18 +386,6 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
     }
 
 
-    public interface GradualValue {
-        int minAge();
-        void minAge(int value);
-        int maxAge();
-        void maxAge(int value);
-        float startingValue();
-        void startingValue(float value);
-        float endingValue();
-        void endingValue(float value);
-        io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve calculationCurve();
-        void calculationCurve(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value);
-    }
     public interface ExtraLife {
         int minAge();
         void minAge(int value);
@@ -407,6 +395,18 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         void minimumHoursForExtraLife(float value);
         float multiplier();
         void multiplier(float value);
+        io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve calculationCurve();
+        void calculationCurve(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value);
+    }
+    public interface GradualValue {
+        int minAge();
+        void minAge(int value);
+        int maxAge();
+        void maxAge(int value);
+        float startingValue();
+        void startingValue(float value);
+        float endingValue();
+        void endingValue(float value);
         io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve calculationCurve();
         void calculationCurve(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value);
     }

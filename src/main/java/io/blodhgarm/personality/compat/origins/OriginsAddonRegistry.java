@@ -92,71 +92,67 @@ public class OriginsAddonRegistry implements PersonalityEntrypoint {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     public <T extends BaseAddon> void addonRegistry(AddonRegistry<T> registry) {
-        registry.registerDelayedAddon(delayedRegistery -> {
-            Predicate<T> addonValidation = t -> {
-                if (t instanceof OriginAddon originAddon) {
-                    try {
-                        OriginLayer layer = OriginLayers.getLayer(originAddon.getOriginLayerId());
+        Predicate<T> addonValidation = t -> {
+            if (t instanceof OriginAddon originAddon) {
+                try {
+                    OriginLayer layer = OriginLayers.getLayer(originAddon.getOriginLayerId());
 
-                        if (Objects.equals(originAddon.getOriginId().getPath(), "random")) {
-                            List<Identifier> randomOrigins = layer.getOrigins().stream()
-                                    .filter(o -> !((OriginLayerAccessor) layer).personality$OriginsExcludedFromRandom().contains(o))
-                                    .filter(id -> ((OriginLayerAccessor) layer).personality$DoesRandomAllowUnchoosable() || OriginRegistry.get(id).isChoosable())
-                                    .collect(Collectors.toList());
+                    if (Objects.equals(originAddon.getOriginId().getPath(), "random")) {
+                        List<Identifier> randomOrigins = layer.getOrigins().stream()
+                                .filter(o -> !((OriginLayerAccessor) layer).personality$OriginsExcludedFromRandom().contains(o))
+                                .filter(id -> ((OriginLayerAccessor) layer).personality$DoesRandomAllowUnchoosable() || OriginRegistry.get(id).isChoosable())
+                                .collect(Collectors.toList());
 
-                            Identifier origin = Origin.EMPTY.getIdentifier();
+                        Identifier origin = Origin.EMPTY.getIdentifier();
 
-                            if (layer.isRandomAllowed() && randomOrigins.size() > 0) {
-                                origin = randomOrigins.get(new Random().nextInt(randomOrigins.size()));
-                            }
-
-                            originAddon.setOrigin(origin, layer.getIdentifier());
-
-                            return true;
-                        } else if (layer.getOrigins().contains(originAddon.getOriginId())) {
-                            return true;
+                        if (layer.isRandomAllowed() && randomOrigins.size() > 0) {
+                            origin = randomOrigins.get(new Random().nextInt(randomOrigins.size()));
                         }
-                    } catch (IllegalArgumentException e) {
-                        LOGGER.error("[OriginAddon] It seems that there was a issue attempting to validate a Personality Addon leading to addon being thrown out");
+
+                        originAddon.setOrigin(origin, layer.getIdentifier());
+
+                        return true;
+                    } else if (layer.getOrigins().contains(originAddon.getOriginId())) {
+                        return true;
                     }
+                } catch (IllegalArgumentException e) {
+                    LOGGER.error("[OriginAddon] It seems that there was a issue attempting to validate a Personality Addon leading to addon being thrown out");
                 }
+            }
 
-                return false;
-            };
+            return false;
+        };
 
-            OriginLayers.getLayers().forEach(originLayer -> {
-                Origin origin = getChoosableSortedOrigins(originLayer).get(0);
+        for(OriginLayer originLayer : OriginLayers.getLayers()){
+            Origin origin = getChoosableSortedOrigins(originLayer).get(0);
 
-                System.out.println("Origin Addon ID: " + originLayer.getIdentifier());
+            System.out.println("Origin Addon ID: " + originLayer.getIdentifier());
 
-                registry.registerAddon(originLayer.getIdentifier(),
+            registry.registerAddon(originLayer.getIdentifier(),
                     (Class<T>) OriginAddon.class,
                     () -> (T) new OriginAddon(origin.getIdentifier(), originLayer.getIdentifier()),
                     addonValidation
-                );
-            });
-        });
+            );
+        }
     }
 
     @Override
     public void infoRevealRegistry(InfoRevealRegistry registry) {
-        registry.registerDelayedInfoRevealing(revealRegistry -> {
-            if(!OriginRegistry.contains(UNKNOWN)) OriginRegistry.register(UNKNOWN);
+        if(!OriginRegistry.contains(UNKNOWN)) OriginRegistry.register(UNKNOWN);
 
-            OriginLayers.getLayers().forEach(layer -> {
-                Identifier layerId = layer.getIdentifier();
-                InfoRevealLevel level = InfoRevealLevel.TRUSTED;
+        OriginLayers.getLayers().forEach(layer -> {
+            Identifier layerId = layer.getIdentifier();
+            InfoRevealLevel level = InfoRevealLevel.TRUSTED;
 
-                if(layerId.equals(new Identifier("origins-classes", "class"))) {
-                    level = InfoRevealLevel.GENERAL;
-                } else if(layerId.equals(new Identifier("origins", "origin"))) {
-                    level = InfoRevealLevel.ASSOCIATE;
-                }
+            if(layerId.equals(new Identifier("origins-classes", "class"))) {
+                level = InfoRevealLevel.GENERAL;
+            } else if(layerId.equals(new Identifier("origins", "origin"))) {
+                level = InfoRevealLevel.ASSOCIATE;
+            }
 
-                System.out.println("OriginInfoReveal ID: " + layerId);
+            System.out.println("OriginInfoReveal ID: " + layerId);
 
-                revealRegistry.registerValueForRevealing(level, layerId, () -> new OriginAddon(UNKNOWN.getIdentifier(), layerId));
-            });
+            registry.registerValueForRevealing(level, layerId, () -> new OriginAddon(UNKNOWN.getIdentifier(), layerId));
         });
     }
 

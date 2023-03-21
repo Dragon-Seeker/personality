@@ -8,6 +8,7 @@ import io.blodhgarm.personality.api.PersonalityEntrypoint;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.api.character.Character;
+import io.blodhgarm.personality.api.core.BaseRegistry;
 import io.blodhgarm.personality.api.events.FinalizedPlayerConnectionEvent;
 import io.blodhgarm.personality.api.reveal.InfoRevealLevel;
 import io.blodhgarm.personality.api.reveal.InfoRevealRegistry;
@@ -15,16 +16,16 @@ import io.blodhgarm.personality.compat.origins.OriginsAddonRegistry;
 import io.blodhgarm.personality.compat.pehkui.PehkuiAddonRegistry;
 import io.blodhgarm.personality.compat.trinkets.TrinketsGlasses;
 import io.blodhgarm.personality.item.WalkingStick;
-import io.blodhgarm.personality.server.CharacterTick;
-import io.blodhgarm.personality.server.ServerCharacters;
 import io.blodhgarm.personality.misc.PersonalityCommands;
 import io.blodhgarm.personality.misc.config.PersonalityConfig;
+import io.blodhgarm.personality.server.CharacterTick;
+import io.blodhgarm.personality.server.ServerCharacters;
 import io.blodhgarm.personality.utils.DebugCharacters;
 import io.wispforest.owo.registration.reflect.FieldRegistrationHandler;
 import io.wispforest.owo.registration.reflect.ItemRegistryContainer;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
@@ -63,11 +64,27 @@ public class PersonalityMod implements ModInitializer, PersonalityEntrypoint, It
         PersonalityCommands.register();
         Networking.registerNetworking();
 
+        ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+            loadRegistries("ServerStarted");
+
+            ServerCharacters.INSTANCE.onServerStarted(server);
+        });
+
+        ServerLifecycleEvents.SERVER_STOPPED.register(PersonalityMod.id("on_server_stop"), server -> {
+            for (BaseRegistry value : BaseRegistry.REGISTRIES.values()) value.clearRegistry();
+
+            ServerCharacters.INSTANCE.onServerStopped(server);
+        });
+
+        ServerLifecycleEvents.END_DATA_PACK_RELOAD.register((server, resourceManager, success) -> loadRegistries("EndDataPackReload"));
+
         ServerTickEvents.END_WORLD_TICK.register(PersonalityMod.id("tick"), new CharacterTick());
 
-        ServerWorldEvents.LOAD.register(PersonalityMod.id("on_world_load"), ServerCharacters.INSTANCE);
-
         FinalizedPlayerConnectionEvent.CONNECTION_FINISHED.register(PersonalityMod.id("on_player_join"), ServerCharacters.INSTANCE);
+    }
+
+    public static void loadRegistries(String eventCall){
+        if(FabricLoader.getInstance().isDevelopmentEnvironment()) System.out.println("Event[" + eventCall + "]: Registry[BaseRegistries]");
 
         FabricLoader.getInstance().getEntrypoints("personality", PersonalityEntrypoint.class).forEach(personalityEntrypoint -> {
             personalityEntrypoint.addonRegistry(AddonRegistry.INSTANCE);
