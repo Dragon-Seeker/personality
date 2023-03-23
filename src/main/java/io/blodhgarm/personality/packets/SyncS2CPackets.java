@@ -37,7 +37,7 @@ public class SyncS2CPackets {
                 PersonalityMod.loadRegistries("InitialSync");
 
                 //This may be a faulty approach to confirming registries are synced due to its placement as if the packet is lost, it would allow the client to connect and issues may happen
-                Networking.sendC2S(new SyncC2SPackets.RegistrySync(BaseRegistry.REGISTRIES));
+                Networking.sendC2S(SyncC2SPackets.RegistrySync.of(BaseRegistry.REGISTRIES));
             }
 
             ClientCharacters.INSTANCE.init(message.characters, message.associations);

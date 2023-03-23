@@ -114,5 +114,5 @@
   "origin.personality.unknown.name": "Unknown",
   "origin.personality.unknown.description": "Currently Unknown to you, you can ask them or wait until they tell you?",
   "personality.addon_registry.name": "Addon",
-  "personality.info_reveal_level_registry.name": "Info Reveal Level"
+  "personality.info_reveal_registry.name": "Info Reveal"
 }

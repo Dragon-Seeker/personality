@@ -57,7 +57,7 @@ public class ClientCharacters extends CharacterManager<AbstractClientPlayerEntit
         for (SyncS2CPackets.CharacterData entry : characters) {
             Character c = PersonalityMod.GSON.fromJson(entry.characterData(), Character.class);
 
-            AddonRegistry.INSTANCE.deserializesAddons(c, entry.addonData());
+            AddonRegistry.INSTANCE.deserializesAddons(c, entry.addonData(), false);
 
             characterIDToCharacter.put(c.getUUID(), c);
         }

@@ -7,6 +7,7 @@ import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.core.BaseRegistry;
 import io.blodhgarm.personality.server.ServerCharacters;
 import io.wispforest.owo.network.ServerAccess;
+import it.unimi.dsi.fastutil.Pair;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -54,7 +55,7 @@ public class SyncC2SPackets {
 
             if(message.elementsChanges != null) ServerCharacters.INSTANCE.logCharacterEditing(access.player(), c, message.elementsChanges);
 
-            AddonRegistry.INSTANCE.deserializesAddons(c, message.addonData);
+            AddonRegistry.INSTANCE.deserializesAddons(c, message.addonData, true);
 
             ServerCharacters.INSTANCE.saveAddonsForCharacter(c, true);
 
@@ -71,8 +72,6 @@ public class SyncC2SPackets {
 
     public record NewCharacter(String characterJson, Map<Identifier, String> addonData, boolean immediateAssociation) {
         public static void newCharacter(NewCharacter message, ServerAccess access) {
-
-
             Character c = PersonalityMod.GSON.fromJson(message.characterJson, Character.class);
 
             if(!c.getPlayerUUID().equals(access.player().getUuidAsString())){
@@ -80,7 +79,7 @@ public class SyncC2SPackets {
                 LOGGER.warn("[New Character]: It seems that a Character was created on the Client and was found to be having mismatching Player UUID: [Character UUID: {}]", c.getUUID());
             }
 
-            AddonRegistry.INSTANCE.deserializesAddons(c, message.addonData);
+            AddonRegistry.INSTANCE.deserializesAddons(c, message.addonData, true);
 
             ServerCharacters.INSTANCE.characterLookupMap().put(c.getUUID(), c);
 
@@ -106,80 +105,137 @@ public class SyncC2SPackets {
         }
     }
 
-    public record RegistrySync(List<DelayedRegistryData> registryData){
+    @SuppressWarnings("unchecked")
+    public record RegistrySync(Map<Identifier, DelayedRegistryData> registryData){
 
-        public RegistrySync(Map<Identifier, BaseRegistry> registriesLoaded){
-            this(registriesLoaded.entrySet().stream().map(entry -> new DelayedRegistryData(entry.getKey(), entry.getValue().getRegisteredIds())).toList());
+        public static RegistrySync of(Map<Identifier, BaseRegistry> registriesLoaded){
+            return new RegistrySync(
+                    Map.ofEntries(registriesLoaded.entrySet()
+                            .stream()
+                            .map(entry -> Map.entry(entry.getKey(), new DelayedRegistryData(entry.getKey(), entry.getValue().getRegisteredIds())))
+                            .toArray(Map.Entry[]::new)
+                    )
+            );
         }
 
         public static void registriesSync(RegistrySync message, ServerAccess access){
-            message.registryData().forEach(data -> {
-                registrySync(data.registryId, data.registryIds, access);
-            });
-        }
+            List<MutableText> registryMissingClient = new ArrayList<>();
+            List<MutableText> registryMissingServer = new ArrayList<>();
 
-        public static void registrySync(Identifier registryId, List<Identifier> registryIds,  ServerAccess access){
-            if(access.runtime().isHost(access.player().getGameProfile())) return;
+            for (BaseRegistry serverRegistry : BaseRegistry.REGISTRIES.values()) {
+                if(message.registryData().get(serverRegistry.getRegistryId()) == null) {
+                    registryMissingClient.add(Text.literal(serverRegistry.getRegistryId().toString() + "\n"));
+                }
+            }
 
-            BaseRegistry serverRegistry = BaseRegistry.getRegistry(registryId);
+            for (DelayedRegistryData data : message.registryData().values()) {
+                if(BaseRegistry.getRegistry(data.registryId) == null) {
+                    registryMissingServer.add(Text.literal(data.registryId.toString() + "\n"));
+                }
+            }
 
-            if(serverRegistry == null) {
-                access.netHandler().disconnect(Text.of("A Registry sync was attempted and found the server lacking the given client registry! [RegistryId: " +  registryId + "]"));
+            MutableText mainMissingText = Text.literal("The following Registries were found to be missing on the server: \n");
+
+            boolean missingRegistries = false;
+
+            MutableText clientRegistryMismatch = Text.empty()
+                    .append(Text.literal("\nRegistries Client Missing: \n\n").formatted(Formatting.BOLD));
+
+            if(!registryMissingClient.isEmpty()){
+                for (MutableText missingClientText : registryMissingClient) clientRegistryMismatch.append(missingClientText.formatted().formatted(Formatting.DARK_RED));
+
+                mainMissingText.append(clientRegistryMismatch);
+
+                missingRegistries = true;
+            }
+
+            MutableText serverRegistryMismatch = Text.empty()
+                    .append(Text.literal("\nRegistries Server Missing: \n\n").formatted(Formatting.BOLD));
+
+            if(!registryMissingServer.isEmpty()){
+                for (MutableText missingServerText : registryMissingServer) serverRegistryMismatch.append(missingServerText.formatted().formatted(Formatting.DARK_PURPLE));
+
+                mainMissingText.append(serverRegistryMismatch);
+
+                missingRegistries = true;
+            }
+
+            if(missingRegistries){
+                access.netHandler().disconnect(mainMissingText);
 
                 return;
             }
 
-            List<Identifier> serverRegistryIds = serverRegistry.getRegisteredIds();
+            //--------------------------------------------------
 
-            if(serverRegistryIds.hashCode() != registryIds.hashCode()){
-                MutableText mainText = Text.literal("Personality Addon Registry seems to contain a mismatch: \n\n");
+            List<MutableText> registryMismatchTexts = new ArrayList<>();
 
-                MutableText serverAddonMismatch = Text.empty().append(
-                        Text.literal("Server ")
-                                .append(serverRegistry.getTranslation())
-                                .append(Text.literal(" Missing: \n"))
-                                .formatted(Formatting.BOLD)
-                );
-                AtomicBoolean appendToMainText1 = new AtomicBoolean(false);
+            for (BaseRegistry serverRegistry : BaseRegistry.REGISTRIES.values()) {
+                DelayedRegistryData data = message.registryData().get(serverRegistry.getRegistryId());
 
-                serverRegistryIds.forEach(identifier -> {
-                    if(!registryIds.contains(identifier)){
-                        serverAddonMismatch.append(identifier.toString() + "\n");
+                if(serverRegistry.getRegisteredIds().hashCode() != data.registryIds.hashCode()) {
+                    MutableText mainMismatchText = Text.empty();
 
-                        appendToMainText1.set(true);
+                    MutableText serverAddonMismatch = Text.empty().append(
+                            Text.literal("Server ")
+                                    .append(serverRegistry.getTranslation())
+                                    .append(Text.literal(" Missing: \n"))
+                                    .formatted(Formatting.BOLD)
+                    );
+
+                    MutableText clientAddonMismatch = Text.empty().append(
+                            Text.literal("Client ")
+                                    .append(serverRegistry.getTranslation())
+                                    .append(Text.literal(" Missing: \n"))
+                                    .formatted(Formatting.BOLD)
+                    );
+
+                    boolean mismatchDetected = false;
+
+                    if(mismatchTextBuilder(serverRegistry.getRegisteredIds(), data.registryIds, serverAddonMismatch, Formatting.DARK_RED)){
+                        mainMismatchText.append(serverAddonMismatch);
+
+                        mismatchDetected = true;
                     }
-                });
 
-                if(appendToMainText1.get()) mainText.append(
-                        serverAddonMismatch
-                                .append(Text.of("\n"))
-                                .formatted(Formatting.DARK_RED)
-                );
+                    if(mismatchTextBuilder(data.registryIds, serverRegistry.getRegisteredIds(), clientAddonMismatch, Formatting.DARK_PURPLE)){
+                        mainMismatchText.append(clientAddonMismatch);
 
-                MutableText clientAddonMismatch = Text.empty().append(
-                        Text.literal("Client ")
-                                .append(serverRegistry.getTranslation())
-                                .append(Text.literal(" Missing: \n"))
-                                .formatted(Formatting.BOLD)
-                );
-                AtomicBoolean appendToMainText2 = new AtomicBoolean(false);
-
-                registryIds.forEach(identifier -> {
-                    if(!serverRegistryIds.contains(identifier)){
-                        clientAddonMismatch.append(identifier.toString() + "\n");
-
-                        appendToMainText2.set(true);
+                        mismatchDetected = true;
                     }
-                });
 
-                if(appendToMainText2.get()) mainText.append(
-                        clientAddonMismatch
-                                .formatted(Formatting.DARK_PURPLE)
-                );
+                    if(mismatchDetected) registryMismatchTexts.add(mainMismatchText);
+                }
+            }
 
-                access.netHandler().disconnect(mainText);
+            if(!registryMismatchTexts.isEmpty()){
+                MutableText mainMismatchText = Text.literal("Personality Addon Registry seems to contain a mismatch: \n\n");
+
+                for (MutableText registryMismatchText : registryMismatchTexts) mainMismatchText.append(registryMismatchText);
+
+                access.netHandler().disconnect(mainMismatchText);
             }
         }
+
+        private static boolean mismatchTextBuilder(List<Identifier> primaryRegistryList, List<Identifier> secoundaryRegistryList, MutableText mismatchText, Formatting... formattings){
+            MutableText missingIdentifiers = Text.empty();
+
+            for (Identifier identifier : primaryRegistryList) {
+                if (secoundaryRegistryList.contains(identifier)) continue;
+
+                missingIdentifiers.append(identifier.toString() + "\n");
+            }
+
+            if (missingIdentifiers.getSiblings().isEmpty()) return false;
+
+            mismatchText
+                    .append(missingIdentifiers)
+                    .append(Text.of("\n"))
+                    .formatted(formattings);
+
+            return true;
+        }
+
     }
 
     public record DelayedRegistryData(Identifier registryId, List<Identifier> registryIds){};

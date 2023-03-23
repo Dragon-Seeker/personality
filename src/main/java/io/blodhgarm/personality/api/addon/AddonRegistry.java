@@ -77,15 +77,15 @@ public class AddonRegistry<A extends BaseAddon> extends BaseRegistry {
     }
 
     @Nullable
-    public A validateOrDefault(Identifier addonId, @Nullable A addonClass){
+    public A validateOrDefault(Identifier addonId, @Nullable A addon){
         Optional<AddonLoader<A>> loaderStorage = getAddonLoader(addonId);
 
         if(loaderStorage.isPresent()) {
-            if (addonClass != null) {
-                boolean valid = loaderStorage.get().addonValidator().test(addonClass);
+            if (addon != null) {
+                boolean valid = loaderStorage.get().addonValidator().test(addon);
 
                 if (valid) {
-                    return addonClass;
+                    return addon;
                 } else {
                     LOGGER.warn("[AddonValidation] A characters addon from {} was found to be invalid, will be replaced with the default value", addonId);
                 }
@@ -153,13 +153,26 @@ public class AddonRegistry<A extends BaseAddon> extends BaseRegistry {
                 e.printStackTrace();
             }
 
+            if(!registryHelper.addonValidator.test(addon)){
+                //throw new AddonInvalidException("A given Character Addon was found to be invalid! [Name: " + c.getName() + " , UUID: " + c.getUUID() + "]")
+                LOGGER.error("[AddonLoading] {} addon for [Name: {}, UUID: {}] was found to be invalid.", s, c.getName(), c.getUUID());
+
+                addon.improperLoad();
+            }
+
             c.getAddons().put(s, addon);
         });
 
         return addonData;
     }
 
-    public void deserializesAddons(Character c, Map<Identifier, String> addonData){
+    public static class AddonInvalidException extends RuntimeException {
+        public AddonInvalidException(String s){
+            super(s);
+        }
+    }
+
+    public void deserializesAddons(Character c, Map<Identifier, String> addonData, boolean validateOrDefault){
         Map<Identifier, BaseAddon> addons = new HashMap<>();
 
         addonData.forEach((addonId, s2) -> {
@@ -177,8 +190,11 @@ public class AddonRegistry<A extends BaseAddon> extends BaseRegistry {
 
             A addon;
 
-            try { addon = PersonalityMod.GSON.fromJson(s2, registryHelper.addonClass()); }
-            catch (JsonSyntaxException e){
+            try {
+                addon = PersonalityMod.GSON.fromJson(s2, registryHelper.addonClass());
+
+                if(validateOrDefault) addon = this.validateOrDefault(addonId, addon);
+            } catch (JsonSyntaxException e){
                 LOGGER.error("[AddonLoading] {} addon for [Name: {}, UUID: {}] was unable to be serialized, setting such to default.", addonId, c.getName(), c.getUUID());
 
                 addon = registryHelper.defaultAddon.get();
