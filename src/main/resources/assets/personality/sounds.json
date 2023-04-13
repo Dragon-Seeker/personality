@@ -1,0 +1,8 @@
+{
+  "glasses_equipped": {
+    "subtitle": "subtitles.personality.glasses",
+    "sounds": [
+      "personality:glasses_equipped"
+    ]
+  }
+}

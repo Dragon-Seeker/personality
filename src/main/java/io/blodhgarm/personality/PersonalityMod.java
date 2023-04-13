@@ -16,6 +16,7 @@ import io.blodhgarm.personality.compat.origins.OriginsAddonRegistry;
 import io.blodhgarm.personality.compat.pehkui.PehkuiAddonRegistry;
 import io.blodhgarm.personality.compat.trinkets.TrinketsGlasses;
 import io.blodhgarm.personality.item.WalkingStick;
+import io.blodhgarm.personality.item.GlassesItem;
 import io.blodhgarm.personality.misc.PersonalityCommands;
 import io.blodhgarm.personality.misc.config.PersonalityConfig;
 import io.blodhgarm.personality.server.CharacterTick;
@@ -42,8 +43,8 @@ public class PersonalityMod implements ModInitializer, PersonalityEntrypoint, It
 
     public static final String MODID = "personality";
 
-    public static Item BASIC_GLASSES;
     public static Item WALKING_STICK = new WalkingStick(new Item.Settings().maxCount(1).group(ItemGroup.COMBAT));
+    public static GlassesItem BASIC_GLASSES = new GlassesItem(new Item.Settings().maxCount(1).group(ItemGroup.TOOLS));
 
     public static Identifier id(String path) {
         return new Identifier(MODID, path);
@@ -52,12 +53,9 @@ public class PersonalityMod implements ModInitializer, PersonalityEntrypoint, It
     @Override
     public void onInitialize() {
         DebugCharacters.init();
+        FieldRegistrationHandler.register(PersonalitySoundEvents.class, MODID, false);
 
-        if(FabricLoader.getInstance().isModLoaded("trinkets")) {
-            TrinketsGlasses.init();
-        } else {
-            BASIC_GLASSES = new Item(new Item.Settings().maxCount(1).group(ItemGroup.TOOLS));
-        }
+        if(FabricLoader.getInstance().isModLoaded("trinkets")) TrinketsGlasses.init();
 
         FieldRegistrationHandler.register(PersonalityMod.class, MODID, false);
 

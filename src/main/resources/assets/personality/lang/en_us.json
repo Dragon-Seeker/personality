@@ -3,15 +3,31 @@
   "personality.gender.female": "Female",
   "personality.gender.non-binary": "Non-Binary",
   "personality.gender.other": "Other",
+
   "personality.info.none": "None",
   "personality.info.general": "General",
   "personality.info.associate": "Associate",
   "personality.info.trusted": "Trusted",
   "personality.info.confidant": "Confidant",
+
   "personality.reveal_range.directed": "Directed",
   "personality.reveal_range.small": "Small",
   "personality.reveal_range.medium": "Medium",
   "personality.reveal_range.large": "Large",
+
+  "personality.addon_registry.name": "Addon",
+  "personality.info_reveal_registry.name": "Info Reveal",
+
+  "personality.keybind.open_subscreen": "Open Character Screen",
+  "personality.keybind.reveal": "Open Reveal Screen",
+
+  "origin.personality.unknown.name": "Unknown",
+  "origin.personality.unknown.description": "Currently Unknown to you, you can ask them or wait until they tell you?",
+
+  "item.personality.basic_glasses": "Glasses",
+  "item.personality.cane" : "Wooden Cane",
+
+  "#divider": "CONFIG TRANSLATIONS \/",
 
   "text.config.personality.title": "Personality Config",
 
@@ -106,13 +122,5 @@
   "text.config.personality.option.showPlayerNameWhenHoveringChat": "Show Player Name when Hovering Chat Messages",
   "text.config.personality.option.showPlayerNamePlateAtChestLevel": "Show Player Nameplate at Chest Level",
 
-  "category.personality": "Personality",
-
-  "personality.keybind.open_subscreen": "Open Character Screen",
-  "personality.keybind.reveal": "Open Reveal Screen",
-
-  "origin.personality.unknown.name": "Unknown",
-  "origin.personality.unknown.description": "Currently Unknown to you, you can ask them or wait until they tell you?",
-  "personality.addon_registry.name": "Addon",
-  "personality.info_reveal_registry.name": "Info Reveal"
+  "category.personality": "Personality"
 }
