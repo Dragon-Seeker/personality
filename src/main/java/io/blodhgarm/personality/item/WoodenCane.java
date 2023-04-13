@@ -11,12 +11,21 @@ import net.minecraft.item.ToolMaterial;
 import net.minecraft.recipe.Ingredient;
 import net.minecraft.tag.ItemTags;
 import net.minecraft.util.Lazy;
+import software.bernie.geckolib3.core.IAnimatable;
+import software.bernie.geckolib3.core.PlayState;
+import software.bernie.geckolib3.core.builder.AnimationBuilder;
+import software.bernie.geckolib3.core.builder.RawAnimation;
+import software.bernie.geckolib3.core.controller.AnimationController;
+import software.bernie.geckolib3.core.manager.AnimationData;
+import software.bernie.geckolib3.core.manager.AnimationFactory;
+import software.bernie.geckolib3.core.manager.InstancedAnimationFactory;
+import software.bernie.geckolib3.util.GeckoLibUtil;
 
-public class WalkingStick extends ToolItem {
+public class WoodenCane extends ToolItem implements IAnimatable {
 
     private final Multimap<EntityAttribute, EntityAttributeModifier> attributeModifiers;
 
-    public WalkingStick(Settings settings) {
+    public WoodenCane(Settings settings) {
         super(WALKING_STICK_MATERIAL, settings);
 
         ImmutableMultimap.Builder<EntityAttribute, EntityAttributeModifier> builder = ImmutableMultimap.builder();
@@ -50,4 +59,29 @@ public class WalkingStick extends ToolItem {
         @Override public Ingredient getRepairIngredient() { return repairIngredient.get(); }
     };
 
+    @Override
+    public void registerControllers(AnimationData animationData) {
+//        AnimationController<WoodenCane> controller = new AnimationController(this, "test", 1000, event -> {
+//            if(event.isMoving()){
+//                return PlayState.CONTINUE;
+//            } else {
+//                return PlayState.STOP;
+//            }
+//        });
+//
+//        AnimationBuilder builder = new AnimationBuilder();
+//
+//        builder.getRawAnimationList()
+//                .add(RawAnimation)
+//
+//        controller.setAnimation(builder);
+//
+//
+//        animationData.addAnimationController();
+    }
+
+    @Override
+    public AnimationFactory getFactory() {
+        return GeckoLibUtil.createFactory(this);
+    }
 }

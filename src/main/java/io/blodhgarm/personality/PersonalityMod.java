@@ -43,8 +43,8 @@ public class PersonalityMod implements ModInitializer, PersonalityEntrypoint, It
 
     public static final String MODID = "personality";
 
-    public static Item WALKING_STICK = new WalkingStick(new Item.Settings().maxCount(1).group(ItemGroup.COMBAT));
     public static GlassesItem BASIC_GLASSES = new GlassesItem(new Item.Settings().maxCount(1).group(ItemGroup.TOOLS));
+    public static Item CANE = new WoodenCane(new Item.Settings().maxCount(1).group(ItemGroup.COMBAT));
 
     public static Identifier id(String path) {
         return new Identifier(MODID, path);
