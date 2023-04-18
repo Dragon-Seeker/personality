@@ -1,4 +1,4 @@
-package io.blodhgarm.personality.client.gui.components.owo;
+package io.blodhgarm.personality.client.gui.components;
 
 import com.mojang.datafixers.util.Function5;
 import io.wispforest.owo.ui.component.ButtonComponent;
@@ -38,20 +38,25 @@ public class CustomButtonComponent extends ButtonComponent {
 
         var textRenderer = MinecraftClient.getInstance().textRenderer;
 
-        var x = this.x + (this.width / 2f) - (textRenderer.getWidth(this.getMessage()) / 2f);
-        var y = this.y + (this.height - 8) / 2f + yTextOffset;
+        try {
+            var x = this.x + (this.width / 2f) - (textRenderer.getWidth(this.getMessage()) / 2f);
+            var y = this.y + (this.height - 8) / 2f + yTextOffset;
 
-        if(!floatPrecision){
-            x = Math.round(x);
-            y = Math.round(y);
+            if (!floatPrecision) {
+                x = Math.round(x);
+                y = Math.round(y);
+            }
+
+            Function5<MatrixStack, Text, Float, Float, Integer, Integer> method = this.textShadow
+                    ? textRenderer::drawWithShadow
+                    : textRenderer::draw;
+
+            method.apply(matrices, this.getMessage(), x, y, color);
+
+            if (this.hovered) this.renderTooltip(matrices, mouseX, mouseY);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            System.out.println(this.getMessage());
+            System.out.println("Something with rendering a given button has imploded and will not render!!!!!");
         }
-
-        Function5<MatrixStack, Text, Float, Float, Integer, Integer> method = this.textShadow
-                ? textRenderer::drawWithShadow
-                : textRenderer::draw;
-
-        method.apply(matrices, this.getMessage(), x, y, color);
-
-        if (this.hovered) this.renderTooltip(matrices, mouseX, mouseY);
     }
 }
