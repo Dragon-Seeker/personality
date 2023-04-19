@@ -1,19 +1,29 @@
 package io.blodhgarm.personality.client.gui.screens;
 
 import com.mojang.authlib.GameProfile;
+import com.mojang.blaze3d.systems.RenderSystem;
+import io.blodhgarm.personality.Networking;
+import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.character.Character;
 import io.blodhgarm.personality.api.character.CharacterManager;
 import io.blodhgarm.personality.client.ClientCharacters;
+import io.blodhgarm.personality.client.gui.CharacterViewMode;
 import io.blodhgarm.personality.client.gui.ThemeHelper;
-import io.blodhgarm.personality.client.gui.components.owo.character.CharacterGridLayout;
-import io.blodhgarm.personality.client.gui.components.owo.LabeledGridLayout;
-import io.blodhgarm.personality.client.gui.components.ButtonAddon;
-import io.blodhgarm.personality.client.gui.components.owo.CustomButtonComponent;
-import io.blodhgarm.personality.client.gui.components.owo.MultiToggleButton;
-import io.blodhgarm.personality.client.gui.utils.CustomSurfaces;
+import io.blodhgarm.personality.client.gui.utils.owo.layout.ButtonAddon;
+import io.blodhgarm.personality.client.gui.components.grid.LabeledGridLayout;
+import io.blodhgarm.personality.client.gui.components.grid.MultiToggleButton;
+import io.blodhgarm.personality.client.gui.components.grid.SearchbarComponent;
+import io.blodhgarm.personality.client.gui.components.character.CharacterBasedGridLayout;
+import io.blodhgarm.personality.client.gui.screens.utility.ConfirmationScreen;
+import io.blodhgarm.personality.client.gui.screens.utility.PlayerSelectionScreen;
+import io.blodhgarm.personality.client.gui.utils.owo.ExtraSurfaces;
 import io.blodhgarm.personality.client.gui.utils.ModifiableCollectionHelper;
 import io.blodhgarm.personality.client.gui.utils.owo.VariantButtonSurface;
+import io.blodhgarm.personality.client.gui.utils.polygons.ComponentAsPolygon;
 import io.blodhgarm.personality.misc.pond.owo.ButtonAddonDuck;
+import io.blodhgarm.personality.misc.pond.owo.InclusiveBoundingArea;
+import io.blodhgarm.personality.packets.AdminActionPackets.*;
+import io.blodhgarm.personality.server.ServerCharacters;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.Components;
@@ -23,25 +33,27 @@ import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.*;
 import io.wispforest.owo.ui.util.Drawer;
-import me.xdrop.fuzzywuzzy.FuzzySearch;
-import me.xdrop.fuzzywuzzy.ToStringFunction;
-import me.xdrop.fuzzywuzzy.model.BoundExtractedResult;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.client.toast.SystemToast;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
+import org.apache.commons.collections4.list.UnmodifiableList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
-public class AdminCharacterScreen extends BaseOwoScreen<FlowLayout> implements ModifiableCollectionHelper<Void, Character> {
+public class AdminCharacterScreen extends BaseOwoScreen<FlowLayout> implements ModifiableCollectionHelper<AdminCharacterScreen, Character> {
+
+    private static final Identifier ADMIN_BUTTON_TEXTURE = PersonalityMod.id("textures/gui/admin_screen_buttons.png");
 
     private int charactersPerPage = 100;
     private int waitTimeToUpdatePages = -1;
@@ -49,12 +61,12 @@ public class AdminCharacterScreen extends BaseOwoScreen<FlowLayout> implements M
     private int pageCount = 0;
     private int currentPageNumber = 1;
 
-    private final List<Character> defaultCharacterView = List.copyOf(ClientCharacters.INSTANCE.characterLookupMap().valueList());
+    private final List<Character> defaultCharacterView = UnmodifiableList.unmodifiableList(ClientCharacters.INSTANCE.characterLookupMap().valueList());
     private final List<Character> characterView = new ArrayList<>();
 
-    private List<Character> selectedCharacters = new ArrayList<>();
+    private CharacterBasedGridLayout characterLayout;
 
-    private SearchType type = SearchType.STRICT;
+    private final List<String> selectedCharacters = new ArrayList<>();
 
     @Nullable private FilterFunc<Character> cached_filter = null;
     @Nullable private Comparator<Character> cached_comparator = null;
@@ -90,188 +102,467 @@ public class AdminCharacterScreen extends BaseOwoScreen<FlowLayout> implements M
     @Override
     protected void build(FlowLayout rootComponent) {
         FlowLayout mainLayout = Containers.verticalFlow(Sizing.content(), Sizing.content())
-                .configure(layout -> {
-                    layout.surface(ThemeHelper.dynamicSurface())
-                            .horizontalAlignment(HorizontalAlignment.CENTER)
-                            .padding(Insets.of(4));
-                });
+                .configure((FlowLayout layout) -> {
+                        layout.surface(ThemeHelper.dynamicSurface())
+                                .horizontalAlignment(HorizontalAlignment.CENTER)
+                                .padding(Insets.of(4))
+                                .allowOverflow(true);
+                }).child(
+                        new SearchbarComponent<>(this, Character::getName, this::updateCharacterListComponent)
+                                .configure((SearchbarComponent<?> component) -> {
+                                        component.adjustTextboxWidth(Sizing.fixed(200))
+                                                .verticalAlignment(VerticalAlignment.CENTER);
+                                }).build()
+                );
 
-        FlowLayout topActionBar = Containers.horizontalFlow(Sizing.content(), Sizing.content())
-                .configure(layout -> {
-                    layout.verticalAlignment(VerticalAlignment.CENTER);
-                });
+        //---- Admin Buttons
 
-        topActionBar.child(
-                Components.textBox(Sizing.fixed(200), "")
-                        .configure((TextBoxComponent component) -> {
-                            component.onChanged()
-                                    .subscribe(value -> {
-                                        type.filterAndSort(value, Character::getName, this);
+        List<Component> adminButtons = new ArrayList<>();
 
-                                        updateCharacterListComponent();
-                                    });
-                        })
-                        .id("main_search_box")
-                        .margins(Insets.of(3, 3, 4, 4))
-        );
+        BiFunction<List<GameProfile>, List<Character>, MutableText> textAppend = (gameProfiles, selectedCharacters) -> {
+            MutableText mutableText = Text.empty();
 
-        topActionBar.child(
-                new CustomButtonComponent(Text.of(""), buttonComponent -> {
-                    type = type.getNextType();
-                    type.setButtonTextForNext(buttonComponent);
+            for (int i = 0; i < selectedCharacters.size(); i++) {
+                boolean isSingleEntry = selectedCharacters.size() == 1;
+                boolean showPlayerInfo = !gameProfiles.isEmpty();
 
-                    type.filterAndSort(rootComponent.childById(TextBoxComponent.class, "main_search_box").getText(), Character::getName, this);
+                String label = (!isSingleEntry && !showPlayerInfo) ? String.valueOf(i + 1) : "Character";
+                String spacer = isSingleEntry ? "" : "  ";
 
-                    updateCharacterListComponent();
-                }).configure((CustomButtonComponent c) -> {
-                    c.sizing(Sizing.fixed(11), Sizing.fixed(11));
+                if (!isSingleEntry) mutableText.append(Text.literal((i + 1) + ": \n").formatted(Formatting.BOLD, Formatting.GRAY));
 
-                    type.setButtonTextForNext(c);
+                mutableText
+                        .append(Text.literal(spacer + label + ": ").formatted(Formatting.BOLD))
+                        .append(Text.of(selectedCharacters.get(0).getName()));
 
-                    c.setYTextOffset(2);
-                    c.setFloatPrecision(true);
-                })
-        );
+                if (showPlayerInfo) {
+                    GameProfile profile = MinecraftClient.getInstance().getSessionService()
+                            .fillProfileProperties(gameProfiles.get(i), false);
 
-        //TODO: Future development to add functionality to the Screen with the similar functions to the already existing commands
+                    mutableText
+                            .append(Text.literal("\n" + spacer + "Player: ").formatted(Formatting.BOLD))
+                            .append(Text.of(profile.getName()));
+                }
+
+                if(i + 1 != selectedCharacters.size()) mutableText.append("\n");
+            }
+
+            return mutableText;
+        };
+
         if(CharacterManager.hasModerationPermissions(MinecraftClient.getInstance().player)){
-            //Associate
-            //Disassociate
+            List<Component> components = List.of(
+                //Associate Action
+                buildAdminButton("Associate", 16, 3, component -> {
+                    if(!shouldDoAdminAction("Associate", false)) return;
+
+                    List<Character> selectedCharacters = this.getSelectedCharacters();
+
+                    PlayerSelectionScreen screen = new PlayerSelectionScreen(this, playerEntities -> {
+                        if(playerEntities.isEmpty()) return;
+
+                        PlayerListEntry p = playerEntities.get(0);
+                        Character c = selectedCharacters.get(0);
+
+                        ConfirmationScreen confirmation = new ConfirmationScreen(this, () -> Networking.sendC2S(new AssociateAction(c.getUUID(), p.getProfile().getId().toString())))
+                                .setLabel(Text.literal("Are you sure you want to Attempt to ").append(Text.literal("Associate:").formatted(Formatting.BOLD)))
+                                .setBodyText(
+                                        textAppend.apply(List.of(p.getProfile()), selectedCharacters)
+//                                        Text.empty()
+//                                        .append(Text.literal("Character: ").formatted(Formatting.BOLD)).append(Text.of(c.getName() + "\n"))
+//                                        .append(Text.literal("Player: ").formatted(Formatting.BOLD)).append(Text.of(p.getProfile().getName() + ""))
+                                );
+
+                        MinecraftClient.getInstance().setScreen(confirmation);
+                    }).setSingleSelection(true);
+
+                    MinecraftClient.getInstance().setScreen(screen);
+                }),
+                //Disassociate Action
+                buildAdminButton("Disassociate", 0, 3, component -> {
+                    if(!shouldDoAdminAction("Disassociate", true)) return;
+
+                    MutableText allCharactersText = Text.empty();
+
+                    List<Character> selectedCharacters = this.getSelectedCharacters();
+
+                    for (int i = 0; i < selectedCharacters.size(); i++) {
+                        String label = selectedCharacters.size() == 1 ? "Character" : String.valueOf(i + 1);
+
+                        allCharactersText
+                                .append(Text.literal(label + ": ").formatted(Formatting.BOLD)).append(Text.of(selectedCharacters.get(0).getName() + "\n"));
+                    }
+
+                    Character c = selectedCharacters.get(0);
+                    String playerUUID = ClientCharacters.INSTANCE.getPlayerUUID(c.getUUID());
+
+                    if(playerUUID == null) {
+                        SystemToast.add(
+                                MinecraftClient.getInstance().getToastManager(),
+                                SystemToast.Type.CHAT_PREVIEW_WARNING,
+                                Text.of("Character isn't Associated to anyone!"),
+                                Text.of("The selected Character don't have any player associated to them.")
+                        );
+
+                        return;
+                    }
+
+                    ConfirmationScreen confirmation = new ConfirmationScreen(this, () -> Networking.sendC2S(new DisassociateAction(c.getUUID(), true)))
+                            .setLabel(Text.literal("Are you sure you want to Attempt to ").append(Text.literal("Disassociate:").formatted(Formatting.BOLD)))
+                            .setBodyText(
+                                    textAppend.apply(selectedCharacters.stream()
+                                            .map(c1 -> {
+                                                String pUUIDstring = ClientCharacters.INSTANCE.getPlayerUUID(c1);
+
+                                                UUID pUUID = pUUIDstring != null ? UUID.fromString(pUUIDstring) : null;
+
+                                                return new GameProfile(pUUID, "[ERROR: UNKNOWN NAME]");
+                                            }).toList(), selectedCharacters
+                                    )
+//                                    Text.empty()
+//                                    .append(Text.literal("Character: ").formatted(Formatting.BOLD)).append(Text.of(c.getName() + "\n"))
+//                                    .append(Text.literal("Player: ").formatted(Formatting.BOLD)).append(Text.of(playerProfile.getName() + ""))
+                            );
+
+                    MinecraftClient.getInstance().setScreen(confirmation);
+                })
+            );
+
+            adminButtons.addAll(components);
         }
 
         if(CharacterManager.hasAdministrationPermissions(MinecraftClient.getInstance().player)){
-            //Edit
-            //Kill
-            //Delete
+            List<Component> components = List.of(
+                    //Edit Action
+                    buildAdminButton("Edit", 32, 3, component -> {
+                        CharacterBasedGridLayout layout = this.uiAdapter.rootComponent.childById(CharacterBasedGridLayout.class, "character_list");
+
+                        layout.changeMode((layout.getMode() == CharacterViewMode.VIEWING) ? CharacterViewMode.EDITING : CharacterViewMode.VIEWING);
+                    }),
+                    //Revive Action
+                    buildAdminButton("Revive", 48, 3, component -> {
+                        if(!shouldDoAdminAction("Revive", true)) return;
+
+                        List<Character> selectedCharacters = this.getSelectedCharacters();
+
+                        Consumer<@Nullable PlayerListEntry> reviveAction = (p) -> {
+                            MutableText allCharactersText = Text.empty();
+
+                            for (int i = 0; i < selectedCharacters.size(); i++) {
+                                String label = selectedCharacters.size() == 1 ? "Character" : String.valueOf(i + 1);
+
+                                allCharactersText
+                                        .append(Text.literal(label + ": ").formatted(Formatting.BOLD))
+                                        .append(Text.of(selectedCharacters.get(0).getName() + "\n"));
+                            }
+
+                            AtomicReference<String> pUUID = new AtomicReference<>("");
+
+                            if(p != null){
+                                pUUID.set(p.getProfile().getId().toString());
+                                allCharactersText.append(Text.literal("Player: ").formatted(Formatting.BOLD)).append(Text.of(p.getProfile().getName() + ""));
+                            }
+
+                            ConfirmationScreen confirmation = new ConfirmationScreen(this, () -> Networking.sendC2S(new CharacterBasedAction(selectedCharacters.stream().map(Character::getUUID).toList(), "revive", pUUID.get())))
+                                    .setLabel(Text.literal("Are you sure you want to Attempt to ").append(Text.literal("Revive:").formatted(Formatting.BOLD)))
+                                    .setBodyText(Text.empty().append(allCharactersText));
+
+                            MinecraftClient.getInstance().setScreen(confirmation);
+                        };
+
+                        if(selectedCharacters.size() == 1){
+                            PlayerSelectionScreen screen = new PlayerSelectionScreen(this, playerEntities -> {
+                                reviveAction.accept(!playerEntities.isEmpty() ? playerEntities.get(0) : null);
+                            }).setSingleSelection(true)
+                                    .allowForNoSelection(true);
+
+                            MinecraftClient.getInstance().setScreen(screen);
+                        } else {
+                            reviveAction.accept(null);
+                        }
+                    }),
+                    //Kill Action
+                    buildAdminButton("Kill", 64, 3, component -> {
+                        if(!shouldDoAdminAction("Kill", true)) return;
+
+                        List<Character> selectedCharacters = this.getSelectedCharacters();
+
+                        MutableText allCharactersText = Text.empty();
+
+                        for (int i = 0; i < selectedCharacters.size(); i++) {
+                            Character c = selectedCharacters.get(i);
+
+                            String label = selectedCharacters.size() == 1 ? "Character" : String.valueOf(i + 1);
+
+                            allCharactersText
+                                    .append(Text.literal(label + ": ").formatted(Formatting.BOLD))
+                                    .append(Text.of(c.getName() + "\n"));
+                        }
+
+                        ConfirmationScreen confirmation = new ConfirmationScreen(this, () -> Networking.sendC2S(new CharacterBasedAction(selectedCharacters.stream().map(Character::getUUID).toList(), "kill")))
+                                .setLabel(Text.literal("Are you sure you want to Attempt to ").append(Text.literal("Kill:").formatted(Formatting.BOLD)))
+                                .setBodyText(Text.empty().append(allCharactersText));
+
+                        MinecraftClient.getInstance().setScreen(confirmation);
+                    }),
+                    //Delete Action
+                    buildAdminButton("Delete", 80, 0, component -> {
+                        if(!shouldDoAdminAction("Delete", true)) return;
+
+                        List<Character> selectedCharacters = this.getSelectedCharacters();
+
+                        MutableText allCharactersText = Text.empty();
+
+                        for (int i = 0; i < selectedCharacters.size(); i++) {
+                            Character c = selectedCharacters.get(i);
+
+                            String label = selectedCharacters.size() == 1 ? "Character" : String.valueOf(i + 1);
+
+                            allCharactersText
+                                    .append(Text.literal(label + ": ").formatted(Formatting.BOLD)).append(Text.of(c.getName() + "\n"));
+                        }
+
+                        ConfirmationScreen confirmation = new ConfirmationScreen(this, () -> Networking.sendC2S(new CharacterBasedAction(selectedCharacters.stream().map(Character::getUUID).toList(), "delete")))
+                                .setLabel(Text.literal("Are you sure you want to Attempt to ").append(Text.literal("Delete:").formatted(Formatting.BOLD)))
+                                .setBodyText(Text.empty().append(allCharactersText));
+
+                        MinecraftClient.getInstance().setScreen(confirmation);
+                    })
+            );
+
+            adminButtons.addAll(components);
         }
 
-        mainLayout.child(topActionBar);
+        if(!adminButtons.isEmpty()){
+            FlowLayout adminButtonSidebar = Containers.verticalFlow(Sizing.content(), Sizing.content())
+                    .configure((FlowLayout component) -> {
+                        component.padding(Insets.of(6))
+                                .surface(ThemeHelper.dynamicSurface())
+                                .verticalAlignment(VerticalAlignment.CENTER)
+                                .positioning(Positioning.relative(-20, 50)); //30
+                    })
+                    .children(adminButtons);
+
+            ((InclusiveBoundingArea<FlowLayout>) mainLayout)
+                    .addInclusionZone(new ComponentAsPolygon(adminButtonSidebar))
+                    .child(adminButtonSidebar);
+        }
+
+        //----
 
         List<MultiToggleButton> buttons = new ArrayList<>();
 
-        mainLayout.child(Containers.verticalScroll(Sizing.content(), Sizing.fixed(155),
-                new CharacterGridLayout(Sizing.content(), Sizing.content(), this, (mode, baseCharacter) -> new CharacterScreen(mode, null, baseCharacter, true))
-                        .addBuilder(0,
-                            isParentVertical -> {
-                                return Containers.horizontalFlow(Sizing.content(), Sizing.content())
-                                        .child(buildButton(
+        //TODO: MULTI THREAD THIS TO PREVENT HUGE SPIKE THE STALES MINECRAFT
+        CharacterBasedGridLayout characterLayout = new CharacterBasedGridLayout(Sizing.content(), Sizing.content(), this)
+                .configure((CharacterBasedGridLayout layout) -> {
+                    layout.openAsAdmin(true)
+                            .setRowDividingLine(1)
+                            .setColumnDividingLine(1)
+                            .id("character_list");
+                })
+                .addBuilder(0,
+                        isParentVertical -> {
+                            return Containers.verticalFlow(Sizing.content(), Sizing.content())
+                                    .child(buildButton(
                                             buttons,
-                                            component -> {
-                                                this.sortEntries(null);
-                                            },
-                                            component -> {
-                                                this.sortEntries((ch1, ch2) -> {
-                                                    boolean character1Selected = this.selectedCharacters.contains(ch1);
-                                                    boolean character2Selected = this.selectedCharacters.contains(ch2);
+                                            component -> this.sortEntries(null),
+                                            component -> this.sortEntries((ch1, ch2) -> {
+                                                boolean character1Selected = this.selectedCharacters.contains(ch1.getUUID());
+                                                boolean character2Selected = this.selectedCharacters.contains(ch2.getUUID());
 
-                                                    int compValue = 1;
+                                                int compValue = 1;
 
-                                                    if(character1Selected == character2Selected) compValue = 0;
-                                                    if(character1Selected) compValue = -1;
+                                                if(character1Selected == character2Selected) compValue = 0;
+                                                if(character1Selected) compValue = -1;
 
-                                                    return compValue;
-                                                });
-                                            },
-                                            component -> {
-                                                this.sortEntries((ch1, ch2) -> {
-                                                    boolean character1Selected = this.selectedCharacters.contains(ch1);
-                                                    boolean character2Selected = this.selectedCharacters.contains(ch2);
+                                                return compValue;
+                                            }),
+                                            component -> this.sortEntries((ch1, ch2) -> {
+                                                boolean character1Selected = this.selectedCharacters.contains(ch1.getUUID());
+                                                boolean character2Selected = this.selectedCharacters.contains(ch2.getUUID());
 
-                                                    int compValue = -1;
+                                                int compValue = -1;
 
-                                                    if(character1Selected == character2Selected) compValue = 0;
-                                                    if(character1Selected) compValue = 1;
+                                                if(character1Selected == character2Selected) compValue = 0;
+                                                if(character1Selected) compValue = 1;
 
-                                                    return compValue;
-                                                });
-                                            }
-                                        ));
-                            },
-                            (character, mode, isParentVertical) -> {
-                                return Components.button(Text.of(""), buttonComponent -> {
-                                        if(!selectedCharacters.contains(character)) {
-                                            selectedCharacters.add((Character) character);
+                                                return compValue;
+                                            })
+                                    )).margins(Insets.bottom(1));
+                        },
+                        (character, mode, isParentVertical) -> {
+                            return Components.button(Text.of(""), buttonComponent -> {
+                                        if(!selectedCharacters.contains(character.getUUID())) {
+                                            selectedCharacters.add(character.getUUID());
                                         } else {
-                                            selectedCharacters.remove((Character) character);
+                                            selectedCharacters.remove(character.getUUID());
                                         }
                                     }).renderer((matrices, button, delta) -> {
-                                        boolean isSelected = selectedCharacters.contains(character);
+                                        boolean isSelected = selectedCharacters.contains(character.getUUID());
 
                                         ButtonComponent.Renderer.VANILLA.draw(matrices, button, delta);
 
                                         if(isSelected) {
-                                            Drawer.drawRectOutline(matrices, button.x + 2, button.y + 2, button.width() - 4, button.height() - 4, new Color(0.95f, 0.95f, 0.95f).argb());
+                                            Drawer.drawRectOutline(matrices, button.x() + 2, button.y() + 2, button.width() - 4, button.height() - 4, new Color(0.95f, 0.95f, 0.95f).argb());
                                         }
                                     })
                                     .sizing(Sizing.fixed(8));
-                            }
-                        )
-                        .addBuilder(
-                            isParentVertical -> {
-                                return Components.label(Text.of("Created By"));
-                            },
-                            (character, mode, isParentVertical) -> {
-                                MutableText name = Text.literal("");
+                        }
+                ).addBuilder(
+                        isParentVertical -> Components.label(Text.of("Created By")),
+                        (character, mode, isParentVertical) -> {
+                            MutableText name = Text.literal("");
 
-                                AtomicBoolean wasSuccessful = new AtomicBoolean();
+                            AtomicBoolean wasSuccessful = new AtomicBoolean();
 
-                                try {
-                                    GameProfile profile = MinecraftClient.getInstance().getSessionService()
-                                            .fillProfileProperties(new GameProfile(UUID.fromString(character.getPlayerUUID()), ""), false);
+                            try {
+                                GameProfile profile = MinecraftClient.getInstance().getSessionService()
+                                        .fillProfileProperties(new GameProfile(UUID.fromString(character.getPlayerUUID()), ""), false);
 
-                                    String playerNameString = profile.getName();
+                                String playerNameString = profile.getName();
 
-                                    if(!playerNameString.isBlank()){
-                                        name = Text.literal(playerNameString);
+                                if(!playerNameString.isBlank()){
+                                    name = Text.literal(playerNameString);
 
-                                        wasSuccessful.set(true);
-                                    }
-                                } catch (IllegalArgumentException ignored){}
-
-                                if(!wasSuccessful.get()){
-                                    name = (!character.getPlayerUUID().isBlank()
-                                            ? Text.literal(character.getPlayerUUID())
-                                            : Text.literal("Error: Character missing Player UUID Info!"))
-                                            .formatted(Formatting.RED);
+                                    wasSuccessful.set(true);
                                 }
+                            } catch (IllegalArgumentException ignored){}
 
-                                return Components.label(name)
-                                        .maxWidth(125)
-                                        .margins(Insets.of(2))
-                                        .configure(component -> {
-                                            if(!wasSuccessful.get()) component.tooltip(Text.of("Could not find the given Players name, showing UUID"));
-                                        });
+                            if(!wasSuccessful.get()){
+                                name = (!character.getPlayerUUID().isBlank()
+                                        ? Text.literal(character.getPlayerUUID())
+                                        : Text.literal("Error: Character missing Player UUID Info!"))
+                                        .formatted(Formatting.RED);
                             }
-                        )
-                        .setRowDividingLine(1)
-                        .setColumnDividingLine(1)
-                        .id("character_list")
-                ).surface(CustomSurfaces.INVERSE_PANEL)
-                .padding(Insets.of(4))
+
+                            return Components.label(name)
+                                    .maxWidth(125)
+                                    .margins(Insets.of(2))
+                                    .configure(component -> {
+                                        if(!wasSuccessful.get()) component.tooltip(Text.of("Could not find the given Players name, showing UUID"));
+                                    });
+                        }
+                ).addBuilder(
+                        isParentVertical -> {
+                            return Containers.horizontalFlow(Sizing.content(), Sizing.content())
+                                    .child(
+                                            Components.label(Text.of("Status"))
+                                                    .margins(Insets.right(3))
+                                    )
+                                    .child(buildButton(
+                                            buttons,
+                                            component -> this.sortEntries(null),
+                                            component -> this.sortEntries((ch1, ch2) -> {
+                                                int compValue = 1;
+
+                                                if(ch1.isDead() == ch2.isDead()) compValue = 0;
+                                                if(ch1.isDead()) compValue = -1;
+
+                                                return compValue;
+                                            }),
+                                            component -> this.sortEntries((ch1, ch2) -> {
+                                                int compValue = -1;
+
+                                                if(ch1.isDead() == ch2.isDead()) compValue = 0;
+                                                if(ch1.isDead()) compValue = 1;
+
+                                                return compValue;
+                                            }))
+                                    );
+                        },
+                        (character, mode, isParentVertical) -> {
+                            Text labelText = (character.isDead())
+                                    ? Text.literal("Deceased").formatted(Formatting.RED)
+                                    : Text.literal("Living").formatted(Formatting.GREEN);
+
+                            return Components.label(labelText)
+                                    .margins(Insets.of(2));
+                        }
+                );
+
+        this.characterLayout = characterLayout;
+
+        mainLayout.child(
+                Containers.verticalScroll(Sizing.content(), Sizing.fixed(155), characterLayout)
+                        .surface(ExtraSurfaces.INVERSE_PANEL)
+                        .padding(Insets.of(4))
         );
 
-        FlowLayout pageBar = Containers.horizontalFlow(Sizing.content(), Sizing.content())
-                .configure(layout -> {
-                    layout.verticalAlignment(VerticalAlignment.CENTER)
-                            .margins(Insets.vertical(2))
-                            .id("page_bar");
-                });
+        //----
 
-        mainLayout.child(pageBar);
+        mainLayout.child(Containers.horizontalFlow(Sizing.content(), Sizing.content())
+                .configure((FlowLayout layout) -> {
+                        layout.verticalAlignment(VerticalAlignment.CENTER)
+                                .margins(Insets.vertical(2))
+                                .id("page_bar");
+                }));
 
-        FlowLayout bottomActionBar = Containers.horizontalFlow(Sizing.content(), Sizing.content());
-
-        //--------------------------------------------------------
-
-
-        //--------------------------------------------------------
-
-        mainLayout.child(bottomActionBar);
+        //----
 
         rootComponent.child(mainLayout.positioning(Positioning.relative(50, 50)));
 
+        //----
+
         applyFiltersAndSorting();
     }
+
+    //---
+
+    @SafeVarargs
+    public static MultiToggleButton buildButton(List<MultiToggleButton> buttons, Consumer<ButtonComponent> ...onToggleEvents){
+        return (MultiToggleButton) MultiToggleButton.of(
+                        List.of(
+                                new MultiToggleButton.ToggleVariantInfo("-", "Normal Order", onToggleEvents[0]),
+                                new MultiToggleButton.ToggleVariantInfo("⏶", "Sort Up", onToggleEvents[1]),
+                                new MultiToggleButton.ToggleVariantInfo("⏷", "Sort Down", onToggleEvents[2])
+                        )
+                ).linkButton(buttons)
+                .sizing(Sizing.fixed(9), Sizing.fixed(9)); //12
+    }
+
+    private static Component buildAdminButton(String tooltip, int uOffset, int bottomMargin, Consumer<ButtonComponent> buttonAction){
+        return Components.button(Text.empty(), buttonAction)
+                .renderer((matrices, button, delta) -> {
+                    ButtonComponent.Renderer.VANILLA.draw(matrices, button, delta);
+
+                    RenderSystem.enableDepthTest();
+                    RenderSystem.setShaderTexture(0, ADMIN_BUTTON_TEXTURE);
+                    Drawer.drawTexture(matrices, button.x + 4, button.y + 4, uOffset, 0, 16, 16, 96, 16);
+                })
+                .tooltip(Text.of(tooltip))
+                .sizing(Sizing.fixed(24), Sizing.fixed(24)) // 22
+                .margins(Insets.bottom(bottomMargin));
+    }
+
+    public boolean shouldDoAdminAction(String action, boolean allowManySelected){
+        boolean doAction = true;
+
+        if(!allowManySelected && this.selectedCharacters.size() > 1){
+            SystemToast.add(
+                    MinecraftClient.getInstance().getToastManager(),
+                    SystemToast.Type.CHAT_PREVIEW_WARNING,
+                    Text.of("Action has To Many Selected!"),
+                    Text.of(action + " action isn't allowed to have more than one target!")
+            );
+
+            doAction = false;
+        }
+
+        if(this.selectedCharacters.isEmpty()){
+            SystemToast.add(
+                    MinecraftClient.getInstance().getToastManager(),
+                    SystemToast.Type.CHAT_PREVIEW_WARNING,
+                    Text.of("Action has no Character Selected!"),
+                    Text.of("You haven't made a selection on any character!")
+            );
+
+            doAction = false;
+        }
+
+        return doAction;
+    }
+
+    //---
 
     public void buildPageBar(FlowLayout rootComponent){
         FlowLayout pageBar = rootComponent.childById(FlowLayout.class, "page_bar");
@@ -282,13 +573,7 @@ public class AdminCharacterScreen extends BaseOwoScreen<FlowLayout> implements M
 
         // 9 Max count
 
-        int startingPageNumber;
-
-        if(pageCount < 9 || this.currentPageNumber <= 4){
-            startingPageNumber = 1;
-        } else {
-            startingPageNumber = this.currentPageNumber - 4;
-        }
+        int startingPageNumber = (pageCount < 9 || this.currentPageNumber <= 4) ? 1 : this.currentPageNumber - 4;
 
         int maxPageCount = Math.min(startingPageNumber + 9, pageCount);
 
@@ -301,27 +586,27 @@ public class AdminCharacterScreen extends BaseOwoScreen<FlowLayout> implements M
             String buttonId = String.valueOf(componentPageNumber);
 
             pageBar.child(
-                    Containers.horizontalFlow(Sizing.fixed(12), Sizing.fixed(12))
+                    ((ButtonAddonDuck<FlowLayout>) Containers.horizontalFlow(Sizing.fixed(12), Sizing.fixed(12))
                             .child(
-                                    Components.label(Text.literal(buttonId))
-                                            .id("button_label")
+                                    Components.label(Text.literal(buttonId)).id("button_label")
                             )
                             .horizontalAlignment(HorizontalAlignment.CENTER)
-                            .verticalAlignment(VerticalAlignment.CENTER)
-                            .configure(component -> {
-                                ((ButtonAddonDuck<FlowLayout>) component)
-                                        .setButtonAddon(layout -> {
-                                            return new ButtonAddon<>(layout)
-                                                    .useCustomButtonSurface(VariantButtonSurface.surfaceLike(Size.square(3), Size.square(48), false, ThemeHelper.isDarkMode(), false))
-                                                    .onPress(button -> {
-                                                            if(this.currentPageNumber != componentPageNumber){
-                                                                travelToSelectPage(componentPageNumber);
+                            .verticalAlignment(VerticalAlignment.CENTER))
+                            .setButtonAddon(layout -> {
+                                return new ButtonAddon<>(layout)
+                                        .useCustomButtonSurface(
+                                                VariantButtonSurface.surfaceLike(Size.square(3), Size.square(48), false, ThemeHelper.isDarkMode(), false)
+                                        )
+                                        .onPress(button -> {
+                                            if(this.currentPageNumber == componentPageNumber) return;
 
-                                                                buildPageBar(this.uiAdapter.rootComponent);
-                                                            }
-                                                    });
-                                        }).margins((componentPageNumber != startingPageNumber) ? Insets.left(2) : Insets.of(0));
-                            }).id("page_button_" + buttonId)
+                                            travelToSelectPage(componentPageNumber);
+
+                                            buildPageBar(this.uiAdapter.rootComponent);
+                                        });
+                            })
+                            .margins((componentPageNumber != startingPageNumber) ? Insets.left(2) : Insets.of(0))
+                            .id("page_button_" + buttonId)
             );
         }
 
@@ -343,10 +628,7 @@ public class AdminCharacterScreen extends BaseOwoScreen<FlowLayout> implements M
 
         gridLayout.clearEntries();
 
-        if(this.characterView.size() > 0) {
-            gridLayout.addEntries(this.characterView
-                    .subList(startingIndex, endingIndex));
-        }
+        if(this.characterView.size() > 0) gridLayout.addEntries(this.characterView.subList(startingIndex, endingIndex));
 
         gridLayout.rebuildComponents();
 
@@ -362,20 +644,25 @@ public class AdminCharacterScreen extends BaseOwoScreen<FlowLayout> implements M
         this.currentPageNumber = newPageNumber;
     }
 
-    @SafeVarargs
-    private MultiToggleButton buildButton(List<MultiToggleButton> buttons, Consumer<ButtonComponent> ...onToggleEvents){
-        return (MultiToggleButton) MultiToggleButton.of(
-                List.of(
-                    new MultiToggleButton.ToggleVariantInfo("-", "Normal Order", onToggleEvents[0]),
-                    new MultiToggleButton.ToggleVariantInfo("⏶", "Sort Up", onToggleEvents[1]),
-                    new MultiToggleButton.ToggleVariantInfo("⏷", "Sort Down", onToggleEvents[2])
-                )
-        ).linkButton(buttons)
-                .sizing(Sizing.fixed(9), Sizing.fixed(9)); //12
+    public void shouldAttemptUpdate(Character c){
+        if(characterLayout.getCharactersWithinLayout().stream().anyMatch(c1 -> Objects.equals(c.getUUID(), c1.getUUID()))){
+            applyFiltersAndSorting();
+
+            this.travelToSelectPage(this.currentPageNumber);
+        }
+    }
+
+    public List<Character> getSelectedCharacters(){
+        return this.selectedCharacters.stream()
+                .map(ClientCharacters.INSTANCE::getCharacter)
+                .toList();
+    }
+
+    public void clearSelectedEntries(){
+        this.selectedCharacters.clear();
     }
 
     //-------------------------------------------------------
-
 
     @Override public void setFilter(FilterFunc<Character> filter) { this.cached_filter = filter; }
     @Override public FilterFunc<Character> getFilter() { return this.cached_filter; }
@@ -399,61 +686,8 @@ public class AdminCharacterScreen extends BaseOwoScreen<FlowLayout> implements M
     @Override public List<Character> getList() { return this.characterView; }
     @Override public List<Character> getDefaultList() { return this.defaultCharacterView; }
 
-    public enum SearchType {
-        STRICT("*", "Toggle Strict Filtering"),
-        FUZZY("~", "Toggle Fuzzy Filtering");
-
-        public final String buttonText;
-        public final String tooltipText;
-
-        SearchType(String buttonText, String tooltipText){
-            this.buttonText = buttonText;
-            this.tooltipText = tooltipText;
-        }
-
-        public <V> void filterAndSort(String query, ToStringFunction<V> toStringFunc, ModifiableCollectionHelper<?, V> helper){
-            switch (this){
-                case STRICT -> {
-                    Predicate<V> filter = null;
-
-                    if(!query.isEmpty()) {
-                        String regex = Arrays.stream(query.toLowerCase().split(" "))
-                                .filter(s -> !s.trim().equals(""))
-                                .collect(Collectors.joining("|"));
-
-                        filter = v -> Pattern.compile(regex, Pattern.CASE_INSENSITIVE)
-                                .asPredicate()
-                                .test(toStringFunc.apply(v));
-                    }
-
-                    helper.filterEntries(filter);
-                }
-                case FUZZY -> {
-                    helper.filterEntriesFunc(!query.isEmpty()
-                            ? helper1 -> FuzzySearch.extractAll(query, helper.getDefaultList(), toStringFunc, 60)
-                                    .stream()
-                                    .map(BoundExtractedResult::getReferent)
-                                    .toList()
-                            : null);
-                }
-            }
-        };
-
-        public SearchType getNextType(){
-            SearchType[] types = SearchType.values();
-
-            int nextIndex = this.ordinal() + 1;
-
-            if(nextIndex >= types.length) nextIndex = 0;
-
-            return types[nextIndex];
-        }
-
-        public void setButtonTextForNext(ButtonComponent component){
-            SearchType nextType = getNextType();
-
-            component.setMessage(Text.of(nextType.buttonText));
-            component.tooltip(Text.of(nextType.tooltipText));
-        }
+    @Override
+    public boolean shouldPause() {
+        return false;
     }
 }

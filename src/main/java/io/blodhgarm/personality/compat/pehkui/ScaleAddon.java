@@ -1,6 +1,7 @@
 package io.blodhgarm.personality.compat.pehkui;
 
 import io.blodhgarm.personality.api.addon.BaseAddon;
+import net.minecraft.entity.EntityType;
 import net.minecraft.entity.player.PlayerEntity;
 import virtuoel.pehkui.api.ScaleData;
 
@@ -21,7 +22,7 @@ public class ScaleAddon extends BaseAddon {
         if(this.heightOffset == 0){
             data.resetScale();
         } else {
-            data.setTargetScale((this.heightOffset / player.getHeight()) + 1);
+            data.setTargetScale((this.heightOffset / EntityType.PLAYER.getHeight()) + 1); /// 1.8F
         }
     }
 

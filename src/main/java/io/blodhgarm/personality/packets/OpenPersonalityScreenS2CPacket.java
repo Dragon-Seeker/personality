@@ -3,8 +3,9 @@ package io.blodhgarm.personality.packets;
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.api.character.Character;
 import io.blodhgarm.personality.api.character.CharacterManager;
-import io.blodhgarm.personality.client.gui.CharacterScreenMode;
-import io.blodhgarm.personality.client.gui.screens.CharacterScreen;
+import io.blodhgarm.personality.client.gui.CharacterViewMode;
+import io.blodhgarm.personality.client.gui.screens.AdminCharacterScreen;
+import io.blodhgarm.personality.client.gui.screens.CharacterViewScreen;
 import io.wispforest.owo.network.ClientAccess;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -12,7 +13,11 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import org.slf4j.Logger;
 
-public record OpenPersonalityScreenS2CPacket(CharacterScreenMode mode, String characterUUID) {
+public record OpenPersonalityScreenS2CPacket(CharacterViewMode mode, String characterUUID, boolean fromAdminScreen) {
+
+    public OpenPersonalityScreenS2CPacket(CharacterViewMode mode, String characterUUID){
+        this(mode, characterUUID, false);
+    }
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -42,6 +47,9 @@ public record OpenPersonalityScreenS2CPacket(CharacterScreenMode mode, String ch
             if(errorHasOccured) return;
         }
 
-        MinecraftClient.getInstance().setScreen(new CharacterScreen(message.mode, access.player(), character));
+        CharacterViewScreen characterScreen = new CharacterViewScreen(message.mode, access.player().getGameProfile(), character)
+                .setOriginScreen((message.fromAdminScreen() && access.runtime().currentScreen instanceof AdminCharacterScreen screen) ? screen : null);
+
+        MinecraftClient.getInstance().setScreen(characterScreen);
     }
 }

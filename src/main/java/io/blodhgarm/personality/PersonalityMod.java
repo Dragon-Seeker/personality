@@ -15,11 +15,13 @@ import io.blodhgarm.personality.api.reveal.InfoRevealRegistry;
 import io.blodhgarm.personality.compat.origins.OriginsAddonRegistry;
 import io.blodhgarm.personality.compat.pehkui.PehkuiAddonRegistry;
 import io.blodhgarm.personality.compat.trinkets.TrinketsGlasses;
-import io.blodhgarm.personality.item.WalkingStick;
 import io.blodhgarm.personality.item.GlassesItem;
+import io.blodhgarm.personality.item.WoodenCane;
 import io.blodhgarm.personality.misc.PersonalityCommands;
+import io.blodhgarm.personality.misc.PersonalitySoundEvents;
 import io.blodhgarm.personality.misc.config.PersonalityConfig;
 import io.blodhgarm.personality.server.CharacterTick;
+import io.blodhgarm.personality.server.PrivilegeManager;
 import io.blodhgarm.personality.server.ServerCharacters;
 import io.blodhgarm.personality.utils.DebugCharacters;
 import io.wispforest.owo.registration.reflect.FieldRegistrationHandler;
@@ -52,8 +54,11 @@ public class PersonalityMod implements ModInitializer, PersonalityEntrypoint, It
 
     @Override
     public void onInitialize() {
-        DebugCharacters.init();
         FieldRegistrationHandler.register(PersonalitySoundEvents.class, MODID, false);
+
+        if(FabricLoader.getInstance().isDevelopmentEnvironment()) DebugCharacters.init();
+
+        PrivilegeManager.init();
 
         if(FabricLoader.getInstance().isModLoaded("trinkets")) TrinketsGlasses.init();
 

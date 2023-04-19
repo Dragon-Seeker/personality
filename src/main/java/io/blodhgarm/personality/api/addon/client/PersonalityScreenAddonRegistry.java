@@ -1,8 +1,9 @@
 package io.blodhgarm.personality.api.addon.client;
 
+import com.mojang.authlib.GameProfile;
 import io.blodhgarm.personality.api.character.BaseCharacter;
-import io.blodhgarm.personality.client.gui.CharacterScreenMode;
-import io.blodhgarm.personality.client.gui.screens.CharacterScreen;
+import io.blodhgarm.personality.client.gui.CharacterViewMode;
+import io.blodhgarm.personality.client.gui.screens.CharacterViewScreen;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Identifier;
 
@@ -12,7 +13,7 @@ import java.util.Map;
 
 /**
  * A Class where all {@link PersonalityScreenAddon} implementations can register
- * the needed Factory to build the addon for the {@link CharacterScreen}
+ * the needed Factory to build the addon for the {@link CharacterViewScreen}
  */
 public class PersonalityScreenAddonRegistry {
 
@@ -28,6 +29,6 @@ public class PersonalityScreenAddonRegistry {
     }
 
     public interface AddonFactory<T extends PersonalityScreenAddon> {
-        T buildAddon(CharacterScreenMode mode, @Nullable BaseCharacter character, @Nullable PlayerEntity player);
+        T buildAddon(CharacterViewMode mode, @Nullable GameProfile playerProfile, @Nullable BaseCharacter character);
     }
 }

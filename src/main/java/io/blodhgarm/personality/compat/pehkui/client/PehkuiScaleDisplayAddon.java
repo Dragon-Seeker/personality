@@ -1,10 +1,11 @@
 package io.blodhgarm.personality.compat.pehkui.client;
 
+import com.mojang.authlib.GameProfile;
 import io.blodhgarm.personality.api.character.BaseCharacter;
 import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddon;
 import io.blodhgarm.personality.client.gui.ThemeHelper;
-import io.blodhgarm.personality.client.gui.CharacterScreenMode;
+import io.blodhgarm.personality.client.gui.CharacterViewMode;
 import io.blodhgarm.personality.compat.pehkui.PehkuiAddonRegistry;
 import io.blodhgarm.personality.compat.pehkui.ScaleAddon;
 import io.wispforest.owo.ui.base.BaseParentComponent;
@@ -31,8 +32,8 @@ public class PehkuiScaleDisplayAddon extends PersonalityScreenAddon {
 
     @Nullable private ScaleAddon scaleAddon = null;
 
-    public PehkuiScaleDisplayAddon(CharacterScreenMode mode, @Nullable BaseCharacter character, @Nullable PlayerEntity player) {
-        super(mode, character, player, new Identifier("pehkui", "scale_selection_addon"));
+    public PehkuiScaleDisplayAddon(CharacterViewMode mode, GameProfile playerProfile, @Nullable BaseCharacter character) {
+        super(mode, playerProfile, character, new Identifier("pehkui", "scale_selection_addon"));
 
         if(mode.importFromCharacter()){
             scaleAddon = (ScaleAddon) character.getAddon(PehkuiAddonRegistry.addonId);

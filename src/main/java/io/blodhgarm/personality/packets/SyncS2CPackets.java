@@ -9,6 +9,7 @@ import io.blodhgarm.personality.api.character.Character;
 import io.blodhgarm.personality.api.core.BaseRegistry;
 import io.blodhgarm.personality.api.utils.PlayerAccess;
 import io.blodhgarm.personality.client.ClientCharacters;
+import io.blodhgarm.personality.client.gui.screens.AdminCharacterScreen;
 import io.wispforest.owo.network.ClientAccess;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -84,6 +85,10 @@ public class SyncS2CPackets {
                     && Objects.equals(playerCharacter.UUID(), access.player().getUuid().toString())) {
                 ClientCharacters.INSTANCE.setKnownCharacters(playerCharacter, c.getUUID());
             }
+
+            if(MinecraftClient.getInstance().currentScreen instanceof AdminCharacterScreen screen){
+                screen.shouldAttemptUpdate(c);
+            }
         }
     }
 
@@ -108,6 +113,10 @@ public class SyncS2CPackets {
                     LOGGER.warn("[SyncAddons]: The given Identifier [{}] wasn't found within the AddonRegistry meaning it wasn't able to deserialize the info meaning such will be skipped.", addonId);
                 }
             });
+
+            if(MinecraftClient.getInstance().currentScreen instanceof AdminCharacterScreen screen){
+                screen.shouldAttemptUpdate(c);
+            }
         }
     }
 
@@ -131,6 +140,7 @@ public class SyncS2CPackets {
             ClientCharacters.INSTANCE.dissociateUUID(message.uuid, message.characterUUID);
 
             AddonRegistry.INSTANCE.checkAndDefaultPlayerAddons(access.player());
+
         }
     }
 

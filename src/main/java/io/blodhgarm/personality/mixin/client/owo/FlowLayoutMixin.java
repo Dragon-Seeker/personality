@@ -1,8 +1,8 @@
 package io.blodhgarm.personality.mixin.client.owo;
 
-import io.blodhgarm.personality.client.gui.components.ButtonAddon;
+import io.blodhgarm.personality.client.gui.utils.owo.layout.ButtonAddon;
 import io.blodhgarm.personality.client.gui.utils.polygons.AbstractPolygon;
-import io.blodhgarm.personality.client.gui.utils.owo.LineEvent;
+import io.blodhgarm.personality.client.gui.utils.owo.layout.LineEvent;
 import io.blodhgarm.personality.misc.pond.owo.*;
 import io.wispforest.owo.ui.base.BaseParentComponent;
 import io.wispforest.owo.ui.container.FlowLayout;
@@ -22,7 +22,11 @@ import java.util.List;
 import java.util.function.Function;
 
 @Mixin(value = FlowLayout.class, remap = false)
-public abstract class FlowLayoutMixin extends BaseParentComponent implements ExcludableBoundingArea<FlowLayout>, RefinedBoundingArea<FlowLayout>, LineManageable<FlowLayout>, FocusCheckable, CustomFocusHighlighting<FlowLayout>, ButtonAddonDuck<FlowLayout> {
+public abstract class FlowLayoutMixin extends BaseParentComponent implements MutableBoundingArea<FlowLayout>, LineManageable<FlowLayout>, FocusCheckable, CustomFocusHighlighting<FlowLayout>, ButtonAddonDuck<FlowLayout> {
+
+    private final List<AbstractPolygon> inclusionZones = new ArrayList<>();
+
+    //----------------------------
 
     private final List<AbstractPolygon> exclusionZones = new ArrayList<>();
 
@@ -74,6 +78,28 @@ public abstract class FlowLayoutMixin extends BaseParentComponent implements Exc
     @Override
     public final <P extends AbstractPolygon> FlowLayout addExclusionZone(List<P> polygons) {
         this.exclusionZones.addAll(polygons);
+
+        return (FlowLayout) (Object) this;
+    }
+
+    //----------------------------
+
+    @Override
+    public List<AbstractPolygon> getInclusionZones() {
+        return inclusionZones;
+    }
+
+    @SafeVarargs
+    @Override
+    public final <P extends AbstractPolygon> FlowLayout addInclusionZone(P... polygons) {
+        this.inclusionZones.addAll(List.of(polygons));
+
+        return (FlowLayout) (Object) this;
+    }
+
+    @Override
+    public final <P extends AbstractPolygon> FlowLayout addInclusionZone(List<P> polygons) {
+        this.inclusionZones.addAll(polygons);
 
         return (FlowLayout) (Object) this;
     }

@@ -1,9 +1,9 @@
 package io.blodhgarm.personality.api.addon.client;
 
+import com.mojang.authlib.GameProfile;
 import io.blodhgarm.personality.api.character.BaseCharacter;
 import io.blodhgarm.personality.api.addon.BaseAddon;
-import io.blodhgarm.personality.client.gui.CharacterScreenMode;
-import io.blodhgarm.personality.client.gui.screens.CharacterScreen;
+import io.blodhgarm.personality.client.gui.CharacterViewMode;
 import io.wispforest.owo.ui.base.BaseParentComponent;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
@@ -19,20 +19,21 @@ public abstract class PersonalityScreenAddon {
 
     public final Identifier addonId;
 
-    private CharacterScreen originScreen = null;
+    private AddonObservable observable = null;
 
-    protected final CharacterScreenMode mode;
+    protected final CharacterViewMode mode;
 
     @Nullable protected final BaseCharacter character;
-    @Nullable protected final PlayerEntity player;
+
+    protected final GameProfile playerProfile;
 
     private BaseParentComponent rootBranchComponent = null;
 
-    public PersonalityScreenAddon(CharacterScreenMode mode, @Nullable BaseCharacter character, @Nullable PlayerEntity player, Identifier addonId){
+    public PersonalityScreenAddon(CharacterViewMode mode, GameProfile playerProfile, @Nullable BaseCharacter character, Identifier addonId){
         this.mode = mode;
 
         this.character = character;
-        this.player = player;
+        this.playerProfile = playerProfile;
 
         this.addonId = addonId;
     }
@@ -47,8 +48,8 @@ public abstract class PersonalityScreenAddon {
                 .id(this.addonId().toString());
     }
 
-    public final PersonalityScreenAddon linkAddon(CharacterScreen screen){
-        this.originScreen = screen;
+    public final PersonalityScreenAddon linkAddon(AddonObservable observable){
+        this.observable = observable;
 
         return this;
     }
@@ -64,11 +65,11 @@ public abstract class PersonalityScreenAddon {
     }
 
     public final void closeAddon(){
-        this.originScreen.pushScreenAddon(this);
+        this.observable.pushScreenAddon(this);
     }
 
     public final AddonObservable getObserver(){
-        return this.originScreen;
+        return this.observable;
     }
 
     //-------------------------------------------------------------------------------

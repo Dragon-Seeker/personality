@@ -3,6 +3,7 @@ package io.blodhgarm.personality.mixin.client.owo;
 import io.blodhgarm.personality.client.gui.utils.polygons.AbstractPolygon;
 import io.blodhgarm.personality.misc.pond.owo.CustomFocusHighlighting;
 import io.blodhgarm.personality.misc.pond.owo.ExclusiveBoundingArea;
+import io.blodhgarm.personality.misc.pond.owo.InclusiveBoundingArea;
 import io.blodhgarm.personality.misc.pond.owo.RefinedBoundingArea;
 import io.wispforest.owo.ui.core.Component;
 import net.minecraft.client.util.math.MatrixStack;
@@ -25,6 +26,10 @@ public interface ComponentMixin{
             AbstractPolygon polygon = area.getRefinedBound();
 
             if(polygon != null) cir.setReturnValue(polygon.withinShape((float) x, (float) y));
+        }
+
+        if(this instanceof InclusiveBoundingArea area && !area.getInclusionZones().isEmpty() && area.isWithinInclusionZone((float) x, (float) y)){
+            cir.setReturnValue(true);
         }
     }
 

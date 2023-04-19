@@ -1,7 +1,7 @@
 package io.blodhgarm.personality.mixin.client.origins;
 
-import io.blodhgarm.personality.client.gui.CharacterScreenMode;
-import io.blodhgarm.personality.client.gui.screens.CharacterScreen;
+import io.blodhgarm.personality.client.gui.CharacterViewMode;
+import io.blodhgarm.personality.client.gui.screens.CharacterViewScreen;
 import io.github.apace100.origins.component.OriginComponent;
 import io.github.apace100.origins.networking.ModPacketsS2C;
 import io.github.apace100.origins.origin.OriginLayer;
@@ -22,7 +22,7 @@ public abstract class ModPacketsS2CMixin {
     @Inject(method = "lambda$openOriginScreen$3(Lnet/minecraft/class_310;Z)V", at = @At(value = "TAIL"), locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true)
     private static void personality$cancelOpeningOriginScreen(MinecraftClient minecraftClient, boolean showDirtBackground, CallbackInfo ci, ArrayList<OriginLayer> layers, OriginComponent component){
         if(showDirtBackground){
-            minecraftClient.setScreen(new CharacterScreen(CharacterScreenMode.CREATION, minecraftClient.player, null));
+            minecraftClient.setScreen(new CharacterViewScreen(CharacterViewMode.CREATION, minecraftClient.player.getGameProfile(), null));
 
             ci.cancel();
         }

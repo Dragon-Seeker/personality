@@ -119,8 +119,33 @@
   "text.config.personality.option.themeMode.value.dark_mode": "Dark Mode",
   "text.config.personality.option.themeMode.value.system": "System",
 
-  "text.config.personality.option.showPlayerNameWhenHoveringChat": "Show Player Name when Hovering Chat Messages",
+  "text.config.personality.option.showPlayerNameInChat": "Show Player Name within Chat",
+  "text.config.personality.option.showPlayerNameInChat.tooltip": "Only works if the given player has a character",
+
   "text.config.personality.option.showPlayerNamePlateAtChestLevel": "Show Player Nameplate at Chest Level",
+
+  "text.config.personality.option.disableSponsorComponent": "Disables the Sponsor Component found on some screens",
+
+  "text.config.personality.option.showInWorldDescriptionTooltipComponent": "[WIP] Show In World Description tooltips when looking at the player",
+
+  "text.config.personality.option.minimumInfo" : "Minimum Info Level",
+  "text.config.personality.option.minimumInfo.tooltip" : "Set what the Minimum starting knowledge everyone will get when giving info",
+
+  "text.config.personality.option.none_tier" : "None Tier Info",
+  "text.config.personality.option.none_tier.tooltip" : "Information that will be given when at this given Tier for Knowing someone",
+
+  "text.config.personality.option.general_tier" : "General Tier Info",
+  "text.config.personality.option.general_tier.tooltip" : "Information that will be given when at this given Tier for Knowing someone",
+
+  "text.config.personality.option.associate_tier" : "Associate Tier Info",
+  "text.config.personality.option.associate_tier.tooltip" : "Information that will be given when at this given Tier for Knowing someone",
+
+  "text.config.personality.option.trusted_tier" : "Trusted Tier Info",
+  "text.config.personality.option.trusted_tier.tooltip" : "Information that will be given when at this given Tier for Knowing someone",
+
+  "text.config.personality.option.confidant_tier" : "Confidant Tier Info",
+  "text.config.personality.option.confidant_tier.tooltip" : "Information that will be given when at this given Tier for Knowing someone",
+
 
   "category.personality": "Personality"
 }

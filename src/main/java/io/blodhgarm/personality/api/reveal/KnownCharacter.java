@@ -38,7 +38,7 @@ public class KnownCharacter implements BaseCharacter {
         this.ownerCharacterUUID = ownerCharacterUUID;
 
         this.wrappedCharacterUUID = wrappedCharacterUUID;
-        this.level = InfoRevealLevel.NONE;
+        this.level = PersonalityMod.CONFIG.minimumInfo();
         this.specificKnownInfo = new ArrayList<>();
     }
 
@@ -46,7 +46,7 @@ public class KnownCharacter implements BaseCharacter {
         this.ownerCharacterUUID = "";
 
         this.wrappedCharacterUUID = character.getUUID();
-        this.level = InfoRevealLevel.NONE;
+        this.level = PersonalityMod.CONFIG.minimumInfo();
         this.specificKnownInfo = new ArrayList<>();
     }
 
@@ -160,6 +160,11 @@ public class KnownCharacter implements BaseCharacter {
     @Override
     public int getAge() {
         return getResult(PersonalityMod.id("age"), getWrappedCharacter().getAge()).result();
+    }
+
+    @Override
+    public boolean isDead() {
+        return getWrappedCharacter().isDead();
     }
 
     @Override

@@ -5,7 +5,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import com.mojang.logging.LogUtils;
+import com.google.gson.TypeAdapterFactory;
 import io.blodhgarm.personality.Networking;
 import io.blodhgarm.personality.api.character.Character;
 import io.blodhgarm.personality.api.character.CharacterManager;
@@ -20,17 +20,14 @@ import io.blodhgarm.personality.packets.SyncS2CPackets;
 import io.blodhgarm.personality.utils.DebugCharacters;
 import io.wispforest.owo.Owo;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.WorldSavePath;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,7 +37,9 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public class ServerCharacters extends CharacterManager<ServerPlayerEntity> implements FinalizedPlayerConnectionEvent.Finish, ServerLifecycleEvents.ServerStarted, ServerLifecycleEvents.ServerStopped {
 
@@ -95,9 +94,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     public PlayerAccess<ServerPlayerEntity> getPlayer(String characterUUID) {
         String playerUUID = playerToCharacterReferences().inverse().get(characterUUID);
 
-        if(playerUUID != null) {
-            return new PlayerAccess<>(playerUUID, getPlayerFromServer(playerUUID));
-        }
+        if(playerUUID != null) return new PlayerAccess<>(playerUUID, getPlayerFromServer(playerUUID));
 
         return super.getPlayer(characterUUID);
     }
@@ -151,16 +148,32 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
         return Owo.currentServer().getPlayerManager().getPlayer(UUID.fromString(playerUUID));
     }
 
+//    public void reviveCharacter(Character c) {
+//        reviveCharacter(c, null);
+//    }
+
+    public void reviveCharacter(Character c, @Nullable String playerUUID) {
+        //TODO: Decide on a future way of handling Dead Players to prevent large amounts of memory usage if they won't be revived
+        //this.removeCharacter(c.getUUID());
+
+        c.setIsDead(false);
+
+        if(playerUUID != null && !playerUUID.isBlank()) associateCharacterToPlayer(c.getUUID(), playerUUID);
+
+        saveCharacter(c, true);
+    }
+
     public void killCharacter(String uuid) {
         killCharacter(characterIDToCharacter.get(uuid));
     }
 
     public void killCharacter(Character c) {
-        this.removeCharacter(c.getUUID());
+        //TODO: Decide on a future way of handling Dead Players to prevent large amounts of memory usage if they won't be revived
+        //this.removeCharacter(c.getUUID());
 
         c.setIsDead(true);
 
-        saveCharacter(c, false);
+        saveCharacter(c, true);
     }
 
     public void deleteCharacter(Character character) {
@@ -176,6 +189,99 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
             e.printStackTrace();
         }
     }
+
+    //---
+
+    private record CharacterAction(String formalActionName, BiConsumer<Character, @Nullable String> action, Predicate<Character> actionTest, String invalidMsg) implements BiConsumer<Character, @Nullable String> {
+        public CharacterAction(String formalActionName, Consumer<Character> action){
+            this(formalActionName, (c, s) -> action.accept(c), c -> true, "something has gone wrong!!!");
+        }
+
+        @Override
+        public void accept(Character c, @Nullable String s) {
+            action.accept(c, s);
+        }
+    }
+
+    private static BiConsumer<Character, String> convert(Consumer<Character> c){
+        return (t, o) -> c.accept(t);
+    }
+
+    private static final Map<String, CharacterAction> actions = Map.of(
+            "revive", new CharacterAction("Alive", ServerCharacters.INSTANCE::reviveCharacter, Character::isDead, "The Character is already alive, meaning it can't be revived!"),
+            "kill", new CharacterAction("Dead", convert(ServerCharacters.INSTANCE::killCharacter), Predicate.not(Character::isDead), "The Character is already dead, meaning it can't be killed!"),
+            "delete", new CharacterAction("Deleted", ServerCharacters.INSTANCE::deleteCharacter)
+    );
+
+    public ReturnInformation attemptActionOn(List<String> characterUUID, String actionType, ServerPlayerEntity operator){
+        return attemptActionOn(characterUUID, actionType, operator, null);
+    }
+
+    public ReturnInformation attemptActionOn(List<String> characterUUID, String actionType, ServerPlayerEntity operator, @Nullable String playerUUID){
+        CharacterAction action = actions.get(actionType);
+
+        String returnMessage = null;
+        boolean success = false;
+
+        if(action == null) {
+            returnMessage = "THE GIVEN ACTION HAS NOT BEEN IMPLEMENTED WITHIN THE CharacterBasedAction Packet!";
+        } else if(operator == null) {
+            returnMessage = "This action can not performed without a link to a given Player!";
+        } else if(!PrivilegeManager.getLevel(actionType).test(operator)) {
+            returnMessage = "The given Operator dose not have the required permission to run this action!";
+        }
+
+
+
+        if(returnMessage != null) return new ReturnInformation(returnMessage, actionType, success);
+
+        //----------------------
+
+        if(characterUUID.size() == 1) {
+            Character c = ServerCharacters.INSTANCE.getCharacter(characterUUID.get(0));
+
+            if (c == null) {
+                returnMessage = "Could not locate the Character though the given selection method";//errorNoCharacterMsg(context, context.getSource().getPlayer());
+            } else if(!action.actionTest().test(c)){
+                returnMessage = action.invalidMsg();
+            } else {
+                action.accept(c, playerUUID);
+
+                returnMessage = c.getName() + " is now " + action.formalActionName() + "! [UUID: " + c.getUUID() + "]";
+                success = true;
+            }
+        } else {
+            Set<Character> charactersAffected = new HashSet<>();
+
+            for (String uuid : characterUUID) {
+                Character c = ServerCharacters.INSTANCE.getCharacter(uuid);
+
+                if (c == null) continue;
+
+                if(action.actionTest().test(c)){
+                    action.accept(c, playerUUID);
+                } else {
+                    //TODO: HANDLE THIS MESSAGE OF SOME CHARACTERS WERE NOT EFFECTED
+                }
+
+                charactersAffected.add(c);
+            }
+
+            if(charactersAffected.isEmpty()) {
+                returnMessage = "A list of characters were to be " + actionType + " but were not!";
+            } else {
+                String charactersNameList = charactersAffected.stream().map(Character::getName).toList().toString();
+                String charactersUUIDList = charactersAffected.stream().map(Character::getUUID).toList().toString();
+
+                returnMessage = charactersNameList  + " are now " + action.formalActionName() + "! [UUIDs: " + charactersUUIDList + "]";
+                success = true;
+            }
+        }
+
+        return new ReturnInformation(returnMessage, actionType, success);
+    }
+
+    public record ReturnInformation(String returnMessage, String action, boolean success){}
 
     //----------------------------------------------------
 
@@ -269,6 +375,10 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     public String saveAddonForCharacter(Character c, Identifier addonId, boolean syncAddons){
         BaseAddon addon = c.getAddons().get(addonId);
 
+        return saveAddonForCharacter(c, addonId, addon, syncAddons);
+    }
+
+    public String saveAddonForCharacter(Character c, Identifier addonId, @Nullable BaseAddon addon, boolean syncAddons){
         if(addon != null){
 
             String addonJson = GSON.toJson(addon);
@@ -445,5 +555,50 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
         if(FabricLoader.getInstance().isDevelopmentEnvironment()) LOGGER.info("[Server-CharacterManager]: Manager has been cleared!");
     }
 
-    public record EditorHistory(String editorUUID, LocalDateTime dateOfEdit, List<String> elementsChanges){}
+    public static final class EditorHistory {
+        private final String editorUUID;
+        private final LocalDateTime dateOfEdit;
+        private final List<String> elementsChanges;
+
+        public EditorHistory(String editorUUID, LocalDateTime dateOfEdit, List<String> elementsChanges) {
+            this.editorUUID = editorUUID;
+            this.dateOfEdit = dateOfEdit;
+            this.elementsChanges = elementsChanges;
+        }
+
+        public String editorUUID() {
+            return editorUUID;
+        }
+
+        public LocalDateTime dateOfEdit() {
+            return dateOfEdit;
+        }
+
+        public List<String> elementsChanges() {
+            return elementsChanges;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this) return true;
+            if (obj == null || obj.getClass() != this.getClass()) return false;
+            var that = (EditorHistory) obj;
+            return Objects.equals(this.editorUUID, that.editorUUID) &&
+                    Objects.equals(this.dateOfEdit, that.dateOfEdit) &&
+                    Objects.equals(this.elementsChanges, that.elementsChanges);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(editorUUID, dateOfEdit, elementsChanges);
+        }
+
+        @Override
+        public String toString() {
+            return "EditorHistory[" +
+                    "editorUUID=" + editorUUID + ", " +
+                    "dateOfEdit=" + dateOfEdit + ", " +
+                    "elementsChanges=" + elementsChanges + ']';
+        }
+    }
 }

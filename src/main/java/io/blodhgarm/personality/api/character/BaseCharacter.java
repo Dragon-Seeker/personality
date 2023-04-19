@@ -44,6 +44,8 @@ public interface BaseCharacter {
 
     int getAge();
 
+    boolean isDead();
+
     int getPlaytime();
 
     void beforeSaving();

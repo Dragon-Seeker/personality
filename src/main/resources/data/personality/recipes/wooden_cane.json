@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "WWW",
+    "W W",
+    "  B"
+  ],
+  "key": {
+    "W": {
+      "item": "minecraft:oak_log"
+    },
+    "B": {
+      "item": "minecraft:black_concrete"
+    }
+  },
+  "result": {
+    "item": "personality:cane",
+    "count": 1
+  }
+}
+

@@ -6,17 +6,18 @@ import io.blodhgarm.personality.api.character.Character;
 import io.blodhgarm.personality.api.reveal.KnownCharacter;
 import io.blodhgarm.personality.client.ClientCharacters;
 import io.blodhgarm.personality.client.gui.ThemeHelper;
-import io.blodhgarm.personality.client.gui.CharacterScreenMode;
-import io.blodhgarm.personality.client.gui.components.owo.character.CharacterGridLayout;
-import io.blodhgarm.personality.client.gui.components.owo.LabeledGridLayout;
-import io.blodhgarm.personality.client.gui.utils.CustomSurfaces;
+import io.blodhgarm.personality.client.gui.CharacterViewMode;
+import io.blodhgarm.personality.client.gui.components.SponsorComponent;
+import io.blodhgarm.personality.client.gui.components.character.CharacterBasedGridLayout;
+import io.blodhgarm.personality.client.gui.components.grid.LabeledGridLayout;
+import io.blodhgarm.personality.client.gui.components.character.CharacterViewComponent;
+import io.blodhgarm.personality.client.gui.utils.owo.ExtraSurfaces;
 import io.blodhgarm.personality.utils.DebugCharacters;
 import io.wispforest.owo.ui.base.BaseParentComponent;
 import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.component.TextBoxComponent;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
-import io.wispforest.owo.ui.container.ScrollContainer;
 import io.wispforest.owo.ui.core.*;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
@@ -33,7 +34,7 @@ import java.util.stream.Collectors;
 
 public class CharacterInfoScreen extends TabbedScreen {
 
-    private CharacterScreen characterScreen;
+    private CharacterViewComponent characterScreen;
 
     private Character currentCharacter;
 
@@ -51,26 +52,39 @@ public class CharacterInfoScreen extends TabbedScreen {
         knownCharacters = new TabComponentBuilder<>(PersonalityMod.id("known_characters"), Text.of("Known Characters"), this::buildKnownCharacterTab);
         heritageInfo = new TabComponentBuilder<>(PersonalityMod.id("heritage_info"), Text.of("Family Tree"), this::buildHeritageInfo);
 
+//        if(!PersonalityMod.CONFIG.disableSponsorComponent()) {
+//            this.addGlobalBuilder(layout -> {
+//                return new SponsorComponent(Sizing.content(), Sizing.content())
+//                        .positioning(Positioning.relative(98, 98));
+//            });
+//        }
+
         registeredBuilders.put(characterInformation.id, characterInformation);
         registeredBuilders.put(knownCharacters.id, knownCharacters);
 //        registeredBuilders.put(heritageInfo.id, heritageInfo);
     }
 
-    public void buildCharacterInfoTab(FlowLayout layout){
+    public Component buildCharacterInfoTab(FlowLayout rootComponent){
         Character playerCharacter = ClientCharacters.INSTANCE.getCharacter(MinecraftClient.getInstance().player);
 
         if(playerCharacter == null && FabricLoader.getInstance().isDevelopmentEnvironment()){
             playerCharacter = DebugCharacters.REVEAL_TEST;
         }
 
-        this.characterScreen = new CharacterScreen(CharacterScreenMode.VIEWING, MinecraftClient.getInstance().player, playerCharacter);
+        this.characterScreen = new CharacterViewComponent(CharacterViewMode.VIEWING, MinecraftClient.getInstance().player.getGameProfile(), playerCharacter);
 
-        characterScreen.buildAsChild(layout);
+        FlowLayout mainLayout = characterScreen.buildComponent(rootComponent, false);
+
+        mainLayout.positioning(Positioning.relative(250, 65));
+
+        mainLayout.positioning().animate(1000, Easing.CUBIC, Positioning.relative(50, 65)).forwards();
+
+        mainLayout.allowOverflow(true);
+
+        return mainLayout;
     }
 
-    public void buildKnownCharacterTab(FlowLayout layout){
-        FlowLayout mainLayout = Containers.verticalFlow(Sizing.content(), Sizing.fixed(182));
-
+    public Component buildKnownCharacterTab(FlowLayout rootComponent){
         this.currentCharacter = ClientCharacters.INSTANCE.getCharacter(MinecraftClient.getInstance().player);
 
         if(this.currentCharacter == null) this.currentCharacter = DebugCharacters.getRevealTest(ClientCharacters.INSTANCE);
@@ -79,69 +93,65 @@ public class CharacterInfoScreen extends TabbedScreen {
 
         if(knownCharacters.isEmpty() && !DebugCharacters.KNOWN_CHARACTERS.isEmpty()) knownCharacters.addAll(DebugCharacters.getKnownCharacters(ClientCharacters.INSTANCE));
 
-        FlowLayout knownCharacterLayout = Containers.verticalFlow(Sizing.content(), Sizing.content()); //140
+        FlowLayout knownCharacterLayout = Containers.verticalFlow(Sizing.content(), Sizing.content())
+                .child(
+                        new CharacterBasedGridLayout(Sizing.content(), Sizing.content(),this)
+//                                .changeDirection(((ScrollContainerAccessor) knownCharacterContainer).personality$direction() == ScrollContainer.ScrollDirection.VERTICAL)'
+                                .addBuilder(Text.of("Friendliness"), (c, mode, isVertical) -> Components.label(((KnownCharacter) c).level.getTranslation()))
+                                .setRowDividingLine(1)
+                                .setColumnDividingLine(1)
+                                .addEntries(knownCharacters)
+                                .id("knownCharacterList")
+                );
 
-        ScrollContainer<FlowLayout> knownCharacterContainer = Containers.verticalScroll(Sizing.content(), Sizing.fill(85), knownCharacterLayout);
+        FlowLayout mainLayout = Containers.verticalFlow(Sizing.content(), Sizing.fixed(182))
+                .configure((FlowLayout layout) -> {
+                        layout.horizontalAlignment(HorizontalAlignment.CENTER)
+                                .surface(ThemeHelper.dynamicSurface())
+                                .padding(Insets.of(6));
+                }).child(
+                        Containers.verticalScroll(Sizing.content(), Sizing.fill(85), knownCharacterLayout)
+                                .surface(ExtraSurfaces.INVERSE_PANEL)
+                                .padding(Insets.of(4))
+                ).child(
+                        Components.textBox(Sizing.fixed(205), "")
+                                .configure(component -> {
+                                    ((TextBoxComponent) component).onChanged()
+                                            .subscribe(value -> {
+                                                LabeledGridLayout listLayout = rootComponent.childById(LabeledGridLayout.class, "knownCharacterList");
 
-        knownCharacterLayout.child(
-            new CharacterGridLayout(Sizing.content(), Sizing.content(),this)
-//                    .changeDirection(((ScrollContainerAccessor) knownCharacterContainer).personality$direction() == ScrollContainer.ScrollDirection.VERTICAL)'
-                    .addBuilder(
-                            Text.of("Friendliness"),
-                            (baseCharacter, mode, isParentVertical) -> Components.label(((KnownCharacter) baseCharacter).level.getTranslation())
-                    )
-                    .setRowDividingLine(1)
-                    .setColumnDividingLine(1)
-                    .addEntries(knownCharacters)
-                    .id("knownCharacterList")
-        );
+                                                Predicate<BaseCharacter> filter = null;
 
-        mainLayout.child(
-                knownCharacterContainer
-                        .surface(CustomSurfaces.INVERSE_PANEL)
-                        .padding(Insets.of(4))
-        );
+                                                if(!value.isEmpty()) {
+                                                    String regex = Arrays.stream(value.toLowerCase()
+                                                                    .split(" "))
+                                                            .filter(s -> !s.trim().equals(""))
+                                                            .collect(Collectors.joining("|"));
 
-        mainLayout
-                .surface(ThemeHelper.dynamicSurface())
-                .padding(Insets.of(6));
+                                                    var pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
-        mainLayout.child(
-                Components.textBox(Sizing.fill(40), "")
-                        .configure(component -> {
-                            ((TextBoxComponent) component).onChanged()
-                                    .subscribe(value -> {
-                                        LabeledGridLayout listLayout = layout.childById(LabeledGridLayout.class, "knownCharacterList");
+                                                    filter = character -> pattern.asPredicate().test(character.getName());
+                                                } else {
+                                                    System.out.println("weeeeeeeeeeeeeeeeeeeeeee");
+                                                }
 
-                                        Predicate<BaseCharacter> filter = null;
+                                                listLayout.filterEntries(filter);
+                                            });
+                                })
+                                .margins(Insets.vertical(3))
 
-                                        if(!value.isEmpty()) {
-                                            String regex = Arrays.stream(value.toLowerCase()
-                                                            .split(" "))
-                                                    .filter(s -> !s.trim().equals(""))
-                                                    .collect(Collectors.joining("|"));
+                );
 
-                                            var pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+        mainLayout.positioning(Positioning.relative(200, 65));
 
-                                            filter = character -> pattern.asPredicate().test(character.getName());
-                                        } else {
-                                            System.out.println("weeeeeeeeeeeeeeeeeeeeeee");
-                                        }
+        mainLayout.positioning().animate(1000, Easing.LINEAR, Positioning.relative(50, 65)).forwards();
 
-                                        listLayout.filterEntries(filter);
-                                    });
-                        })
-                        .margins(Insets.vertical(3))
 
-        );
-
-        mainLayout.horizontalAlignment(HorizontalAlignment.CENTER);
-
-        layout.child(mainLayout);
+        return mainLayout;
     }
 
-    public void buildHeritageInfo(FlowLayout layout){
-        layout.child(Containers.verticalFlow(Sizing.content(), Sizing.content()));
+    public Component buildHeritageInfo(FlowLayout rootComponent){
+        return Containers.verticalFlow(Sizing.content(), Sizing.content());
     }
 
     @Override

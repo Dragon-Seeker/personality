@@ -24,26 +24,36 @@ public class CharacterTick implements ServerTickEvents.EndWorldTick {
     public void onEndTick(ServerWorld world) {
         for (ServerPlayerEntity player : world.getPlayers()) {
             Character c = ServerCharacters.INSTANCE.getCharacter(player);
-            if (c == null)
-                return;
+
+            if (c == null) continue;
 
             // Kill Too Old Characters
             if (c.getAge() >= c.getMaxAge()) {
                 ServerCharacters.INSTANCE.killCharacter(c);
                 player.damage(DEATH_BY_OLD_AGE, Float.MAX_VALUE);
+
                 continue;
             }
 
             // Apply Slowness to Old Characters without a stick
             PersonalityConfig.GradualValue config = PersonalityMod.CONFIG.agingSlowness;
             EntityAttributeInstance instance = player.getAttributeInstance(EntityAttributes.GENERIC_MOVEMENT_SPEED);
-            if (ConfigHelper.shouldApply(config, c) && !player.getOffHandStack().isIn(PersonalityTags.WALKING_STICKS) && !player.getMainHandStack().isIn(PersonalityTags.WALKING_STICKS)) {
-                if (instance.getModifier(AGING_SLOWNESS_MODIFIER_UUID) == null)
-                    instance.addTemporaryModifier(new EntityAttributeModifier(AGING_SLOWNESS_MODIFIER_UUID, "Old Person with No Stick", -ConfigHelper.apply(config, c), EntityAttributeModifier.Operation.MULTIPLY_BASE));
-            }
-            else {
+
+            boolean check = ConfigHelper.shouldApply(config, c)
+                    && !player.getOffHandStack().isIn(PersonalityTags.WALKING_STICKS)
+                    && !player.getMainHandStack().isIn(PersonalityTags.WALKING_STICKS);
+
+            if (!check) {
                 instance.removeModifier(AGING_SLOWNESS_MODIFIER_UUID);
+
+                continue;
             }
+
+            if (instance.getModifier(AGING_SLOWNESS_MODIFIER_UUID) != null) continue;
+
+            instance.addTemporaryModifier(new EntityAttributeModifier(AGING_SLOWNESS_MODIFIER_UUID, "Old Person with No Stick", -ConfigHelper.apply(config, c), EntityAttributeModifier.Operation.MULTIPLY_BASE));
         }
     }
+
+
 }

@@ -23,17 +23,17 @@ public abstract class FontStorageMixin {
 
     @Shadow protected abstract FontStorage.GlyphPair findGlyph(int codePoint);
 
-    @Inject(method = "getGlyph", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "getGlyph", at = @At("HEAD"))
     private void personality$catch_index_exception(int codePoint, boolean validateAdvance, CallbackInfoReturnable<Glyph> cir){
         try {
             this.glyphCache.computeIfAbsent(codePoint, this::findGlyph).getGlyph(validateAdvance);
         } catch (ArrayIndexOutOfBoundsException e){
-            cir.setReturnValue(BuiltinEmptyGlyph.MISSING);
-
             LOGGER.error("A glyph was found to have a messed up index or something!");
             LOGGER.error("CodePoint: " + codePoint);
 
-            e.printStackTrace();
+            LOGGER.error(this.glyphCache.toString());
+
+            throw e;
         }
     }
 }

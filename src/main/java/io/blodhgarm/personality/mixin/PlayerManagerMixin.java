@@ -1,7 +1,7 @@
 package io.blodhgarm.personality.mixin;
 
 import io.blodhgarm.personality.Networking;
-import io.blodhgarm.personality.client.gui.CharacterScreenMode;
+import io.blodhgarm.personality.client.gui.CharacterViewMode;
 import io.blodhgarm.personality.server.ServerCharacters;
 import io.blodhgarm.personality.packets.OpenPersonalityScreenS2CPacket;
 import net.fabricmc.loader.api.FabricLoader;
@@ -24,7 +24,7 @@ public abstract class PlayerManagerMixin {
         if(!FabricLoader.getInstance().isModLoaded("origins")) {
             if(!ServerCharacters.INSTANCE.getCharacterUUID(player.getUuid().toString()).equals("INVALID")) return;
 
-            Networking.CHANNEL.serverHandle(player).send(new OpenPersonalityScreenS2CPacket(CharacterScreenMode.CREATION, "personality$packet_target"));
+            Networking.CHANNEL.serverHandle(player).send(new OpenPersonalityScreenS2CPacket(CharacterViewMode.CREATION, "personality$packet_target"));
         }
     }
 }

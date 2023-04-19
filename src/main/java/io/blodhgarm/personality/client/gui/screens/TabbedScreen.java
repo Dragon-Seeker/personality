@@ -2,9 +2,10 @@ package io.blodhgarm.personality.client.gui.screens;
 
 import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.client.gui.ThemeHelper;
-import io.blodhgarm.personality.client.gui.components.ButtonAddon;
+import io.blodhgarm.personality.client.gui.utils.owo.layout.ButtonAddon;
 import io.blodhgarm.personality.client.gui.utils.owo.VariantButtonSurface;
 import io.blodhgarm.personality.client.gui.utils.owo.VariantsNinePatchRender;
+import io.blodhgarm.personality.misc.pond.owo.AnimationExtension;
 import io.blodhgarm.personality.misc.pond.owo.ButtonAddonDuck;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.base.BaseParentComponent;
@@ -21,6 +22,8 @@ import org.apache.commons.collections4.map.LinkedMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -28,7 +31,10 @@ public abstract class TabbedScreen extends BaseOwoScreen<FlowLayout> {
 
     public LinkedMap<Identifier, TabComponentBuilder<BaseParentComponent>> registeredBuilders = new LinkedMap<>();
 
+    public List<ComponentBuilder<FlowLayout>> globalComponentBuilders = new ArrayList<>();
+
     @Nullable public Identifier activeTabId = null;
+    @Nullable protected Component activeTab = null;
 
     public TabbedScreen(Text title){
         super(title);
@@ -43,13 +49,15 @@ public abstract class TabbedScreen extends BaseOwoScreen<FlowLayout> {
 
     @Override
     protected void build(FlowLayout rootComponent) {
-        FlowLayout mainLayout = Containers.verticalFlow(Sizing.fixed(480), Sizing.content());
+        this.uiAdapter.rootComponent.allowOverflow(true);
 
         //----------------------------------------
 
-        FlowLayout tabLayout = Containers.horizontalFlow(Sizing.fixed(480 - 32), Sizing.content());
+        int targetValue = 480 - 34;
 
-        int sizing = MathHelper.floor((480 - 34) / ((float) registeredBuilders.size())); //100 / registeredBuilders.size();
+        FlowLayout tabLayout = Containers.horizontalFlow(Sizing.fixed(targetValue - 32), Sizing.content());
+
+        int sizing = MathHelper.floor((targetValue - 34) / ((float) registeredBuilders.size())); //100 / registeredBuilders.size();
 
         int builderIndex = 0;
 
@@ -80,22 +88,24 @@ public abstract class TabbedScreen extends BaseOwoScreen<FlowLayout> {
                                         .setVIndex(4))
                 );
 
-        mainLayout
+        rootComponent //mainlayout
                 .child(
                         tabBar.surface(ThemeHelper.dynamicSurface())
                                 .padding(Insets.of(5)) //5
+                                .positioning(Positioning.relative(50, 9))
                                 .margins(Insets.bottom(3))
                 )
-                .child(
-                        Containers.verticalFlow(Sizing.content(), Sizing.content())
-                                .id("tab_view")
-                )
-                .positioning(Positioning.relative(50, 50))
                 .horizontalAlignment(HorizontalAlignment.CENTER);
 
-        rootComponent.child(mainLayout);
+        for (ComponentBuilder<FlowLayout> b : this.globalComponentBuilders) {
+            rootComponent.child(b.build(rootComponent));
+        }
 
         this.openTab(registeredBuilders.get(registeredBuilders.firstKey()));
+    }
+
+    public void addGlobalBuilder(ComponentBuilder<FlowLayout> builder){
+        this.globalComponentBuilders.add(builder);
     }
 
     public abstract void registerTabs(Map<Identifier, TabComponentBuilder<BaseParentComponent>> registeredBuilders);
@@ -105,17 +115,29 @@ public abstract class TabbedScreen extends BaseOwoScreen<FlowLayout> {
     }
 
     public <R extends BaseParentComponent> void openTab(TabComponentBuilder<R> tabComponentBuilder){
-        if(!isTabOpen(tabComponentBuilder.id)){
-            this.activeTabId = tabComponentBuilder.id;
+        if(isTabOpen(tabComponentBuilder.id)) return;
 
-            FlowLayout pageLayout = this.uiAdapter.rootComponent.childById(FlowLayout.class, "tab_view");
+        this.activeTabId = tabComponentBuilder.id;
 
-            pageLayout.clearChildren();
+        var oldActiveTab = this.activeTab;
 
-            tabComponentBuilder.pageBuilder.build(pageLayout);
+        if(oldActiveTab != null) {
+            Positioning oldPosition = ((AnimationExtension<Positioning>) oldActiveTab.positioning().animation())
+                    .getCurrentValue();
 
-            this.uiAdapter.inflateAndMount();
+            oldActiveTab.positioning(oldPosition);
+
+            ((AnimationExtension<Positioning>) oldActiveTab.positioning().animate(1000, Easing.LINEAR, Positioning.relative(-250, oldPosition.y)).forwards()) //250
+                    .setOnCompletionEvent(positioningAnimation -> {
+                        this.uiAdapter.rootComponent.removeChild(oldActiveTab);
+                    });
         }
+
+        this.activeTab = tabComponentBuilder.pageBuilder.build(this.uiAdapter.rootComponent);
+
+        this.uiAdapter.rootComponent.child(this.activeTab);
+
+        this.uiAdapter.inflateAndMount();
     }
 
     public static class TabComponentBuilder<R extends BaseParentComponent> {
@@ -194,6 +216,6 @@ public abstract class TabbedScreen extends BaseOwoScreen<FlowLayout> {
     }
 
     public interface ComponentBuilder<R extends BaseParentComponent> {
-        void build(FlowLayout layout);
+        Component build(FlowLayout layout);
     }
 }

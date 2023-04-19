@@ -1,6 +1,6 @@
 package io.blodhgarm.personality.mixin;
 
-import io.blodhgarm.personality.item.WalkingStick;
+import io.blodhgarm.personality.item.WoodenCane;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,6 +15,6 @@ public abstract class LivingEntityMixin {
 
     @Inject(method = "disablesShield", at = @At("HEAD"), cancellable = true)
     private void personality$disableShieldIfIsWalkingStick(CallbackInfoReturnable<Boolean> cir){
-        if(this.getMainHandStack().getItem() instanceof WalkingStick) cir.setReturnValue(true);
+        if(this.getMainHandStack().getItem() instanceof WoodenCane) cir.setReturnValue(true);
     }
 }

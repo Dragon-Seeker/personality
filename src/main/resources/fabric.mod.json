@@ -4,18 +4,22 @@
   "version": "${version}",
 
   "name": "Personality",
-  "description": "A Mod designed to add more Personal Elements to minecraft with Origin Support.",
+  "description": "Personality is a Utility Mod for people who want to Role Play and have integration within the game.",
   "authors": [
-    "Blodhgarm",
-    "Minenash"
+    "Main Programmer: Blodhgarm",
+    "Artist: Dr. Zeal"
+  ],
+  "contributors": [
+    "Funded by / Designed for OUTLANDER: N-SMP",
+    "Programmer: Minenash"
   ],
   "contact": {
     "homepage": "",
     "sources": ""
   },
 
-  "license": "LGPL-3.0",
-  "icon": "assets/modid/icon.png",
+  "license": "MIT",
+  "icon": "assets/personality/icon.png",
 
   "accessWidener" : "personality.accesswidener",
 
@@ -38,10 +42,12 @@
     "fabric": "*",
     "minecraft": "~1.19",
     "java": ">=17",
-    "owo": ">=0.8.0+1.19"
+    "owo": ">=0.8.0+1.19",
+    "geckolib3": ">=3.1.40"
   },
   "suggests": {
     "origins": "*",
-    "pehkui": "*"
+    "pehkui": "*",
+    "trinkets": "*"
   }
 }

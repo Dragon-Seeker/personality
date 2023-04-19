@@ -1,15 +1,16 @@
 package io.blodhgarm.personality.compat.origins.client.gui;
 
+import com.mojang.authlib.GameProfile;
 import io.blodhgarm.personality.api.character.BaseCharacter;
 import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.client.gui.ThemeHelper;
-import io.blodhgarm.personality.client.gui.CharacterScreenMode;
+import io.blodhgarm.personality.client.gui.CharacterViewMode;
 import io.blodhgarm.personality.compat.origins.OriginAddon;
 import io.blodhgarm.personality.compat.origins.client.gui.components.OriginHeaderComponent;
 import io.blodhgarm.personality.compat.origins.client.gui.components.OriginImpactComponent;
 import io.blodhgarm.personality.compat.origins.client.gui.components.OriginInfoContainer;
 import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddon;
-import io.blodhgarm.personality.client.gui.utils.CustomSurfaces;
+import io.blodhgarm.personality.client.gui.utils.owo.ExtraSurfaces;
 import io.github.apace100.origins.Origins;
 import io.github.apace100.origins.origin.*;
 import io.github.apace100.origins.registry.ModItems;
@@ -23,6 +24,8 @@ import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.container.ScrollContainer;
 import io.wispforest.owo.ui.core.*;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -67,12 +70,12 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
 
     //----------------------------
 
-    public OriginSelectionDisplayAddon(CharacterScreenMode mode, @Nullable BaseCharacter character, @Nullable PlayerEntity player){
-        this(mode, character, player, 0);
+    public OriginSelectionDisplayAddon(CharacterViewMode mode, GameProfile playerProfile, @Nullable BaseCharacter character){
+        this(mode, playerProfile, character, 0);
     }
 
-    public OriginSelectionDisplayAddon(CharacterScreenMode mode, @Nullable BaseCharacter character, @Nullable PlayerEntity player, int currentLayerIndex) {
-        super(mode, character, player, new Identifier("origins", "origin_selection_addon"));
+    public OriginSelectionDisplayAddon(CharacterViewMode mode,  GameProfile playerProfile, @Nullable BaseCharacter character, int currentLayerIndex) {
+        super(mode, playerProfile, character, new Identifier("origins", "origin_selection_addon"));
 
         this.layerList = new ArrayList<>();
 
@@ -100,6 +103,12 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
         setupForSelectedLayer();
     }
 
+    private Optional<AbstractClientPlayerEntity> getPlayerOptional(){
+        return MinecraftClient.getInstance().world.getPlayers().stream()
+                .filter(p -> p.getUuid() == this.playerProfile.getId())
+                .findAny();
+    }
+
     private void setupForSelectedLayer(){
         this.originSelection = new ArrayList<>(10);
 
@@ -110,8 +119,8 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
             if(origin != null) {
                 ItemStack displayItem = origin.getDisplayItem();
 
-                if (displayItem.getItem() == Items.PLAYER_HEAD && !displayItem.has(SKULL_OWNER_KEY) && player != null) {
-                    displayItem.put(SKULL_OWNER_KEY, player.getDisplayName().getString());
+                if (displayItem.getItem() == Items.PLAYER_HEAD && !displayItem.has(SKULL_OWNER_KEY)) {
+                    displayItem.put(SKULL_OWNER_KEY, playerProfile.getName());
                 }
             } else {
                 origin = Origin.EMPTY;
@@ -144,7 +153,9 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
     }
 
     private int generateLayerData(List<Origin> originSelection, OriginLayer currentLayer){
-        List<Identifier> originIdentifiers = currentLayer.getOrigins(player);
+        Optional<AbstractClientPlayerEntity> player = getPlayerOptional();
+
+        List<Identifier> originIdentifiers = player.isPresent() ? currentLayer.getOrigins(player.get()) : currentLayer.getOrigins();
 
         originIdentifiers.forEach(originId -> {
             Origin origin = OriginRegistry.get(originId);
@@ -154,7 +165,7 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
             ItemStack displayItem = origin.getDisplayItem();
 
             if(displayItem.getItem() == Items.PLAYER_HEAD && !displayItem.has(SKULL_OWNER_KEY)) {
-                displayItem.put(SKULL_OWNER_KEY, player.getDisplayName().getString());
+                displayItem.put(SKULL_OWNER_KEY, playerProfile.getName());
             }
 
             originSelection.add(origin);
@@ -167,7 +178,7 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
 
         int maxSelection = originSelection.size();
 
-        if(currentLayer.isRandomAllowed() && currentLayer.getRandomOrigins(player).size() > 0) {
+        if(currentLayer.isRandomAllowed() && player.isPresent() && currentLayer.getRandomOrigins(player.get()).size() > 0) {
             maxSelection += 1;
         }
 
@@ -206,22 +217,28 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
     }
 
     private void initRandomOrigin(ArrayList<OriginLayer> layerList) {
+        Optional<AbstractClientPlayerEntity> player = getPlayerOptional();
+
         Origin randomOrigin = new Origin(Origins.identifier("random"), new ItemStack(ModItems.ORB_OF_ORIGIN), Impact.NONE, -1, Integer.MAX_VALUE);
 
         MutableText randomOriginText = (MutableText)Text.of("");
 
-        List<Identifier> randoms = layerList.get(currentLayerIndex).getRandomOrigins(player);
+        if(player.isPresent()) {
+            List<Identifier> randoms = layerList.get(currentLayerIndex).getRandomOrigins(player.get());
 
-        randoms.sort((ia, ib) -> {
-            Origin a = OriginRegistry.get(ia);
-            Origin b = OriginRegistry.get(ib);
-            int impDelta = a.getImpact().getImpactValue() - b.getImpact().getImpactValue();
-            return impDelta == 0 ? a.getOrder() - b.getOrder() : impDelta;
-        });
+            randoms.sort((ia, ib) -> {
+                Origin a = OriginRegistry.get(ia);
+                Origin b = OriginRegistry.get(ib);
+                int impDelta = a.getImpact().getImpactValue() - b.getImpact().getImpactValue();
+                return impDelta == 0 ? a.getOrder() - b.getOrder() : impDelta;
+            });
 
-        for(Identifier id : randoms) {
-            randomOriginText.append(OriginRegistry.get(id).getName());
-            randomOriginText.append(Text.of("\n"));
+            for (Identifier id : randoms) {
+                randomOriginText.append(OriginRegistry.get(id).getName());
+                randomOriginText.append(Text.of("\n"));
+            }
+        } else {
+            randomOriginText.append("SHIT HAS HIT THE FAN AND YOU GET NOTHING!");
         }
 
         originLayerHelpers.get(layerList.get(currentLayerIndex)).setRandomInfo(randomOrigin, randomOriginText);
@@ -315,7 +332,7 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
                                         .positioning(Positioning.absolute(6, 20))
                                         .padding(Insets.of(8, 4, 0,0))
                                         .id("origin_info"))
-                                .surface(CustomSurfaces.INVERSE_PANEL)
+                                .surface(ExtraSurfaces.INVERSE_PANEL)
 //                                .margins(Insets.of(1,0,0,0))
                 );
 

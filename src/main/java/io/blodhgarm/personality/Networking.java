@@ -1,12 +1,24 @@
 package io.blodhgarm.personality;
 
+import com.mojang.logging.LogUtils;
+import io.blodhgarm.personality.client.gui.screens.AdminCharacterScreen;
 import io.blodhgarm.personality.packets.*;
+import io.blodhgarm.personality.server.ServerCharacters;
 import io.wispforest.owo.Owo;
 import io.wispforest.owo.network.OwoNetChannel;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.loader.impl.util.StringUtil;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.toast.SystemToast;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import org.slf4j.Logger;
 
 public class Networking {
+
+    private static Logger LOGGER = LogUtils.getLogger();
 
     public static final OwoNetChannel CHANNEL = OwoNetChannel.create(new Identifier("personality", "main"));
 
@@ -24,6 +36,8 @@ public class Networking {
         CHANNEL.registerClientboundDeferred(IntroductionPackets.UnknownIntroduction.class);
         CHANNEL.registerClientboundDeferred(IntroductionPackets.UpdatedKnowledge.class);
 
+        CHANNEL.registerClientboundDeferred(ServerCharacters.ReturnInformation.class);
+
         //C2S - Client to Server
         CHANNEL.registerServerbound(SyncC2SPackets.ModifyBaseCharacterData.class, SyncC2SPackets.ModifyBaseCharacterData::modifyCharacter);
         CHANNEL.registerServerbound(SyncC2SPackets.ModifyAddonData.class, SyncC2SPackets.ModifyAddonData::modifyAddons);
@@ -31,12 +45,19 @@ public class Networking {
 
         CHANNEL.registerServerbound(SyncC2SPackets.NewCharacter.class, SyncC2SPackets.NewCharacter::newCharacter);
 
-        CHANNEL.registerServerbound(SyncC2SPackets.AssociatePlayerToCharacter.class, SyncC2SPackets.AssociatePlayerToCharacter::associate);
         CHANNEL.registerServerbound(SyncC2SPackets.RegistrySync.class, SyncC2SPackets.RegistrySync::registriesSync);
 
         CHANNEL.registerServerbound(RevealCharacterC2SPacket.class, RevealCharacterC2SPacket::revealInformationToPlayers);
+
+        CHANNEL.registerServerbound(AdminActionPackets.AssociateAction.class, AdminActionPackets.AssociateAction::attemptAssociateAction);
+        CHANNEL.registerServerbound(AdminActionPackets.DisassociateAction.class, AdminActionPackets.DisassociateAction::attemptDisassociateAction);
+
+        CHANNEL.registerServerbound(AdminActionPackets.EditAction.class, AdminActionPackets.EditAction::attemptEditAction);
+
+        CHANNEL.registerServerbound(AdminActionPackets.CharacterBasedAction.class, AdminActionPackets.CharacterBasedAction::attemptAction);
     }
 
+    @Environment(EnvType.CLIENT)
     public static void registerNetworkingClient(){
         //S2C - Server to Client
         CHANNEL.registerClientbound(OpenPersonalityScreenS2CPacket.class, OpenPersonalityScreenS2CPacket::openScreen);
@@ -50,6 +71,16 @@ public class Networking {
 
         CHANNEL.registerClientbound(IntroductionPackets.UnknownIntroduction.class, IntroductionPackets.UnknownIntroduction::unknownIntroduced);
         CHANNEL.registerClientbound(IntroductionPackets.UpdatedKnowledge.class, IntroductionPackets.UpdatedKnowledge::updatedKnowledge);
+
+        CHANNEL.registerClientbound(ServerCharacters.ReturnInformation.class, (message, access) -> {
+            SystemToast.add(access.runtime().getToastManager(), SystemToast.Type.CHAT_PREVIEW_WARNING, Text.of(StringUtil.capitalize(message.action())), Text.of(message.returnMessage()));
+
+            if(MinecraftClient.getInstance().currentScreen instanceof AdminCharacterScreen screen){
+                screen.clearSelectedEntries();
+            }
+
+            LOGGER.info("Action: {}, Message: {}", message.action(), message.returnMessage());
+        });
     }
 
     public static <R extends Record> void sendC2S(R packet) {

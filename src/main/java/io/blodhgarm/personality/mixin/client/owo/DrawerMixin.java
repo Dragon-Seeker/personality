@@ -2,6 +2,7 @@ package io.blodhgarm.personality.mixin.client.owo;
 
 import io.blodhgarm.personality.client.gui.utils.polygons.AbstractPolygon;
 import io.blodhgarm.personality.misc.pond.owo.ExclusiveBoundingArea;
+import io.blodhgarm.personality.misc.pond.owo.InclusiveBoundingArea;
 import io.blodhgarm.personality.misc.pond.owo.RefinedBoundingArea;
 import io.blodhgarm.personality.misc.pond.owo.UnimportantToggleHelper;
 import io.wispforest.owo.ui.core.Color;
@@ -53,12 +54,16 @@ public abstract class DrawerMixin {
 
         @Inject(method = "drawInspector", at = @At(value = "JUMP", opcode = Opcodes.IFEQ, ordinal = 1), locals = LocalCapture.CAPTURE_FAILHARD)
         private void renderTriangles(MatrixStack matrices, ParentComponent root, double mouseX, double mouseY, boolean onlyHovered, CallbackInfo ci, MinecraftClient client, TextRenderer textRenderer, ArrayList<Component> children, Iterator<Component> iterator, Component child){
-            if(child instanceof ExcludableBoundingArea excludableBoundingArea && !excludableBoundingArea.getExclusionZones().isEmpty()){
+            if(child instanceof ExclusiveBoundingArea excludableBoundingArea && !excludableBoundingArea.getExclusionZones().isEmpty()){
                 excludableBoundingArea.getExclusionZones().forEach(polygon -> ((AbstractPolygon)polygon).drawPolygon(matrices, new Color(1.0f, 0f, 0f, 0.5f).argb()));
             }
 
             if(child instanceof RefinedBoundingArea refinedBoundingArea && refinedBoundingArea.getRefinedBound() != null){
                 refinedBoundingArea.getRefinedBound().drawPolygon(matrices, new Color(0.8f, 0.6f, 0.2f, 0.5f).argb(), true, true);
+            }
+
+            if(child instanceof InclusiveBoundingArea inclusiveBoundingArea && !inclusiveBoundingArea.getInclusionZones().isEmpty()){
+                inclusiveBoundingArea.getInclusionZones().forEach(polygon -> ((AbstractPolygon)polygon).drawPolygon(matrices, new Color(0.4f, 0.2f, 0.6f, 0.5f).argb()));
             }
         }
 

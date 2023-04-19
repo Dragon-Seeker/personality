@@ -97,14 +97,6 @@ public class SyncC2SPackets {
         }
     }
 
-    public record AssociatePlayerToCharacter(String characterUUID){
-        public static void associate(AssociatePlayerToCharacter message, ServerAccess access){
-            if(ServerCharacters.INSTANCE.characterLookupMap().containsKey(message.characterUUID())){
-                ServerCharacters.INSTANCE.associateCharacterToPlayer(message.characterUUID(), access.player().getUuidAsString());
-            }
-        }
-    }
-
     @SuppressWarnings("unchecked")
     public record RegistrySync(Map<Identifier, DelayedRegistryData> registryData){
 

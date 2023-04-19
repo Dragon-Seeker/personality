@@ -105,32 +105,34 @@ public class DebugCharacters {
 
     public static final List<BaseCharacter> KNOWN_CHARACTERS = new ArrayList<>();
 
-    public static final List<Character> DEBUG_CHARACTERS_LIST = List.of(
-            DEBUG_1,
-            DEBUG_2,
-            DEBUG_3,
-            DEBUG_4,
-            DEBUG_5
+    private static final List<Character> DEBUG_CHARACTERS_LIST = new ArrayList<>(
+            List.of(
+                    DEBUG_1,
+                    DEBUG_2,
+                    DEBUG_3,
+                    DEBUG_4,
+                    DEBUG_5
+            )
     );
 
     public static final Map<String, Character> DEBUG_CHARACTERS_MAP = new HashMap<>();
 
     public static void init() {
-        if(FabricLoader.getInstance().isDevelopmentEnvironment()) {
-            for(int i = 0; i < 5; i++) {
-                Character character = DEBUG_CHARACTERS_LIST.get(i);
+        for(int i = 0; i < 5; i++) {
+            Character character = DEBUG_CHARACTERS_LIST.get(i);
 
-                DEBUG_CHARACTERS_MAP.put(character.getUUID(), character);
+            DEBUG_CHARACTERS_MAP.put(character.getUUID(), character);
 
-                KnownCharacter wrappedCharacter = new KnownCharacter(DEBUG_CHARACTERS_LIST.get(i));
+            KnownCharacter wrappedCharacter = new KnownCharacter(DEBUG_CHARACTERS_LIST.get(i));
 
-                wrappedCharacter.updateInfoLevel(InfoRevealLevel.VALID_VALUES[i]);
+            wrappedCharacter.updateInfoLevel(InfoRevealLevel.VALID_VALUES[i]);
 
-                REVEAL_TEST.getKnownCharacters().put(character.getUUID(), wrappedCharacter);
+            REVEAL_TEST.getKnownCharacters().put(character.getUUID(), wrappedCharacter);
 
-                KNOWN_CHARACTERS.add(wrappedCharacter);
-            }
+            KNOWN_CHARACTERS.add(wrappedCharacter);
         }
+
+        DEBUG_CHARACTERS_LIST.add(REVEAL_TEST);
     }
 
     public static Character getRevealTest(CharacterManager<?> manager){
