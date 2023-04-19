@@ -5,8 +5,8 @@ import io.blodhgarm.personality.Networking;
 import io.blodhgarm.personality.api.reveal.InfoRevealLevel;
 import io.blodhgarm.personality.client.PersonalityClient;
 import io.blodhgarm.personality.client.gui.ThemeHelper;
-import io.blodhgarm.personality.client.gui.builders.SimpleRadialLayoutBuilder;
-import io.blodhgarm.personality.client.gui.utils.CustomSurfaces;
+import io.blodhgarm.personality.client.gui.components.builders.SimpleRadialLayoutBuilder;
+import io.blodhgarm.personality.client.gui.utils.owo.ExtraSurfaces;
 import io.blodhgarm.personality.api.reveal.RevelInfoManager;
 import io.blodhgarm.personality.misc.pond.owo.AnimationExtension;
 import io.blodhgarm.personality.packets.RevealCharacterC2SPacket;
@@ -73,7 +73,7 @@ public class RevealIdentityScreen extends BaseOwoScreen<FlowLayout> {
                         .margins(Insets.bottom(3))
         ).child(
                 Containers.verticalFlow(Sizing.content(), Sizing.content())
-                        .surface(CustomSurfaces.INVERSE_PANEL)
+                        .surface(ExtraSurfaces.INVERSE_PANEL)
                         .padding(Insets.of(6))
                         .id("confirmation_info_layout")
                         .margins(Insets.bottom(3))
@@ -114,7 +114,7 @@ public class RevealIdentityScreen extends BaseOwoScreen<FlowLayout> {
                             try {
                                 this.selectedRevealLevel = InfoRevealLevel.valueOf(id);
 
-                                ((AnimationExtension<Positioning, ?>) this.revealLevel.getComponent()
+                                ((AnimationExtension<Positioning>) this.revealLevel.getComponent()
                                         .positioning().animate(500, Easing.LINEAR, PersonalityClient.customRelative(-200, 50)).forwards())
                                         .setOnCompletionEvent(animation -> this.uiAdapter.rootComponent.removeChild(this.revealLevel.getComponent()));
 
@@ -165,7 +165,7 @@ public class RevealIdentityScreen extends BaseOwoScreen<FlowLayout> {
                             try {
                                 this.selectedRevealRange = RevelInfoManager.RevealRange.valueOf(id);
 
-                                ((AnimationExtension<Positioning, ?>) this.revealRange.getComponent()
+                                ((AnimationExtension<Positioning>) this.revealRange.getComponent()
                                         .positioning().animate(500, Easing.LINEAR, PersonalityClient.customRelative(-200, 50)).forwards())
                                         .setOnCompletionEvent(animation -> this.uiAdapter.rootComponent.removeChild(this.revealRange.getComponent()));
 

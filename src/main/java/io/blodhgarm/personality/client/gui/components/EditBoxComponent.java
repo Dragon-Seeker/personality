@@ -1,10 +1,11 @@
-package io.blodhgarm.personality.client.gui.components.vanilla;
+package io.blodhgarm.personality.client.gui.components;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.blodhgarm.personality.mixin.client.accessor.EditBoxAccessor;
 import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.core.Color;
 import io.wispforest.owo.ui.core.CursorStyle;
+import io.wispforest.owo.ui.core.Size;
 import io.wispforest.owo.ui.core.Sizing;
 import io.wispforest.owo.ui.inject.ComponentStub;
 import io.blodhgarm.personality.mixin.client.accessor.EditBoxWidgetAccessor;
@@ -18,8 +19,6 @@ import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
 
-import java.util.List;
-
 /**
  * This is manly a copy of EditBoxWidget with certain changes to how it functions for Personality
  */
@@ -30,6 +29,8 @@ public class EditBoxComponent extends EditBoxWidget implements ComponentStub {
 
     private boolean canEdit = true;
 
+    public enum ScrollBarSide { LEFT, RIGHT }
+
     private ScrollBarSide position = ScrollBarSide.LEFT;
 
     public EditBoxComponent(Text placeholder, Text message) {
@@ -38,20 +39,15 @@ public class EditBoxComponent extends EditBoxWidget implements ComponentStub {
         this.setText("");
     }
 
-    public static EditBoxComponent emptyEditBox(Sizing horizontalSizing, Sizing verticalSizing, Text placeholder, Text message) {
-        return editBox(horizontalSizing, verticalSizing, placeholder, message, "");
+    public static EditBoxComponent editBox(Sizing horizontalSizing, Sizing verticalSizing, Text placeholder, Text msg, String info){
+        return Components.createWithSizing(() -> new EditBoxComponent(placeholder, msg), horizontalSizing, verticalSizing)
+                .setInfo(info);
     }
 
-    public static EditBoxComponent editBox(Sizing horizontalSizing, Sizing verticalSizing, Text placeholder, Text message, String info){
-        EditBoxComponent widget = Components.createWithSizing(
-                () -> new EditBoxComponent(placeholder, message),
-                horizontalSizing,
-                verticalSizing
-        );
+    public EditBoxComponent setInfo(String info) {
+        super.setText(info);
 
-        widget.setText(info);
-
-        return widget;
+        return this;
     }
 
     public EditBoxComponent textWidth(int width){
@@ -91,6 +87,14 @@ public class EditBoxComponent extends EditBoxWidget implements ComponentStub {
         this.editBox.moveCursor(movement, amount);
 
         return this;
+    }
+
+    @Override
+    public void inflate(Size space) {
+        super.inflate(space);
+
+        this.editBox.width = width() - this.getPaddingDoubled();
+        this.editBox.rewrap();
     }
 
     @Override
@@ -258,45 +262,8 @@ public class EditBoxComponent extends EditBoxWidget implements ComponentStub {
         // noop, since TextFieldWidget already does this
     }
 
-    protected CursorStyle owo$preferredCursorStyle() {
-        return CursorStyle.TEXT;
-    }
-
-    public String convertTextBox(){
-        StringBuilder builder = new StringBuilder();
-
-        List<EditBox.Substring> substrings = (List<EditBox.Substring>) this.editBox.getLines();
-
-        if(substrings.isEmpty() || substrings.stream().filter(substring -> substring != EditBox.Substring.EMPTY).toList().isEmpty()){
-            return "";
-        }
-
-        for(int i = 0; i < substrings.size(); i++){
-            EditBox.Substring substring = substrings.get(i);
-
-            boolean addNewLineIfNeeded = true;
-
-            if(substring != EditBox.Substring.EMPTY){
-                String text = this.editBox.getText().substring(substring.beginIndex(), substring.endIndex());
-
-                if(text.contains("\n")) addNewLineIfNeeded = false;
-
-                builder.append(text);
-            }
-
-            if(i + 1 != substrings.size() && addNewLineIfNeeded) builder.append("\n");
-        }
-
-        return builder.toString();
-    }
-
     @Override
     public boolean canFocus(FocusSource source) {
         return true;
-    }
-
-    public enum ScrollBarSide {
-        LEFT,
-        RIGHT
     }
 }

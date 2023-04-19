@@ -1,4 +1,4 @@
-package io.blodhgarm.personality.client.gui.builders;
+package io.blodhgarm.personality.client.gui.components.builders;
 
 import io.wispforest.owo.ui.core.Component;
 

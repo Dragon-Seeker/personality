@@ -42,12 +42,20 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
     private final Option<java.lang.Float> extraAgeConfiguration_multiplier = this.optionForKey(new Option.Key("extraAgeConfiguration.multiplier"));
     private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> extraAgeConfiguration_calculationCurve = this.optionForKey(new Option.Key("extraAgeConfiguration.calculationCurve"));
     private final Option<java.lang.Integer> maximumExtraAge = this.optionForKey(new Option.Key("maximumExtraAge"));
+    private final Option<io.blodhgarm.personality.api.reveal.InfoRevealLevel> minimumInfo = this.optionForKey(new Option.Key("minimumInfo"));
+    private final Option<java.util.List<net.minecraft.util.Identifier>> none_tier = this.optionForKey(new Option.Key("none_tier"));
+    private final Option<java.util.List<net.minecraft.util.Identifier>> general_tier = this.optionForKey(new Option.Key("general_tier"));
+    private final Option<java.util.List<net.minecraft.util.Identifier>> associate_tier = this.optionForKey(new Option.Key("associate_tier"));
+    private final Option<java.util.List<net.minecraft.util.Identifier>> trusted_tier = this.optionForKey(new Option.Key("trusted_tier"));
+    private final Option<java.util.List<net.minecraft.util.Identifier>> confidant_tier = this.optionForKey(new Option.Key("confidant_tier"));
     private final Option<java.util.List<java.lang.String>> moderationList = this.optionForKey(new Option.Key("moderationList"));
     private final Option<java.util.List<java.lang.String>> administrationList = this.optionForKey(new Option.Key("administrationList"));
     private final Option<java.lang.Boolean> adjustWidthAndHeightOnly = this.optionForKey(new Option.Key("adjustWidthAndHeightOnly"));
     private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.ThemeMode> themeMode = this.optionForKey(new Option.Key("themeMode"));
-    private final Option<java.lang.Boolean> showPlayerNameWhenHoveringChat = this.optionForKey(new Option.Key("showPlayerNameWhenHoveringChat"));
+    private final Option<java.lang.Boolean> showPlayerNameInChat = this.optionForKey(new Option.Key("showPlayerNameInChat"));
     private final Option<java.lang.Boolean> showPlayerNamePlateAtChestLevel = this.optionForKey(new Option.Key("showPlayerNamePlateAtChestLevel"));
+    private final Option<java.lang.Boolean> disableSponsorComponent = this.optionForKey(new Option.Key("disableSponsorComponent"));
+    private final Option<java.lang.Boolean> disableInWorldDescriptionTooltipComponent = this.optionForKey(new Option.Key("disableInWorldDescriptionTooltipComponent"));
 
     private PersonalityConfig() {
         super(io.blodhgarm.personality.misc.config.PersonalityConfigModel.class);
@@ -333,6 +341,54 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         maximumExtraAge.set(value);
     }
 
+    public io.blodhgarm.personality.api.reveal.InfoRevealLevel minimumInfo() {
+        return minimumInfo.value();
+    }
+
+    public void minimumInfo(io.blodhgarm.personality.api.reveal.InfoRevealLevel value) {
+        minimumInfo.set(value);
+    }
+
+    public java.util.List<net.minecraft.util.Identifier> none_tier() {
+        return none_tier.value();
+    }
+
+    public void none_tier(java.util.List<net.minecraft.util.Identifier> value) {
+        none_tier.set(value);
+    }
+
+    public java.util.List<net.minecraft.util.Identifier> general_tier() {
+        return general_tier.value();
+    }
+
+    public void general_tier(java.util.List<net.minecraft.util.Identifier> value) {
+        general_tier.set(value);
+    }
+
+    public java.util.List<net.minecraft.util.Identifier> associate_tier() {
+        return associate_tier.value();
+    }
+
+    public void associate_tier(java.util.List<net.minecraft.util.Identifier> value) {
+        associate_tier.set(value);
+    }
+
+    public java.util.List<net.minecraft.util.Identifier> trusted_tier() {
+        return trusted_tier.value();
+    }
+
+    public void trusted_tier(java.util.List<net.minecraft.util.Identifier> value) {
+        trusted_tier.set(value);
+    }
+
+    public java.util.List<net.minecraft.util.Identifier> confidant_tier() {
+        return confidant_tier.value();
+    }
+
+    public void confidant_tier(java.util.List<net.minecraft.util.Identifier> value) {
+        confidant_tier.set(value);
+    }
+
     public java.util.List<java.lang.String> moderationList() {
         return moderationList.value();
     }
@@ -369,12 +425,12 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         themeMode.set(value);
     }
 
-    public boolean showPlayerNameWhenHoveringChat() {
-        return showPlayerNameWhenHoveringChat.value();
+    public boolean showPlayerNameInChat() {
+        return showPlayerNameInChat.value();
     }
 
-    public void showPlayerNameWhenHoveringChat(boolean value) {
-        showPlayerNameWhenHoveringChat.set(value);
+    public void showPlayerNameInChat(boolean value) {
+        showPlayerNameInChat.set(value);
     }
 
     public boolean showPlayerNamePlateAtChestLevel() {
@@ -385,19 +441,23 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         showPlayerNamePlateAtChestLevel.set(value);
     }
 
-
-    public interface ExtraLife {
-        int minAge();
-        void minAge(int value);
-        int maxAge();
-        void maxAge(int value);
-        float minimumHoursForExtraLife();
-        void minimumHoursForExtraLife(float value);
-        float multiplier();
-        void multiplier(float value);
-        io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve calculationCurve();
-        void calculationCurve(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value);
+    public boolean disableSponsorComponent() {
+        return disableSponsorComponent.value();
     }
+
+    public void disableSponsorComponent(boolean value) {
+        disableSponsorComponent.set(value);
+    }
+
+    public boolean disableInWorldDescriptionTooltipComponent() {
+        return disableInWorldDescriptionTooltipComponent.value();
+    }
+
+    public void disableInWorldDescriptionTooltipComponent(boolean value) {
+        disableInWorldDescriptionTooltipComponent.set(value);
+    }
+
+
     public interface GradualValue {
         int minAge();
         void minAge(int value);
@@ -407,6 +467,18 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         void startingValue(float value);
         float endingValue();
         void endingValue(float value);
+        io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve calculationCurve();
+        void calculationCurve(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value);
+    }
+    public interface ExtraLife {
+        int minAge();
+        void minAge(int value);
+        int maxAge();
+        void maxAge(int value);
+        float minimumHoursForExtraLife();
+        void minimumHoursForExtraLife(float value);
+        float multiplier();
+        void multiplier(float value);
         io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve calculationCurve();
         void calculationCurve(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value);
     }

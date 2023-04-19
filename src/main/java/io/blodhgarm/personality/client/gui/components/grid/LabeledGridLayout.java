@@ -1,12 +1,12 @@
-package io.blodhgarm.personality.client.gui.components.owo;
+package io.blodhgarm.personality.client.gui.components.grid;
 
 import com.mojang.logging.LogUtils;
-import io.blodhgarm.personality.client.gui.builders.LabeledObjectToComponent;
-import io.blodhgarm.personality.client.gui.builders.ObjectToComponent;
+import io.blodhgarm.personality.client.gui.components.builders.LabeledObjectToComponent;
+import io.blodhgarm.personality.client.gui.components.builders.ObjectToComponent;
 import io.blodhgarm.personality.client.gui.components.LineComponent;
 import io.blodhgarm.personality.client.gui.utils.ListWithinListView;
 import io.blodhgarm.personality.client.gui.utils.ModifiableCollectionHelper;
-import io.blodhgarm.personality.client.gui.utils.owo.LineEvent;
+import io.blodhgarm.personality.client.gui.utils.owo.layout.LineEvent;
 import io.blodhgarm.personality.misc.pond.owo.LineManageable;
 import io.blodhgarm.personality.utils.ReflectionUtils;
 import io.wispforest.owo.ui.base.BaseParentComponent;
@@ -293,9 +293,7 @@ public class LabeledGridLayout<T> extends BaseParentComponent implements LineMan
         var childSpace = this.calculateChildSpace(space);
 
         this.finalChildrenView.forEach((child) -> {
-            if (child != null) {
-                child.inflate(childSpace);
-            }
+            if (child != null) child.inflate(childSpace);
         });
 
         if(rebuildSizingArrays) {
@@ -323,8 +321,9 @@ public class LabeledGridLayout<T> extends BaseParentComponent implements LineMan
         Insets columnMargin = Insets.horizontal(3);
         Insets rowMargin = Insets.vertical(3);
 
-        int totalColumnSize = Arrays.stream(columnSizes).sum() + ((columnMargin.horizontal() + columnDividingLineWidth) * this.getColumnSize());
-        int totalRowSize = Arrays.stream(rowSizes).sum() + ((rowMargin.vertical() + rowDividingLineWidth) * this.getRowSize());
+        int totalColumnSize = Arrays.stream(columnSizes).sum() + ((columnMargin.horizontal() + columnDividingLineWidth) * (this.getColumnSize() - 1));
+        int totalRowSize = Arrays.stream(rowSizes).sum() + ((rowMargin.vertical() * (this.getRowSize() - 2)) + (rowDividingLineWidth * (this.getRowSize() - 1))) + 3;
+
         //------------
 
         for (int row = 0; row < getRowSize(); row++) {
@@ -358,14 +357,6 @@ public class LabeledGridLayout<T> extends BaseParentComponent implements LineMan
                                 .setLineWidth(columnDividingLineWidth)
                                 .margins(columnMargin.add(0,0, 0, 0));
 
-                        if(lines.isEmpty()){
-//                            columnComponent.id("debug_line_on");
-
-//                            LOGGER.info(" -- -- ");
-//                            LOGGER.info("[DebugLineRender]: X: {}, Y: {}", this.x(), this.y());
-//                            LOGGER.info("[DebugLineRender]: Line Specs [x1: {}, y1: {}, x2: {}, y2: {}]", x1, y1, x2, y2);
-                        }
-
                         this.addLine(columnComponent);
 
                         this.mountChild(columnComponent, childSpace, child -> {
@@ -393,10 +384,12 @@ public class LabeledGridLayout<T> extends BaseParentComponent implements LineMan
                 int x2 = x1 + totalColumnSize;
                 int y2 = y1;
 
+                var currentMargin = row == 0 ? Insets.bottom(3) : rowMargin;
+
                 LineComponent rowComponent = (LineComponent) new LineComponent(x1, y1, x2, y2)
                         .color(rowDividingLineColor)
                         .setLineWidth(rowDividingLineWidth)
-                        .margins(row == 0 ? Insets.of(0) : rowMargin.add(0,0, 0,0));
+                        .margins(currentMargin);
 
                 this.addLine(rowComponent);
 
@@ -407,7 +400,7 @@ public class LabeledGridLayout<T> extends BaseParentComponent implements LineMan
                     );
                 });
 
-                layoutY.add(rowDividingLineWidth + rowMargin.vertical());
+                layoutY.add(rowDividingLineWidth + currentMargin.vertical());
             }
         }
 

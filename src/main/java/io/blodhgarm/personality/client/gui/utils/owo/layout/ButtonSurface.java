@@ -1,6 +1,5 @@
-package io.blodhgarm.personality.client.gui.utils.owo;
+package io.blodhgarm.personality.client.gui.utils.owo.layout;
 
-import io.blodhgarm.personality.client.gui.components.ButtonAddon;
 import io.wispforest.owo.ui.core.ParentComponent;
 import net.minecraft.client.util.math.MatrixStack;
 

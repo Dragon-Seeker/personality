@@ -1,11 +1,11 @@
-package io.blodhgarm.personality.client.gui.utils;
+package io.blodhgarm.personality.client.gui.utils.owo;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.wispforest.owo.ui.core.Surface;
 import io.wispforest.owo.ui.util.Drawer;
 import net.minecraft.util.Identifier;
 
-public class CustomSurfaces {
+public class ExtraSurfaces {
 
     public static Identifier INVERSE_PANEL_TEXTURE = new Identifier("personality", "textures/gui/inverse_panel.png");
 

@@ -137,11 +137,10 @@ public class AddonRegistry<A extends BaseAddon> extends BaseRegistry {
 
                 addon = PersonalityMod.GSON.fromJson(addonJson, registryHelper.addonClass());
             } catch (IOException e){
-                LOGGER.error("[AddonLoading] {} addon for [Name: {}, UUID: {}] was unable to be loaded from the Disc, setting such to default.", s, c.getName(), c.getUUID());
+                LOGGER.error("[AddonLoading] {} addon for [Name: {}, UUID: {}] was unable to be loaded from the Disc, setting such to default and saved to disc.", s, c.getName(), c.getUUID());
 
                 addon = registryHelper.defaultAddon.get();
-                //TODO: IDK if such is needed or would cause problems
-//                addon.improperLoad();
+                ServerCharacters.INSTANCE.saveAddonForCharacter(c, s, addon, false);
 
                 e.printStackTrace();
             } catch (JsonSyntaxException e){

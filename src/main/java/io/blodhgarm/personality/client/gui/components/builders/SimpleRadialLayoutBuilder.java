@@ -1,4 +1,4 @@
-package io.blodhgarm.personality.client.gui.builders;
+package io.blodhgarm.personality.client.gui.components.builders;
 
 import earcut4j.Earcut;
 import io.blodhgarm.personality.client.gui.components.LineComponent;
@@ -319,7 +319,7 @@ public class SimpleRadialLayoutBuilder {
 
                                 if(startColor == null) startColor = line.startColor().animate(100, Easing.LINEAR, new Color(1.0f, 1.0f, 1.0f));
 
-                                ((AnimationExtension<Color, ?>) startColor)
+                                ((AnimationExtension<Color>) startColor)
                                         .setOnCompletionEvent(animation -> {
                                             if(animation.direction() == Animation.Direction.BACKWARDS) line.zIndex(0);
                                         }).forwards();
@@ -328,7 +328,7 @@ public class SimpleRadialLayoutBuilder {
 
                                 if(endColor == null) endColor = line.endColor().animate(100, Easing.LINEAR, new Color(1.0f, 1.0f, 1.0f));
 
-                                ((AnimationExtension<Color, ?>) endColor)
+                                ((AnimationExtension<Color>) endColor)
                                         .setOnCompletionEvent(animation -> {
                                             if(animation.direction() == Animation.Direction.BACKWARDS) line.zIndex(0);
                                         }).forwards();

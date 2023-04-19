@@ -1,4 +1,4 @@
-package io.blodhgarm.personality.client.gui.builders;
+package io.blodhgarm.personality.client.gui.components.builders;
 
 import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.core.Component;
@@ -23,8 +23,8 @@ public class LabeledObjectToComponent<T> implements ObjectToComponent<T>, LabelC
     //---------------------------------
 
     @Override
-    public Component build(T character, boolean isParentVertical) {
-        return perCharacterBuilder.build(character, isParentVertical);
+    public Component build(T entry, boolean isParentVertical) {
+        return perCharacterBuilder.build(entry, isParentVertical);
     }
 
     @Override

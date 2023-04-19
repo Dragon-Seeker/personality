@@ -56,7 +56,7 @@ dependencies {
 
 	include modImplementation ("io.github.ladysnake:satin:${satin_version}")
 
-	include modImplementation("dev.kosmx.player-anim:player-animation-lib-fabric:${project.player_anim}")
+//	include modImplementation("dev.kosmx.player-anim:player-animation-lib-fabric:${project.player_anim}")
 
 	modImplementation ("software.bernie.geckolib:geckolib-fabric-1.19:${project.gecko}")
 
@@ -76,7 +76,7 @@ dependencies {
 
 
 	//Compat only
-	modApi("com.github.Virtuoel:Pehkui:${pehkui_version}", { exclude group: "net.fabricmc.fabric-api" })
+	modImplementation("com.github.Virtuoel:Pehkui:${pehkui_version}", { exclude group: "net.fabricmc.fabric-api" })
 
 	modLocalRuntime modCompileOnly("com.terraformersmc:modmenu:${project.modmenu_version}")
 	modImplementation "com.github.apace100:origins-fabric:${project.origin_version}"

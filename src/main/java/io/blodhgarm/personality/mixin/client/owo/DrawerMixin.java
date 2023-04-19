@@ -1,7 +1,7 @@
 package io.blodhgarm.personality.mixin.client.owo;
 
 import io.blodhgarm.personality.client.gui.utils.polygons.AbstractPolygon;
-import io.blodhgarm.personality.misc.pond.owo.ExcludableBoundingArea;
+import io.blodhgarm.personality.misc.pond.owo.ExclusiveBoundingArea;
 import io.blodhgarm.personality.misc.pond.owo.RefinedBoundingArea;
 import io.blodhgarm.personality.misc.pond.owo.UnimportantToggleHelper;
 import io.wispforest.owo.ui.core.Color;

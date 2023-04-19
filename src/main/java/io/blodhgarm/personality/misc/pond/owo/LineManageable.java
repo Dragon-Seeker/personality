@@ -1,7 +1,7 @@
 package io.blodhgarm.personality.misc.pond.owo;
 
 import io.blodhgarm.personality.client.gui.components.LineComponent;
-import io.blodhgarm.personality.client.gui.utils.owo.LineEvent;
+import io.blodhgarm.personality.client.gui.utils.owo.layout.LineEvent;
 import io.wispforest.owo.ui.core.Component;
 
 import java.util.List;

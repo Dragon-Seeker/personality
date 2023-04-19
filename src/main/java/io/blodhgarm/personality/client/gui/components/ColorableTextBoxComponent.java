@@ -1,7 +1,6 @@
-package io.blodhgarm.personality.client.gui.components.vanilla;
+package io.blodhgarm.personality.client.gui.components;
 
 import io.blodhgarm.personality.mixin.client.accessor.TextFieldWidgetAccessor;
-import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.component.TextBoxComponent;
 import io.wispforest.owo.ui.core.Color;
 import io.wispforest.owo.ui.core.Sizing;

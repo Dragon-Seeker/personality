@@ -2,11 +2,10 @@ package io.blodhgarm.personality.misc.pond.owo;
 
 import io.blodhgarm.personality.client.gui.utils.polygons.AbstractPolygon;
 import io.wispforest.owo.ui.core.Component;
-import net.minecraft.util.math.Vec2f;
 
 import java.util.List;
 
-public interface ExcludableBoundingArea<T extends Component> {
+public interface ExclusiveBoundingArea<T extends Component> {
 
     <P extends AbstractPolygon> T addExclusionZone(P... polygon);
 

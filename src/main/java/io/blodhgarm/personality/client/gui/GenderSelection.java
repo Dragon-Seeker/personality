@@ -50,7 +50,6 @@ public enum GenderSelection {
         return translation().getString();
     }
 
-
     public int textSizing() {
         return MinecraftClient.getInstance().textRenderer.getWidth(this.translation().asOrderedText());
     }

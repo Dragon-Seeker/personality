@@ -1,7 +1,7 @@
 package io.blodhgarm.personality.mixin.client.owo;
 
 import io.blodhgarm.personality.client.gui.utils.polygons.AbstractPolygon;
-import io.blodhgarm.personality.misc.pond.owo.ExcludableBoundingArea;
+import io.blodhgarm.personality.misc.pond.owo.ExclusiveBoundingArea;
 import io.blodhgarm.personality.misc.pond.owo.RefinedBoundingArea;
 import io.wispforest.owo.ui.base.BaseComponent;
 import net.minecraft.util.math.Vec3f;
@@ -25,7 +25,7 @@ public abstract class BaseComponentMixin {
     private void updateBoundingArea(int value, CallbackInfo ci){
         List<AbstractPolygon> polygons = new ArrayList<>();
 
-        if(this instanceof ExcludableBoundingArea excludableBoundingArea){
+        if(this instanceof ExclusiveBoundingArea excludableBoundingArea){
             polygons.addAll(excludableBoundingArea.getExclusionZones());
         }
 

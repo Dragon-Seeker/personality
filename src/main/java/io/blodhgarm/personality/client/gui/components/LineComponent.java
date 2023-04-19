@@ -4,6 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import io.blodhgarm.personality.misc.pond.owo.UnimportantComponent;
 import io.wispforest.owo.ui.base.BaseComponent;
 import io.wispforest.owo.ui.core.*;
+import io.wispforest.owo.ui.core.Color;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexFormat;
@@ -11,9 +12,6 @@ import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec2f;
-
-import javax.annotation.Nullable;
-import javax.sound.sampled.Line;
 
 public class LineComponent extends BaseComponent implements UnimportantComponent {
 
@@ -201,6 +199,26 @@ public class LineComponent extends BaseComponent implements UnimportantComponent
 
         RenderSystem.disableBlend();
         RenderSystem.enableTexture();
+    }
+
+    @Override
+    public boolean isInBoundingBox(double x, double y) {
+        double lineX = this.x();
+        double lineY = this.y();
+
+        double lineWidth = this.width();
+        double lineHeight = this.height();
+
+        if(lineWidth == 0){
+            lineX -= (this.lineWidth / 2);
+            lineWidth += this.lineWidth;
+        } else if (lineHeight == 0) {
+            lineY -= (this.lineWidth / 2);
+            lineHeight += this.lineWidth;
+        }
+
+        return x >= lineX && x < lineX + lineWidth
+            && y >= lineY && y < lineY + lineHeight;
     }
 
     public enum Corner {

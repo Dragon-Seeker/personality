@@ -15,8 +15,10 @@ public abstract class OwoUIAdapterMixin {
 
     @Inject(method = "keyPressed", at = @At(value = "HEAD"))
     private void test(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir){
-        if(Owo.DEBUG && (modifiers & GLFW.GLFW_MOD_SHIFT) != 0 && keyCode == GLFW.GLFW_KEY_TAB){
+        if(Owo.DEBUG && (modifiers & GLFW.GLFW_MOD_SHIFT) != 0 && keyCode == GLFW.GLFW_KEY_END){
             ((UnimportantToggleHelper)Drawer.debug()).toggleUnimportantComponents();
+            
+            System.out.println(((UnimportantToggleHelper)Drawer.debug()).filterUnimportantComponents());
         }
     }
 }

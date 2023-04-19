@@ -1,8 +1,7 @@
-package io.blodhgarm.personality.client.gui.components.owo;
+package io.blodhgarm.personality.client.gui.components.grid;
 
+import io.blodhgarm.personality.client.gui.components.CustomButtonComponent;
 import io.wispforest.owo.ui.component.ButtonComponent;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
 
 import java.util.ArrayList;

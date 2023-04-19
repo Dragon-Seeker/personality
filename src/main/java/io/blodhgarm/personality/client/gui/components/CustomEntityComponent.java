@@ -1,6 +1,9 @@
-package io.blodhgarm.personality.client.gui.components.owo;
+package io.blodhgarm.personality.client.gui.components;
 
+import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.systems.RenderSystem;
+import io.blodhgarm.personality.misc.pond.ShouldRenderNameTagExtension;
+import io.blodhgarm.personality.utils.Constants;
 import io.wispforest.owo.ui.component.EntityComponent;
 import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.client.MinecraftClient;
@@ -18,10 +21,19 @@ public class CustomEntityComponent<E extends Entity> extends EntityComponent<E> 
 
     public CustomEntityComponent(Sizing entitySizing, E entity) {
         super(entitySizing, entity);
+
+        ShouldRenderNameTagExtension.disable(component -> {})
+                .accept((EntityComponent<Entity>) this);
     }
 
     public static <P extends PlayerEntity, E extends Entity> CustomEntityComponent<E> playerEntityComponent(Sizing entitySizing, @Nullable P entity){
-        return new CustomEntityComponent<>(entitySizing, (E) (entity != null ? entity : new CustomTexturedRenderablePlayerEntity()));
+        return profileBasedEntityComponent(entitySizing, (entity != null) ? entity.getGameProfile() : null);
+    }
+
+    public static <P extends PlayerEntity, E extends Entity> CustomEntityComponent<E> profileBasedEntityComponent(Sizing entitySizing, @Nullable GameProfile profile){
+        boolean validProfile = profile != null && profile != Constants.ERROR_PROFILE ;
+
+        return new CustomEntityComponent<>(entitySizing, (E) (validProfile ? new RenderablePlayerEntity(profile) : new CustomTexturedRenderablePlayerEntity()));
     }
 
     @Override

@@ -1,6 +1,5 @@
-package io.blodhgarm.personality.client.gui.components;
+package io.blodhgarm.personality.client.gui.utils.owo.layout;
 
-import io.blodhgarm.personality.client.gui.utils.owo.ButtonSurface;
 import io.blodhgarm.personality.misc.pond.owo.FocusCheckable;
 import io.wispforest.owo.ui.base.BaseParentComponent;
 import io.wispforest.owo.ui.core.Component;
