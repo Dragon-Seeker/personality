@@ -6,6 +6,7 @@ import io.blodhgarm.personality.api.character.CharacterManager;
 import io.blodhgarm.personality.client.gui.screens.CharacterInfoScreen;
 import io.blodhgarm.personality.client.gui.screens.PersonalitySubScreen;
 import io.blodhgarm.personality.client.gui.screens.RevealIdentityScreen;
+import io.blodhgarm.personality.server.PrivilegeManager;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
@@ -42,7 +43,7 @@ public class KeyBindings {
         }
 
         while (OPEN_SUB_SCREEN_KEYBIND.wasPressed())
-            if(CharacterManager.hasModerationPermissions(MinecraftClient.getInstance().player) || FabricLoader.getInstance().isDevelopmentEnvironment()){
+            if(PrivilegeManager.PrivilegeLevel.MODERATOR.test(MinecraftClient.getInstance().player) || FabricLoader.getInstance().isDevelopmentEnvironment()){
                 client.setScreen(new PersonalitySubScreen());
             } else {
                 Character character = CharacterManager.getManger(world).getCharacter(client.player);

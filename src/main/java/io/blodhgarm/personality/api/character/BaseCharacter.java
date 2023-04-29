@@ -7,6 +7,7 @@ import io.blodhgarm.personality.misc.config.PersonalityConfig;
 import io.blodhgarm.personality.utils.Constants;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -18,30 +19,60 @@ import static java.lang.Math.log;
  */
 public interface BaseCharacter {
 
-    public enum Stage {YOUTH, PRIME, OLD}
+    enum Stage {YOUTH, PRIME, OLD}
 
     Map<String, KnownCharacter> getKnownCharacters();
 
     Map<Identifier, BaseAddon> getAddons();
 
-    default BaseAddon getAddon(Identifier identifier){ return getAddons().get(identifier); }
+    /**
+     * Method used to grab from the characters internal AddonMap via an Identifier
+     * @param addonId Addons Identifier
+     * @return Addon ID linked to the character Addon or null
+     */
+    @Nullable
+    default BaseAddon getAddon(Identifier addonId){ return getAddons().get(addonId); }
 
+    /**
+     * Method that will return the Characters UUID as a String
+     */
     String getUUID();
 
+    /**
+     * Method that will return the Creator of the Characters UUID as a String
+     */
     String getPlayerUUID();
 
+    /**
+     * Method that will return the Characters Name as a String
+     */
     String getName();
 
+    /**
+     * Method that will return the Characters Name formatted with its various Aliases
+     */
     Text getFormattedName();
 
     String getAlias();
 
+    /**
+     * Method that will return the Characters Gender
+     */
     String getGender();
 
+    /**
+     * Method that will return the Physical Description of what the Character looks like
+     */
     String getDescription();
 
+    /**
+     * Method that will return the Biography of the Characters Life and Backstory
+     */
     String getBiography();
 
+    /**
+     * Method used to get the information pertaining to how old the character is
+     */
     int getAge();
 
     boolean isDead();

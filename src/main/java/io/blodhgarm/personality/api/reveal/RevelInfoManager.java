@@ -14,6 +14,13 @@ import java.util.function.Consumer;
  */
 public interface RevelInfoManager<P extends PlayerEntity> {
 
+    /**
+     * Method used to reveal infromation based on value within the {@link RevealRange} Enum
+     *
+     * @param source Person to be revealed
+     * @param range The range at which such person will reveal
+     * @param level Level of information to be revealed
+     */
     default void revealCharacterInfo(P source, RevealRange range, InfoRevealLevel level){
         this.revealCharacterInfo(source, range.range, level);
     }
@@ -26,9 +33,9 @@ public interface RevelInfoManager<P extends PlayerEntity> {
         revealCharacterInfo(source, players, level);
     }
 
-    void revealCharacterInfo(P source, Collection<P> targets, InfoRevealLevel level);
+    default void revealCharacterInfo(P source, Collection<P> targets, InfoRevealLevel level) {}
 
-    Consumer<P> revealCharacterInfo(Character source, Character targetCharacter, InfoRevealLevel level);
+    default void revealCharacterInfo(Character source, Character targetCharacter, P packetTarget, InfoRevealLevel level) {}
 
     enum RevealRange {
         LARGE("large", 15),

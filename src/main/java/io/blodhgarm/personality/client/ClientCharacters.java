@@ -2,6 +2,7 @@ package io.blodhgarm.personality.client;
 
 import com.google.common.collect.HashBiMap;
 import io.blodhgarm.personality.PersonalityMod;
+import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.api.character.BaseCharacter;
 import io.blodhgarm.personality.api.character.Character;
 import io.blodhgarm.personality.api.character.CharacterManager;
@@ -10,6 +11,7 @@ import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.core.KnownCharacterLookup;
 import io.blodhgarm.personality.api.reveal.InfoRevealLevel;
 import io.blodhgarm.personality.api.reveal.KnownCharacter;
+import io.blodhgarm.personality.misc.pond.CharacterToPlayerLink;
 import io.blodhgarm.personality.packets.SyncS2CPackets;
 import io.blodhgarm.personality.utils.DebugCharacters;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -17,11 +19,17 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Consumer;
 
+/**
+ * Client Specific Implementation of {@link CharacterManager}
+ */
 public class ClientCharacters extends CharacterManager<AbstractClientPlayerEntity> implements KnownCharacterLookup, ClientPlayConnectionEvents.Disconnect {
 
     public static ClientCharacters INSTANCE = new ClientCharacters();
@@ -50,6 +58,10 @@ public class ClientCharacters extends CharacterManager<AbstractClientPlayerEntit
         return super.getPlayer(uuid);
     }
 
+    /**
+     * Method used to initialize the client's Character Manager
+     */
+    @ApiStatus.Internal
     public void init(List<SyncS2CPackets.CharacterData> characters, Map<String, String> associations) {
         playerIDToCharacterID = HashBiMap.create(associations);
         characterIDToCharacter.clear();
@@ -57,7 +69,9 @@ public class ClientCharacters extends CharacterManager<AbstractClientPlayerEntit
         for (SyncS2CPackets.CharacterData entry : characters) {
             Character c = PersonalityMod.GSON.fromJson(entry.characterData(), Character.class);
 
-            AddonRegistry.INSTANCE.deserializesAddons(c, entry.addonData(), false);
+            Map<Identifier, BaseAddon> addonMap = AddonRegistry.INSTANCE.deserializesAddons(c, entry.addonData(), false);
+
+            c.getAddons().putAll(addonMap);
 
             characterIDToCharacter.put(c.getUUID(), c);
         }
@@ -67,19 +81,15 @@ public class ClientCharacters extends CharacterManager<AbstractClientPlayerEntit
         clientKnownCharacterMap.clear();
     }
 
-    @Override
-    public void revealCharacterInfo(AbstractClientPlayerEntity source, Collection<AbstractClientPlayerEntity> targets, InfoRevealLevel level) {}
-
-    @Override
-    public Consumer<AbstractClientPlayerEntity> revealCharacterInfo(Character source, Character targetCharacter, InfoRevealLevel level) { return target -> {}; }
+    //---------------
 
     @Override
     public boolean associateCharacterToPlayer(String cUUID, String playerUUID) {
-        if(!super.associateCharacterToPlayer(cUUID, playerUUID)) {
-            return false;
-        }
+        if(!super.associateCharacterToPlayer(cUUID, playerUUID)) return false;
 
         PlayerAccess<AbstractClientPlayerEntity> playerAssociated = this.getPlayer(playerUUID);
+
+        if (playerAssociated.player() != null) ((CharacterToPlayerLink<?>) playerAssociated.player()).setCharacter(this.getCharacter(cUUID));
 
         setKnownCharacters(playerAssociated, cUUID);
 
@@ -96,9 +106,7 @@ public class ClientCharacters extends CharacterManager<AbstractClientPlayerEntit
 
                     PlayerAccess<AbstractClientPlayerEntity> otherP = this.getPlayer(knownCharacter.getWrappedCharacter());
 
-                    if (otherP.valid()) {
-                        this.addKnownCharacter(otherP.UUID(), knownCharacter);
-                    }
+                    if (otherP.valid()) this.addKnownCharacter(otherP.UUID(), knownCharacter);
                 });
             } else {
                 if (clientC.getKnownCharacters().containsKey(cUUID)) {
@@ -126,6 +134,8 @@ public class ClientCharacters extends CharacterManager<AbstractClientPlayerEntit
             oldC = this.getCharacter(this.getCharacterUUID(playerDissociated.UUID()));
         }
 
+        if (playerDissociated.player() != null) ((CharacterToPlayerLink<?>) playerDissociated.player()).setCharacter(null);
+
         revokeKnownCharacters(playerDissociated, oldC);
 
         return super.dissociateUUID(UUID, isCharacterUUID);
@@ -150,6 +160,8 @@ public class ClientCharacters extends CharacterManager<AbstractClientPlayerEntit
         }
     }
 
+    //---------------
+
     @Override
     public void addKnownCharacter(String playerUUID, BaseCharacter character) {
         this.clientKnownCharacterMap.put(playerUUID, character);
@@ -165,6 +177,8 @@ public class ClientCharacters extends CharacterManager<AbstractClientPlayerEntit
     public BaseCharacter getKnownCharacter(String UUID) {
         return this.clientKnownCharacterMap.get(UUID);
     }
+
+    //---------------
 
     @Override
     public void onPlayDisconnect(ClientPlayNetworkHandler handler, MinecraftClient client) {

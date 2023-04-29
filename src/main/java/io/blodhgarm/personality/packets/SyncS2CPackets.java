@@ -53,36 +53,46 @@ public class SyncS2CPackets {
 
     public record CharacterData(String characterData, Map<Identifier, String> addonData){}
 
-    public record SyncBaseCharacterData(String characterJson, Map<Identifier, String> addonJsons) {
+    /**
+     * Packet used to sync either just base Character information plus any addon data
+     */
+    public record SyncCharacterData(String characterJson, Map<Identifier, String> addonData) {
 
         @Environment(EnvType.CLIENT)
-        public static void syncCharacter(SyncBaseCharacterData message, ClientAccess access) {
+        public static void syncCharacter(SyncCharacterData message, ClientAccess access) {
             Character c = PersonalityMod.GSON.fromJson(message.characterJson, Character.class);
 
-            if(!message.addonJsons.isEmpty()) {
-                message.addonJsons.forEach((addonId, s) -> {
-                    Class<BaseAddon> addonClass = AddonRegistry.INSTANCE.getAddonClass(addonId);
+            boolean addonDataDeserialized = false;
 
-                    if(addonClass != null) {
-                        c.getAddons().put(addonId, PersonalityMod.GSON.fromJson(s, addonClass));
-                    } else {
-                        LOGGER.warn("[SyncCharacterPacket]: The given Identifier [{}] wasn't found within the AddonRegistry meaning it wasn't able to deserialize the info meaning such will be skipped.", addonId);
-                    }
-                });
+            if(!message.addonData.isEmpty()) {
+                Map<Identifier, BaseAddon> addonMap = AddonRegistry.INSTANCE.deserializesAddons(c, message.addonData, false);
+
+                if(message.addonData.size() != addonMap.size()){
+                    LOGGER.warn("[SyncCharacter]: Something within the addon loading process has gone wrong leading to a mismatch in addon data!");
+                }
+
+                if(!addonMap.isEmpty()){
+                    c.getAddons().putAll(addonMap);
+
+                    addonDataDeserialized = true;
+                }
             } else {
                 Character oldCharacter = ClientCharacters.INSTANCE.getCharacter(c.getUUID());
 
                 if(oldCharacter != null) c.getAddons().putAll(oldCharacter.getAddons());
             }
 
-            PlayerAccess<AbstractClientPlayerEntity> playerCharacter = ClientCharacters.INSTANCE.getPlayer(c);
-
             ClientCharacters.INSTANCE.characterLookupMap().put(c.getUUID(), c);
 
             ClientCharacters.INSTANCE.sortCharacterLookupMap();
 
+            PlayerAccess<AbstractClientPlayerEntity> playerCharacter = ClientCharacters.INSTANCE.getPlayer(c);
+
             if(playerCharacter.valid()
                     && Objects.equals(playerCharacter.UUID(), access.player().getUuid().toString())) {
+
+                if(playerCharacter.player() != null && addonDataDeserialized) ClientCharacters.INSTANCE.applyAddons(playerCharacter.player());
+
                 ClientCharacters.INSTANCE.setKnownCharacters(playerCharacter, c.getUUID());
             }
 
@@ -92,7 +102,7 @@ public class SyncS2CPackets {
         }
     }
 
-    public record SyncAddonData(String characterUUID, Map<Identifier, String> addonJsons){
+    public record SyncAddonData(String characterUUID, Map<Identifier, String> addonData){
 
         @Environment(EnvType.CLIENT)
         public static void syncAddons(SyncAddonData message, ClientAccess access) {
@@ -104,15 +114,24 @@ public class SyncS2CPackets {
                 return;
             }
 
-            message.addonJsons.forEach((addonId, addonJson) -> {
-                Class<BaseAddon> addonClass = AddonRegistry.INSTANCE.getAddonClass(addonId);
+            Map<Identifier, BaseAddon> addonMap = AddonRegistry.INSTANCE.deserializesAddons(c, message.addonData, false);
 
-                if(addonClass != null) {
-                    c.getAddons().put(addonId, PersonalityMod.GSON.fromJson(addonJson, addonClass));
-                } else {
-                    LOGGER.warn("[SyncAddons]: The given Identifier [{}] wasn't found within the AddonRegistry meaning it wasn't able to deserialize the info meaning such will be skipped.", addonId);
-                }
-            });
+            if(message.addonData.size() != addonMap.size()){
+                LOGGER.warn("[SyncAddons]: Something within the addon loading process has gone wrong leading to a mismatch in addon data!");
+            }
+
+            //Return early as the loading process hasn't found any valid addons when deserializing
+            if(addonMap.isEmpty()) return;
+
+            c.getAddons().putAll(addonMap);
+
+            PlayerAccess<AbstractClientPlayerEntity> playerCharacter = ClientCharacters.INSTANCE.getPlayer(c);
+
+            if(playerCharacter.valid()
+                    && Objects.equals(playerCharacter.UUID(), access.player().getUuid().toString())) {
+
+                if(playerCharacter.player() != null) ClientCharacters.INSTANCE.applyAddons(playerCharacter.player());
+            }
 
             if(MinecraftClient.getInstance().currentScreen instanceof AdminCharacterScreen screen){
                 screen.shouldAttemptUpdate(c);

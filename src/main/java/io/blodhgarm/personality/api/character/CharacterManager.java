@@ -3,10 +3,11 @@ package io.blodhgarm.personality.api.character;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.mojang.logging.LogUtils;
-import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
-import io.blodhgarm.personality.api.utils.PlayerAccess;
 import io.blodhgarm.personality.api.reveal.RevelInfoManager;
+import io.blodhgarm.personality.api.utils.PlayerAccess;
+import io.blodhgarm.personality.client.ClientCharacters;
+import io.blodhgarm.personality.mixin.PlayerEntityMixin;
 import io.blodhgarm.personality.utils.DebugCharacters;
 import io.blodhgarm.personality.utils.ReflectionUtils;
 import net.fabricmc.loader.api.FabricLoader;
@@ -15,11 +16,14 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.world.World;
 import org.apache.commons.collections4.map.ListOrderedMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import javax.annotation.Nonnull;
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Supplier;
 
 /**
@@ -58,19 +62,15 @@ public abstract class CharacterManager<P extends PlayerEntity> implements RevelI
         return (CharacterManager<P>) MANAGER_REGISTRY.get(managerId);
     }
 
+    /**
+     * Method used to get the clients current character for instances that don't reference
+     * the main {@link ClientCharacters}. See example in {@link PlayerEntityMixin}
+     *
+     * @return the current clients character or null
+     */
     @Nullable
     public static Character getClientCharacter(){
         return getClientCharacterFunc.get();
-    }
-
-    public static boolean hasModerationPermissions(PlayerEntity player){
-        return hasAdministrationPermissions(player)
-                || PersonalityMod.CONFIG.moderationList().contains(player.getGameProfile().toString());
-    }
-
-    public static boolean hasAdministrationPermissions(PlayerEntity player){
-        return player.hasPermissionLevel(3)
-                || PersonalityMod.CONFIG.administrationList().contains(player.getGameProfile().toString());
     }
 
     //-----------------------------------------------------------------------------------------
@@ -91,11 +91,16 @@ public abstract class CharacterManager<P extends PlayerEntity> implements RevelI
         return characterIDToCharacter;
     }
 
-    public void clearRegistries(){
+    @ApiStatus.Internal
+    protected void clearRegistries(){
         this.characterIDToCharacter.clear();
         this.playerIDToCharacterID.clear();
     }
 
+    /**
+     * Method to sort the {@link #characterIDToCharacter} Map via some reflection hackyness
+     */
+    @ApiStatus.Internal
     public void sortCharacterLookupMap(){
         ReflectionUtils.getMapInsertOrder(characterLookupMap())
                 .sort(Comparator.comparing(o -> getCharacter(o).getName(), Comparator.naturalOrder()));
@@ -199,15 +204,11 @@ public abstract class CharacterManager<P extends PlayerEntity> implements RevelI
 
         playerToCharacterReferences().put(playerUUID, cUUID);
 
-        applyAddons(cUUID);
-
-        return true;
-    }
-
-    public void applyAddons(String characterUUID){
-        PlayerAccess<P> playerAccess = getPlayer(characterUUID);
+        PlayerAccess<P> playerAccess = getPlayer(cUUID);
 
         if(playerAccess.player() != null) applyAddons(playerAccess.player());
+
+        return true;
     }
 
     /**
@@ -223,10 +224,8 @@ public abstract class CharacterManager<P extends PlayerEntity> implements RevelI
                 }
             });
 
-            c.getKnownCharacters().forEach((s, knownCharacter) -> {
-                knownCharacter.setCharacterManager(this);
-            });
-        } else {
+            c.getKnownCharacters().forEach((s, knownCharacter) -> knownCharacter.setCharacterManager(this));
+        } else  {
             AddonRegistry.INSTANCE.checkAndDefaultPlayerAddons(player);
         }
     }
@@ -247,9 +246,14 @@ public abstract class CharacterManager<P extends PlayerEntity> implements RevelI
         return isCharacterUUID ? valueRemoved : UUID;
     }
 
-    public void removeCharacter(String characterUUID){
-        dissociateUUID(characterUUID, true);
-        characterLookupMap().remove(characterUUID);
+    /**
+     * Method will dissociate the given Character UUID and remove it from the main lookup map
+     *
+     * @param cUUID Selected Character UUID as a String
+     */
+    public void removeCharacter(String cUUID){
+        dissociateUUID(cUUID, true);
+        characterLookupMap().remove(cUUID);
     }
 
 }

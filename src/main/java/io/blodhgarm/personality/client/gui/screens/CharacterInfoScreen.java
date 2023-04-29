@@ -55,7 +55,7 @@ public class CharacterInfoScreen extends TabbedScreen {
 //        if(!PersonalityMod.CONFIG.disableSponsorComponent()) {
 //            this.addGlobalBuilder(layout -> {
 //                return new SponsorComponent(Sizing.content(), Sizing.content())
-//                        .positioning(Positioning.relative(98, 98));
+//                        .positioning(Positioning.relative(99, 99));
 //            });
 //        }
 

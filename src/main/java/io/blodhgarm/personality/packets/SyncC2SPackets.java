@@ -1,21 +1,23 @@
 package io.blodhgarm.personality.packets;
 
 import com.mojang.logging.LogUtils;
+import io.blodhgarm.personality.Networking;
 import io.blodhgarm.personality.PersonalityMod;
-import io.blodhgarm.personality.api.character.Character;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
+import io.blodhgarm.personality.api.addon.BaseAddon;
+import io.blodhgarm.personality.api.character.Character;
 import io.blodhgarm.personality.api.core.BaseRegistry;
 import io.blodhgarm.personality.server.ServerCharacters;
 import io.wispforest.owo.network.ServerAccess;
-import it.unimi.dsi.fastutil.Pair;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class SyncC2SPackets {
 
@@ -55,9 +57,11 @@ public class SyncC2SPackets {
 
             if(message.elementsChanges != null) ServerCharacters.INSTANCE.logCharacterEditing(access.player(), c, message.elementsChanges);
 
-            AddonRegistry.INSTANCE.deserializesAddons(c, message.addonData, true);
+            Map<Identifier, BaseAddon> modifiedAddonsMap = AddonRegistry.INSTANCE.deserializesAddons(c, message.addonData, true);
 
-            ServerCharacters.INSTANCE.saveAddonsForCharacter(c, true);
+            ServerCharacters.INSTANCE.saveAddonsForCharacter(c, modifiedAddonsMap, true);
+
+            c.getAddons().putAll(modifiedAddonsMap);
 
             //TODO: Should we reapply addons and how should such be handled for clients or not?
         }
@@ -70,7 +74,7 @@ public class SyncC2SPackets {
         }
     }
 
-    public record NewCharacter(String characterJson, Map<Identifier, String> addonData, boolean immediateAssociation) {
+    public record NewCharacter(String characterJson, Map<Identifier, String> addonsData, boolean immediateAssociation) {
         public static void newCharacter(NewCharacter message, ServerAccess access) {
             Character c = PersonalityMod.GSON.fromJson(message.characterJson, Character.class);
 
@@ -79,15 +83,20 @@ public class SyncC2SPackets {
                 LOGGER.warn("[New Character]: It seems that a Character was created on the Client and was found to be having mismatching Player UUID: [Character UUID: {}]", c.getUUID());
             }
 
-            AddonRegistry.INSTANCE.deserializesAddons(c, message.addonData, true);
+            Map<Identifier, BaseAddon> addonMap = AddonRegistry.INSTANCE.deserializesAddons(c, message.addonsData, true);
 
             ServerCharacters.INSTANCE.characterLookupMap().put(c.getUUID(), c);
 
             ServerCharacters.INSTANCE.sortCharacterLookupMap();
 
-            ServerCharacters.INSTANCE.saveCharacter(c);
+            String characterData = ServerCharacters.INSTANCE.saveCharacter(c, false);
 
-            ServerCharacters.INSTANCE.saveAddonsForCharacter(c, true);
+            Map<Identifier, String> addonsData = ServerCharacters.INSTANCE.saveAddonsForCharacter(c, addonMap, false);
+
+            //Should such matter if there are less addons within the servers' registry?
+            if(characterData != null || addonsData.size() < AddonRegistry.INSTANCE.getRegisteredIds().size()) {
+                Networking.sendC2S(new SyncS2CPackets.SyncCharacterData(characterData, addonsData));
+            }
 
             if(message.immediateAssociation){
                 ServerCharacters.INSTANCE.associateCharacterToPlayer(c.getUUID(), access.player().getUuidAsString());

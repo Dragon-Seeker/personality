@@ -1,6 +1,8 @@
 package io.blodhgarm.personality.server;
 
+import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.character.CharacterManager;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 
@@ -8,6 +10,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Predicate;
 
+/**
+ * A Simple Utility class for handling privilege for certain operations within Personality
+ */
 public class PrivilegeManager {
 
     private static final Map<String, PrivilegeLevel> actionMap = new HashMap<>();
@@ -57,20 +62,20 @@ public class PrivilegeManager {
                 && getLevel(action).test(source.getPlayer());
     }
 
-    public enum PrivilegeLevel implements Predicate<ServerPlayerEntity> {
-        ADMIN(CharacterManager::hasAdministrationPermissions),
-        MODERATOR(CharacterManager::hasModerationPermissions),
+    public enum PrivilegeLevel implements Predicate<PlayerEntity> {
+        ADMIN(p -> p.hasPermissionLevel(3) || PersonalityMod.CONFIG.administrationList().contains(p.getGameProfile().toString())),
+        MODERATOR(p -> ADMIN.test(p) || PersonalityMod.CONFIG.moderationList().contains(p.getGameProfile().toString())),
         NONE(e -> true);
 
-        public final Predicate<ServerPlayerEntity> authorizationCheck;
+        public final Predicate<PlayerEntity> authorizationCheck;
 
-        PrivilegeLevel(Predicate<ServerPlayerEntity> check){
+        PrivilegeLevel(Predicate<PlayerEntity> check){
             this.authorizationCheck = check;
         }
 
         @Override
-        public boolean test(ServerPlayerEntity serverPlayerEntity) {
-            return this.authorizationCheck.test(serverPlayerEntity);
+        public boolean test(PlayerEntity playerEntity) {
+            return this.authorizationCheck.test(playerEntity);
         }
     }
 }

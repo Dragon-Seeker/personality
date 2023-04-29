@@ -16,9 +16,21 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 
+import java.util.List;
+
 public class Networking {
 
     private static Logger LOGGER = LogUtils.getLogger();
+
+    private static List<String> adminActions = List.of(
+            "associate",
+            "disassociate",
+            "create",
+            "edit",
+            "revive",
+            "kill",
+            "delete"
+    );
 
     public static final OwoNetChannel CHANNEL = OwoNetChannel.create(new Identifier("personality", "main"));
 
@@ -27,14 +39,11 @@ public class Networking {
         CHANNEL.registerClientboundDeferred(OpenPersonalityScreenS2CPacket.class);
 
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.Initial.class);
-        CHANNEL.registerClientboundDeferred(SyncS2CPackets.SyncBaseCharacterData.class);
+        CHANNEL.registerClientboundDeferred(SyncS2CPackets.SyncCharacterData.class);
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.SyncAddonData.class);
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.RemoveCharacter.class);
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.Association.class);
         CHANNEL.registerClientboundDeferred(SyncS2CPackets.Dissociation.class);
-
-        CHANNEL.registerClientboundDeferred(IntroductionPackets.UnknownIntroduction.class);
-        CHANNEL.registerClientboundDeferred(IntroductionPackets.UpdatedKnowledge.class);
 
         CHANNEL.registerClientboundDeferred(ServerCharacters.ReturnInformation.class);
 
@@ -63,23 +72,24 @@ public class Networking {
         CHANNEL.registerClientbound(OpenPersonalityScreenS2CPacket.class, OpenPersonalityScreenS2CPacket::openScreen);
 
         CHANNEL.registerClientbound(SyncS2CPackets.Initial.class, SyncS2CPackets.Initial::initialSync);
-        CHANNEL.registerClientbound(SyncS2CPackets.SyncBaseCharacterData.class, SyncS2CPackets.SyncBaseCharacterData::syncCharacter);
+        CHANNEL.registerClientbound(SyncS2CPackets.SyncCharacterData.class, SyncS2CPackets.SyncCharacterData::syncCharacter);
         CHANNEL.registerClientbound(SyncS2CPackets.SyncAddonData.class, SyncS2CPackets.SyncAddonData::syncAddons);
         CHANNEL.registerClientbound(SyncS2CPackets.RemoveCharacter.class, SyncS2CPackets.RemoveCharacter::removeCharacter);
         CHANNEL.registerClientbound(SyncS2CPackets.Association.class, SyncS2CPackets.Association::syncAssociation);
         CHANNEL.registerClientbound(SyncS2CPackets.Dissociation.class, SyncS2CPackets.Dissociation::syncDissociation);
 
-        CHANNEL.registerClientbound(IntroductionPackets.UnknownIntroduction.class, IntroductionPackets.UnknownIntroduction::unknownIntroduced);
-        CHANNEL.registerClientbound(IntroductionPackets.UpdatedKnowledge.class, IntroductionPackets.UpdatedKnowledge::updatedKnowledge);
-
         CHANNEL.registerClientbound(ServerCharacters.ReturnInformation.class, (message, access) -> {
             SystemToast.add(access.runtime().getToastManager(), SystemToast.Type.CHAT_PREVIEW_WARNING, Text.of(StringUtil.capitalize(message.action())), Text.of(message.returnMessage()));
 
-            if(MinecraftClient.getInstance().currentScreen instanceof AdminCharacterScreen screen){
-                screen.clearSelectedEntries();
-            }
+            if(message.success()){
+                if(adminActions.contains(message.action()) && MinecraftClient.getInstance().currentScreen instanceof AdminCharacterScreen screen){
+                    screen.clearSelectedEntries();
+                }
 
-            LOGGER.info("Action: {}, Message: {}", message.action(), message.returnMessage());
+                LOGGER.info("Action: {}, Message: {}", message.action(), message.returnMessage());
+            } else {
+                LOGGER.error("Action: {}, Message: {}", message.action(), message.returnMessage());
+            }
         });
     }
 

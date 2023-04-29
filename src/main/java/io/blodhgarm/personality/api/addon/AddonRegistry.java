@@ -9,6 +9,7 @@ import io.blodhgarm.personality.server.ServerCharacters;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Util;
 import org.jetbrains.annotations.ApiStatus;
 
 import javax.annotation.Nullable;
@@ -19,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -30,7 +32,6 @@ public class AddonRegistry<A extends BaseAddon> extends BaseRegistry {
     private final Map<Identifier, AddonLoader<A>> LOADERS = new HashMap<>();
 
     //--------------------------------------------------------------------------------
-
 
     public AddonRegistry() { super(); }
 
@@ -82,16 +83,16 @@ public class AddonRegistry<A extends BaseAddon> extends BaseRegistry {
 
         if(loaderStorage.isPresent()) {
             if (addon != null) {
-                boolean valid = loaderStorage.get().addonValidator().test(addon);
+                if (loaderStorage.get().addonValidator().test(addon)) return addon;
 
-                if (valid) {
-                    return addon;
-                } else {
-                    LOGGER.warn("[AddonValidation] A characters addon from {} was found to be invalid, will be replaced with the default value", addonId);
-                }
+                LOGGER.warn("[AddonValidation] A characters addon from {} was found to be invalid, will be replaced with the default value", addonId);
+            } else {
+                LOGGER.warn("[AddonValidation] A characters addon from {} was found to be null, will be replaced with the default value", addonId);
             }
 
             return loaderStorage.get().defaultAddon().get();
+        } else {
+            LOGGER.warn("[AddonValidation] A addonId [{}] was passed within validation check and was found to not exist within the Registry!", addonId);
         }
 
         return null;
@@ -147,7 +148,7 @@ public class AddonRegistry<A extends BaseAddon> extends BaseRegistry {
                 LOGGER.error("[AddonLoading] {} addon for [Name: {}, UUID: {}] was unable to be serialized, setting such to default.", s, c.getName(), c.getUUID());
 
                 addon = registryHelper.defaultAddon.get();
-                addon.improperLoad();
+                addon.loadedProperly = false;
 
                 e.printStackTrace();
             }
@@ -156,7 +157,7 @@ public class AddonRegistry<A extends BaseAddon> extends BaseRegistry {
                 //throw new AddonInvalidException("A given Character Addon was found to be invalid! [Name: " + c.getName() + " , UUID: " + c.getUUID() + "]")
                 LOGGER.error("[AddonLoading] {} addon for [Name: {}, UUID: {}] was found to be invalid.", s, c.getName(), c.getUUID());
 
-                addon.improperLoad();
+                addon.loadedProperly = false;
             }
 
             c.getAddons().put(s, addon);
@@ -165,16 +166,8 @@ public class AddonRegistry<A extends BaseAddon> extends BaseRegistry {
         return addonData;
     }
 
-    public static class AddonInvalidException extends RuntimeException {
-        public AddonInvalidException(String s){
-            super(s);
-        }
-    }
-
-    public void deserializesAddons(Character c, Map<Identifier, String> addonData, boolean validateOrDefault){
-        Map<Identifier, BaseAddon> addons = new HashMap<>();
-
-        addonData.forEach((addonId, s2) -> {
+    public Map<Identifier, BaseAddon> deserializesAddons(Character c, Map<Identifier, String> addonData, boolean validateOrDefault){
+        return Util.make(new HashMap<>(), addonMap -> addonData.forEach((addonId, s2) -> {
             if(addonId == null){
                 LOGGER.error("[AddonLoading] {} addon id was found to be invalid, ignoring addon", addonId);
                 return;
@@ -197,15 +190,13 @@ public class AddonRegistry<A extends BaseAddon> extends BaseRegistry {
                 LOGGER.error("[AddonLoading] {} addon for [Name: {}, UUID: {}] was unable to be serialized, setting such to default.", addonId, c.getName(), c.getUUID());
 
                 addon = registryHelper.defaultAddon.get();
-                addon.improperLoad();
+                addon.loadedProperly = false;
 
                 e.printStackTrace();
             }
 
-            addons.put(addonId, addon);
-        });
-
-        c.getAddons().putAll(addons);
+            addonMap.put(addonId, addon);
+        }));
     }
 
     public Map<Identifier, String> serializesAddons(Character c){

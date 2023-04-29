@@ -3,12 +3,18 @@ package io.blodhgarm.personality.compat.origins;
 import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.github.apace100.origins.Origins;
 import io.github.apace100.origins.component.OriginComponent;
+import io.github.apace100.origins.networking.ModPacketsC2S;
 import io.github.apace100.origins.origin.Origin;
 import io.github.apace100.origins.origin.OriginLayer;
 import io.github.apace100.origins.origin.OriginLayers;
 import io.github.apace100.origins.origin.OriginRegistry;
 import io.github.apace100.origins.registry.ModComponents;
+import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.network.ServerPlayNetworkHandler;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
@@ -35,6 +41,9 @@ public class OriginAddon extends BaseAddon {
         return layer_id;
     }
 
+    /**
+     * This method is similar to origins own method within {@link ModPacketsC2S#chooseOrigin}
+     */
     @Override
     public void applyAddon(PlayerEntity player) {
         OriginComponent component = ModComponents.ORIGIN.get(player);
@@ -51,9 +60,7 @@ public class OriginAddon extends BaseAddon {
             component.sync();
 
             //TODO: Origins have certain spawns or places to be meaning we may need to save the characters position or something idk.
-            if (component.hasAllOrigins() && !hadAllOrigins) {
-                OriginComponent.onChosen(player, true/*hadOriginBefore*/);
-            }
+            if (component.hasAllOrigins() && !hadAllOrigins) OriginComponent.onChosen(player, true/*hadOriginBefore*/);
 
             Origins.LOGGER.info("Player " + player.getDisplayName().getContent() + " chose Origin: " + origin_id + ", for layer: " + layer_id);
         } else {
@@ -69,29 +76,24 @@ public class OriginAddon extends BaseAddon {
 
     @Override
     public String getInfo() {
-        Origin origin = OriginRegistry.get(origin_id);
-        OriginLayer layer = OriginLayers.getLayer(layer_id);
-
-        return "\n§l" + (Text.translatable(layer.getTranslationKey()).getString()) +"§r: " + origin.getName().getString();
+        return "\n§l" + (Text.translatable(OriginLayers.getLayer(layer_id).getTranslationKey()).getString()) +
+                "§r: " + OriginRegistry.get(origin_id).getName().getString();
     }
 
     @Override
     public boolean isEqualToPlayer(PlayerEntity player) {
         OriginComponent component = ModComponents.ORIGIN.get(player);
-
         OriginLayer layer = OriginLayers.getLayer(this.getOriginLayerId());
 
-        if(component.getOrigins().containsKey(layer)){
-            return component.getOrigin(layer).getIdentifier().equals(this.getOriginId());
-        }
-
-        return false;
+        return component.getOrigins().containsKey(layer)
+                && component.getOrigin(layer).getIdentifier().equals(this.getOriginId());
     }
 
     @Override
     public boolean equals(Object obj) {
         if(obj instanceof OriginAddon addon){
-            return addon.getOriginId().equals(this.getOriginId()) && addon.getOriginLayerId().equals(this.getOriginLayerId());
+            return addon.getOriginId().equals(this.getOriginId())
+                    && addon.getOriginLayerId().equals(this.getOriginLayerId());
         }
 
         return false;

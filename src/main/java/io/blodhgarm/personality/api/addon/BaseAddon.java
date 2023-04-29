@@ -2,12 +2,32 @@ package io.blodhgarm.personality.api.addon;
 
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.world.World;
+import org.jetbrains.annotations.ApiStatus;
 
+/**
+ * Base Class to act as the frame for any Addons wanting to interact with Personality internal systems
+ * and used to apply the addons effects and to check if the addon is currently applied
+ */
 public abstract class BaseAddon {
 
-    public boolean loadedProperly = true;
+    /**
+     * Enum used to declare if an addon should be handled on the Client or the Server or both
+     */
+    public enum AddonEnvironment {
+        BOTH, CLIENT, SERVER;
 
-    public final void improperLoad(){ loadedProperly = false; }
+        public boolean shouldApply(World world){
+            return this == BOTH
+                    || (this == CLIENT && world.isClient())
+                    || (this == SERVER && !world.isClient());
+        }
+    }
+
+    /**
+     * Variable to indicated if an Addon has been loaded properly
+     */
+    @ApiStatus.Internal
+    public boolean loadedProperly = true;
 
     //--------------------------------------
 
@@ -27,21 +47,12 @@ public abstract class BaseAddon {
      */
     public abstract String getInfo();
 
-    public enum AddonEnvironment {
-        BOTH,
-        CLIENT,
-        SERVER;
-
-        public boolean shouldApply(World world){
-            if(this == BOTH) return true;
-
-            return (this == CLIENT && world.isClient()) || (this == SERVER && !world.isClient());
-        }
-    }
-
+    /**
+     * Method used to check if the addon is already applied to the given Player
+     */
     public abstract boolean isEqualToPlayer(PlayerEntity player);
 
+    //Just forcing everyone to make an implementation of equals
+    @Override
     public abstract boolean equals(Object obj);
-
-    //    public abstract boolean isDefaultAddon(BaseAddon addon);
 }

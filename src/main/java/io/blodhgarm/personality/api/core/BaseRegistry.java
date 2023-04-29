@@ -18,6 +18,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+/**
+ * Helper Class for a basic Registry Implementation
+ */
 public abstract class BaseRegistry {
 
     protected static final Logger LOGGER = LogUtils.getLogger();

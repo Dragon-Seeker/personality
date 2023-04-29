@@ -21,20 +21,20 @@ public abstract class ClientWorldMixin {
 
         @Inject(method = "startTracking(Lnet/minecraft/entity/Entity;)V", at = @At(value = "JUMP", opcode = Opcodes.IFEQ, ordinal = 0, shift = At.Shift.BY, by = 2))
         private void personality$updateBasedOnClientsKnownCharacters(Entity entity, CallbackInfo ci){
-            if (entity instanceof AbstractClientPlayerEntity player) {
-                Character characterOther = ClientCharacters.INSTANCE.getCharacter(player);
+            if (!(entity instanceof AbstractClientPlayerEntity player)) return;
 
-                if(characterOther == null) return;
+            Character characterOther = ClientCharacters.INSTANCE.getCharacter(player);
 
-                ((CharacterToPlayerLink<AbstractClientPlayerEntity>) (player))
-                        .setCharacter(ClientCharacters.INSTANCE.getKnownCharacter(player));
+            if(characterOther == null) return;
 
-                //TODO: MAYBE HOOK INTO EVENTS TO APPLY ADDONS ON THE CLIENT WHEN NEW PLAYERS ENTER THE CLIENTS WORLD AND VISE VERSA
-                // Use net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents
-                ClientCharacters.INSTANCE.applyAddons(player);
+            ((CharacterToPlayerLink<AbstractClientPlayerEntity>) (player))
+                    .setCharacter(ClientCharacters.INSTANCE.getKnownCharacter(player));
 
-                ClientCharacters.INSTANCE.setKnownCharacters(new PlayerAccess(player), characterOther.getUUID());
-            }
+            //TODO: MAYBE HOOK INTO EVENTS TO APPLY ADDONS ON THE CLIENT WHEN NEW PLAYERS ENTER THE CLIENTS WORLD AND VISE VERSA
+            // Use net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents
+            ClientCharacters.INSTANCE.applyAddons(player);
+
+            ClientCharacters.INSTANCE.setKnownCharacters(new PlayerAccess(player), characterOther.getUUID());
         }
     }
 }

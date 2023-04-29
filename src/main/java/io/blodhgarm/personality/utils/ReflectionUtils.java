@@ -1,6 +1,5 @@
 package io.blodhgarm.personality.utils;
 
-import io.blodhgarm.personality.api.character.BaseCharacter;
 import org.apache.commons.collections4.map.ListOrderedMap;
 
 import java.lang.invoke.MethodHandles;

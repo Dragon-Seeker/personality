@@ -5,7 +5,6 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import com.google.gson.TypeAdapterFactory;
 import io.blodhgarm.personality.Networking;
 import io.blodhgarm.personality.api.character.Character;
 import io.blodhgarm.personality.api.character.CharacterManager;
@@ -15,7 +14,6 @@ import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.api.events.FinalizedPlayerConnectionEvent;
 import io.blodhgarm.personality.api.reveal.InfoRevealLevel;
 import io.blodhgarm.personality.api.reveal.KnownCharacter;
-import io.blodhgarm.personality.packets.IntroductionPackets;
 import io.blodhgarm.personality.packets.SyncS2CPackets;
 import io.blodhgarm.personality.utils.DebugCharacters;
 import io.wispforest.owo.Owo;
@@ -26,6 +24,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Util;
 import net.minecraft.util.WorldSavePath;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +40,9 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+/**
+ * Client Specific Implementation of {@link CharacterManager}
+ */
 public class ServerCharacters extends CharacterManager<ServerPlayerEntity> implements FinalizedPlayerConnectionEvent.Finish, ServerLifecycleEvents.ServerStarted, ServerLifecycleEvents.ServerStopped {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting()
@@ -62,6 +64,12 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
         super("server");
     }
 
+    /**
+     * Similar method to {@link CharacterManager#getCharacter} but will attempt to load the character
+     *
+     * @param uuid The Possible UUID of a Character
+     * @return the character bond to the given uuid or null
+     */
     @Nullable
     @Override
     public Character getCharacter(String uuid) {
@@ -81,7 +89,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
                 sortCharacterLookupMap();
 
-                Networking.sendToAll(new SyncS2CPackets.SyncBaseCharacterData(characterJson, AddonRegistry.INSTANCE.loadAddonsFromDisc(c, true)));
+                Networking.sendToAll(new SyncS2CPackets.SyncCharacterData(characterJson, AddonRegistry.INSTANCE.loadAddonsFromDisc(c, true)));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -148,10 +156,6 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
         return Owo.currentServer().getPlayerManager().getPlayer(UUID.fromString(playerUUID));
     }
 
-//    public void reviveCharacter(Character c) {
-//        reviveCharacter(c, null);
-//    }
-
     public void reviveCharacter(Character c, @Nullable String playerUUID) {
         //TODO: Decide on a future way of handling Dead Players to prevent large amounts of memory usage if they won't be revived
         //this.removeCharacter(c.getUUID());
@@ -163,10 +167,10 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
         saveCharacter(c, true);
     }
 
-    public void killCharacter(String uuid) {
-        killCharacter(characterIDToCharacter.get(uuid));
-    }
-
+    /**
+     * Method used to kill an input character on the server
+     * @param c
+     */
     public void killCharacter(Character c) {
         //TODO: Decide on a future way of handling Dead Players to prevent large amounts of memory usage if they won't be revived
         //this.removeCharacter(c.getUUID());
@@ -176,11 +180,12 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
         saveCharacter(c, true);
     }
 
-    public void deleteCharacter(Character character) {
-        deleteCharacter(character.getUUID());
-    }
+    /**
+     * Method that will permanently delete an input character from the Server
+     */
+    public void deleteCharacter(Character c) {
+        String uuid = c.getUUID();
 
-    public void deleteCharacter(String uuid) {
         this.removeCharacter(uuid);
 
         try {
@@ -230,8 +235,6 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
         } else if(!PrivilegeManager.getLevel(actionType).test(operator)) {
             returnMessage = "The given Operator dose not have the required permission to run this action!";
         }
-
-
 
         if(returnMessage != null) return new ReturnInformation(returnMessage, actionType, success);
 
@@ -294,43 +297,41 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
         for (ServerPlayerEntity otherPlayer : targets) {
             Character targetCharacter = this.getCharacter(otherPlayer);
 
-            if(targetCharacter != null) revealCharacterInfo(sourceCharacter, targetCharacter, level).accept(otherPlayer);
+            if(targetCharacter != null) revealCharacterInfo(sourceCharacter, targetCharacter, otherPlayer, level);
         }
     }
 
     @Override
-    public Consumer<ServerPlayerEntity> revealCharacterInfo(Character sourceC, Character targetC, InfoRevealLevel level) {
-        if (!targetC.getKnownCharacters().containsKey(sourceC.getUUID())) {
-            KnownCharacter character = new KnownCharacter(targetC.getUUID(), sourceC.getUUID());
+    public void revealCharacterInfo(Character sourceC, Character targetC, ServerPlayerEntity packetTarget, InfoRevealLevel level) {
+        KnownCharacter sourceKnownCharacter = targetC.getKnownCharacters().get(sourceC.getUUID());
 
-            character.updateInfoLevel(level);
+        ReturnInformation returnPacket = null;
 
-            targetC.getKnownCharacters().put(sourceC.getUUID(), character);
+        if (sourceKnownCharacter == null) {
+            sourceKnownCharacter = new KnownCharacter(targetC.getUUID(), sourceC.getUUID());
 
-            return player -> {
-                saveCharacter(targetC);
+            sourceKnownCharacter.updateInfoLevel(level);
 
-                LOGGER.info("[ServerCharacter] A new Character (Character Name: {}) was revealed to {}", sourceC.getName(), targetC.getName());
+            targetC.getKnownCharacters().put(sourceC.getUUID(), sourceKnownCharacter);
 
-                Networking.sendS2C(player, new IntroductionPackets.UnknownIntroduction(sourceC.getUUID()));
-            };
+            LOGGER.info("[ServerCharacter] A new Character (Character Name: {}) was revealed to {}", sourceC.getName(), targetC.getName());
+
+            returnPacket = new ReturnInformation(sourceC.getName() + " introduced themselves for the first time!", "New Character Introduced", true);
+        } else if(sourceKnownCharacter.level.shouldUpdateLevel(level)) {
+            sourceKnownCharacter.updateInfoLevel(level);
+
+            LOGGER.info("[ServerCharacter] A already known Character (Character Name: {}) had more info revealed to {}", sourceC.getName(), targetC.getName());
+
+            returnPacket = new ReturnInformation(sourceC.getName() + " told more about themselves!", "Known Character Revealed", true);
         } else {
-            KnownCharacter sourceKnownCharacter = targetC.getKnownCharacters().get(sourceC.getUUID());
-
-            if(sourceKnownCharacter.level.shouldUpdateLevel(level)){
-                sourceKnownCharacter.updateInfoLevel(level);
-
-                return player -> {
-                    saveCharacter(targetC);
-
-                    LOGGER.info("[ServerCharacter] A already known Character (Character Name: {}) had more info revealed to {}", sourceC.getName(), targetC.getName());
-
-                    Networking.sendS2C(player, new IntroductionPackets.UpdatedKnowledge(sourceC.getUUID()));
-                };
-            }
+            LOGGER.info("[ServerCharacter] A already known Character (Character Name: {}) didn't have anymore info revealed to {}", sourceC.getName(), targetC.getName());
         }
 
-        return target -> {};
+        if(returnPacket != null){
+            saveCharacter(targetC);
+
+            Networking.sendS2C(packetTarget, returnPacket);
+        }
     }
 
     //----------------------------------------------------
@@ -339,12 +340,13 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
         saveCharacter(character, true);
     }
 
-    public void saveCharacter(Character character, boolean syncCharacter) {
+    @Nullable
+    public String saveCharacter(Character character, boolean syncCharacter) {
         character.beforeSaving();
 
         String characterJson = GSON.toJson(character);
 
-        if(syncCharacter) Networking.sendToAll(new SyncS2CPackets.SyncBaseCharacterData(characterJson, Map.of()));
+        if(syncCharacter) Networking.sendToAll(new SyncS2CPackets.SyncCharacterData(characterJson, Map.of()));
 
         try {
             File characterFile = getCharacterInfo(character.getUUID()).toAbsolutePath().toFile();
@@ -356,30 +358,49 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
             LOGGER.error("[ServerCharacters] A Character [Name:{}, UUID:{}] was unable to be saved to disc", character.getName(), character.getUUID());
 
             e.printStackTrace();
+
+            return null;
         }
+
+        return characterJson;
     }
 
-    public void saveAddonsForCharacter(Character c, boolean syncAddons){
-        Map<Identifier, String> addonData = new HashMap<>();
+    /**
+     * Method that will attempt to save all addons and then sync such data to all players
+     *
+     * @param c Character of which addons should be saved
+     * @param newAddons the addons that are seemingly new and need to be saved
+     * @param syncAddons whether to send a packet to sync clients of the data change
+     */
+    public Map<Identifier, String> saveAddonsForCharacter(Character c, Map<Identifier, BaseAddon> newAddons, boolean syncAddons){
+        Map<Identifier, String> addonData = Util.make(new HashMap<>(), map -> {
+            newAddons.forEach((addonId, addon) -> {
+                String addonJson = saveAddonForCharacter(c, addonId, addon, false);
 
-        c.getAddons().keySet().forEach(s -> {
-            String addonJson = saveAddonForCharacter(c, s, false);
-
-            if(addonJson != null) addonData.put(s, addonJson);
+                if (addonJson != null) map.put(addonId, addonJson);
+            });
         });
 
         if(syncAddons) Networking.sendToAll(new SyncS2CPackets.SyncAddonData(c.getUUID(), addonData));
 
+        return addonData;
     }
 
-    public String saveAddonForCharacter(Character c, Identifier addonId, boolean syncAddons){
-        BaseAddon addon = c.getAddons().get(addonId);
-
-        return saveAddonForCharacter(c, addonId, addon, syncAddons);
-    }
-
+    /**
+     * Primary method used to save a given addon. Such method includes checks to see if the
+     * addon attempting to be saved is the same one as the current characters addon
+     *
+     * @param c Character of which addons should be saved
+     * @param addonId Current Addon ID that is being saved
+     * @param addon Addon in question being saved
+     * @param syncAddons whether to send a packet to sync clients of the data change
+     * @return the deserialized form of the saved addon
+     */
     public String saveAddonForCharacter(Character c, Identifier addonId, @Nullable BaseAddon addon, boolean syncAddons){
         if(addon != null){
+            BaseAddon prevAddon = c.getAddon(addonId);
+
+            if(addon.equals(prevAddon)) return null;
 
             String addonJson = GSON.toJson(addon);
 

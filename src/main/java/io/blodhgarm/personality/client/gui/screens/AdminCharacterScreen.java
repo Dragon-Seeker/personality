@@ -23,6 +23,7 @@ import io.blodhgarm.personality.client.gui.utils.polygons.ComponentAsPolygon;
 import io.blodhgarm.personality.misc.pond.owo.ButtonAddonDuck;
 import io.blodhgarm.personality.misc.pond.owo.InclusiveBoundingArea;
 import io.blodhgarm.personality.packets.AdminActionPackets.*;
+import io.blodhgarm.personality.server.PrivilegeManager;
 import io.blodhgarm.personality.server.ServerCharacters;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.component.ButtonComponent;
@@ -150,7 +151,7 @@ public class AdminCharacterScreen extends BaseOwoScreen<FlowLayout> implements M
             return mutableText;
         };
 
-        if(CharacterManager.hasModerationPermissions(MinecraftClient.getInstance().player)){
+        if(PrivilegeManager.PrivilegeLevel.MODERATOR.test(MinecraftClient.getInstance().player)){
             List<Component> components = List.of(
                 //Associate Action
                 buildAdminButton("Associate", 16, 3, component -> {
@@ -231,7 +232,7 @@ public class AdminCharacterScreen extends BaseOwoScreen<FlowLayout> implements M
             adminButtons.addAll(components);
         }
 
-        if(CharacterManager.hasAdministrationPermissions(MinecraftClient.getInstance().player)){
+        if(PrivilegeManager.PrivilegeLevel.ADMIN.test(MinecraftClient.getInstance().player)){
             List<Component> components = List.of(
                     //Edit Action
                     buildAdminButton("Edit", 32, 3, component -> {
