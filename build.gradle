@@ -78,9 +78,14 @@ dependencies {
 	//Compat only
 	modImplementation("com.github.Virtuoel:Pehkui:${pehkui_version}", { exclude group: "net.fabricmc.fabric-api" })
 
-	modLocalRuntime modCompileOnly("com.terraformersmc:modmenu:${project.modmenu_version}")
-	modImplementation "com.github.apace100:origins-fabric:${project.origin_version}"
-	modImplementation "dev.emi:trinkets:${trinkets_version}"
+	modImplementation("com.terraformersmc:modmenu:${project.modmenu_version}")
+
+	modCompileOnly("maven.modrinth:additionalentityattributes:1.2.0+1.19.2")
+	modCompileOnly("com.github.apace100:apoli:v2.6.0", { exclude group: "com.github.DaFuqs", module: "AdditionalEntityAttributes" })
+
+	modImplementation("com.github.apace100:origins-fabric:${project.origin_version}", { exclude group: "com.github.apace100", module: "apoli" })
+
+	modImplementation("dev.emi:trinkets:${trinkets_version}")
 
 	modCompileOnly "dev.onyxstudios.cardinal-components-api:cardinal-components-base:${project.cc_version}"
 	modCompileOnly "dev.onyxstudios.cardinal-components-api:cardinal-components-entity:${project.cc_version}"
