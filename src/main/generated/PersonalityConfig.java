@@ -42,7 +42,7 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
     private final Option<java.lang.Float> extraAgeConfiguration_multiplier = this.optionForKey(new Option.Key("extraAgeConfiguration.multiplier"));
     private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> extraAgeConfiguration_calculationCurve = this.optionForKey(new Option.Key("extraAgeConfiguration.calculationCurve"));
     private final Option<java.lang.Integer> maximumExtraAge = this.optionForKey(new Option.Key("maximumExtraAge"));
-    private final Option<io.blodhgarm.personality.api.reveal.InfoRevealLevel> minimumInfo = this.optionForKey(new Option.Key("minimumInfo"));
+    private final Option<io.blodhgarm.personality.api.reveal.InfoLevel> minimumInfo = this.optionForKey(new Option.Key("minimumInfo"));
     private final Option<java.util.List<net.minecraft.util.Identifier>> none_tier = this.optionForKey(new Option.Key("none_tier"));
     private final Option<java.util.List<net.minecraft.util.Identifier>> general_tier = this.optionForKey(new Option.Key("general_tier"));
     private final Option<java.util.List<net.minecraft.util.Identifier>> associate_tier = this.optionForKey(new Option.Key("associate_tier"));
@@ -341,11 +341,11 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         maximumExtraAge.set(value);
     }
 
-    public io.blodhgarm.personality.api.reveal.InfoRevealLevel minimumInfo() {
+    public io.blodhgarm.personality.api.reveal.InfoLevel minimumInfo() {
         return minimumInfo.value();
     }
 
-    public void minimumInfo(io.blodhgarm.personality.api.reveal.InfoRevealLevel value) {
+    public void minimumInfo(io.blodhgarm.personality.api.reveal.InfoLevel value) {
         minimumInfo.set(value);
     }
 
@@ -458,18 +458,6 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
     }
 
 
-    public interface GradualValue {
-        int minAge();
-        void minAge(int value);
-        int maxAge();
-        void maxAge(int value);
-        float startingValue();
-        void startingValue(float value);
-        float endingValue();
-        void endingValue(float value);
-        io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve calculationCurve();
-        void calculationCurve(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value);
-    }
     public interface ExtraLife {
         int minAge();
         void minAge(int value);
@@ -479,6 +467,18 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         void minimumHoursForExtraLife(float value);
         float multiplier();
         void multiplier(float value);
+        io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve calculationCurve();
+        void calculationCurve(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value);
+    }
+    public interface GradualValue {
+        int minAge();
+        void minAge(int value);
+        int maxAge();
+        void maxAge(int value);
+        float startingValue();
+        void startingValue(float value);
+        float endingValue();
+        void endingValue(float value);
         io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve calculationCurve();
         void calculationCurve(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value);
     }

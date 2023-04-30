@@ -10,7 +10,8 @@ import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.api.character.Character;
 import io.blodhgarm.personality.api.core.BaseRegistry;
 import io.blodhgarm.personality.api.events.FinalizedPlayerConnectionEvent;
-import io.blodhgarm.personality.api.reveal.InfoRevealLevel;
+import io.blodhgarm.personality.api.reveal.InfoLevel;
+import io.blodhgarm.personality.api.reveal.InfoRevealLoader;
 import io.blodhgarm.personality.api.reveal.InfoRevealRegistry;
 import io.blodhgarm.personality.compat.origins.OriginsAddonRegistry;
 import io.blodhgarm.personality.compat.pehkui.PehkuiAddonRegistry;
@@ -29,9 +30,12 @@ import io.wispforest.owo.registration.reflect.ItemRegistryContainer;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
+import net.minecraft.resource.ResourcePackManager;
+import net.minecraft.resource.ResourceType;
 import net.minecraft.util.Identifier;
 
 public class PersonalityMod implements ModInitializer, PersonalityEntrypoint, ItemRegistryContainer {
@@ -84,6 +88,9 @@ public class PersonalityMod implements ModInitializer, PersonalityEntrypoint, It
         ServerTickEvents.END_WORLD_TICK.register(PersonalityMod.id("tick"), new CharacterTick());
 
         FinalizedPlayerConnectionEvent.CONNECTION_FINISHED.register(PersonalityMod.id("on_player_join"), ServerCharacters.INSTANCE);
+
+        ResourceManagerHelper.get(ResourceType.SERVER_DATA)
+                .registerReloadListener(new InfoRevealLoader());
     }
 
     public static void loadRegistries(String eventCall){
@@ -93,6 +100,8 @@ public class PersonalityMod implements ModInitializer, PersonalityEntrypoint, It
             personalityEntrypoint.addonRegistry(AddonRegistry.INSTANCE);
             personalityEntrypoint.infoRevealRegistry(InfoRevealRegistry.INSTANCE);
         });
+
+        InfoRevealLoader.handleCachedData(InfoRevealRegistry.INSTANCE);
     }
 
     @Override
@@ -103,15 +112,15 @@ public class PersonalityMod implements ModInitializer, PersonalityEntrypoint, It
 
     @Override
     public void infoRevealRegistry(InfoRevealRegistry registry) {
-        registry.registerValueForRevealing(InfoRevealLevel.GENERAL, PersonalityMod.id("description"), () -> "Unknown");
-        registry.registerValueForRevealing(InfoRevealLevel.GENERAL, PersonalityMod.id("alias"), () -> "Unknown");
+        registry.registerValueForRevealing(InfoLevel.GENERAL, PersonalityMod.id("description"), () -> "Unknown");
+        registry.registerValueForRevealing(InfoLevel.GENERAL, PersonalityMod.id("alias"), () -> "Unknown");
 
-        registry.registerValueForRevealing(InfoRevealLevel.ASSOCIATE, PersonalityMod.id("gender"), () -> "Unknown");
-        registry.registerValueForRevealing(InfoRevealLevel.ASSOCIATE, PersonalityMod.id("age"), () -> -1);
+        registry.registerValueForRevealing(InfoLevel.ASSOCIATE, PersonalityMod.id("gender"), () -> "Unknown");
+        registry.registerValueForRevealing(InfoLevel.ASSOCIATE, PersonalityMod.id("age"), () -> -1);
 
-        registry.registerValueForRevealing(InfoRevealLevel.TRUSTED, PersonalityMod.id("biography"), () -> "Unknown");
+        registry.registerValueForRevealing(InfoLevel.TRUSTED, PersonalityMod.id("biography"), () -> "Unknown");
 
-        registry.registerValueForRevealing(InfoRevealLevel.CONFIDANT, PersonalityMod.id("name"), () -> "Unknown");
+        registry.registerValueForRevealing(InfoLevel.CONFIDANT, PersonalityMod.id("name"), () -> "Unknown");
 
         if(FabricLoader.getInstance().isModLoaded("origins")) OriginsAddonRegistry.INSTANCE.infoRevealRegistry(registry);
         if(FabricLoader.getInstance().isModLoaded("pehkui")) PehkuiAddonRegistry.INSTANCE.infoRevealRegistry(registry);

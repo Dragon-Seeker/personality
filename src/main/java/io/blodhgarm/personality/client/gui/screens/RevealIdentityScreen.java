@@ -2,7 +2,7 @@ package io.blodhgarm.personality.client.gui.screens;
 
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.Networking;
-import io.blodhgarm.personality.api.reveal.InfoRevealLevel;
+import io.blodhgarm.personality.api.reveal.InfoLevel;
 import io.blodhgarm.personality.client.PersonalityClient;
 import io.blodhgarm.personality.client.gui.ThemeHelper;
 import io.blodhgarm.personality.client.gui.components.builders.SimpleRadialLayoutBuilder;
@@ -42,7 +42,7 @@ public class RevealIdentityScreen extends BaseOwoScreen<FlowLayout> {
     private FlowLayout confirmationLayout;
 
     @Nullable
-    private InfoRevealLevel selectedRevealLevel = null;
+    private InfoLevel selectedRevealLevel = null;
 
     @Nullable
     private RevelInfoManager.RevealRange selectedRevealRange = null;
@@ -95,7 +95,7 @@ public class RevealIdentityScreen extends BaseOwoScreen<FlowLayout> {
 
         revealLevel = new SimpleRadialLayoutBuilder().adjustRadi(0, 15, 140, 80)
                 .addComponents(
-                        Arrays.stream(InfoRevealLevel.VALID_VALUES)
+                        Arrays.stream(InfoLevel.VALID_VALUES)
                                 .map(level -> {
                                     return Containers.verticalFlow(Sizing.fixed(50), Sizing.fixed(50))
                                             .child(Components.label(level.getTranslation()))
@@ -112,7 +112,7 @@ public class RevealIdentityScreen extends BaseOwoScreen<FlowLayout> {
 
                         if (id != null) {
                             try {
-                                this.selectedRevealLevel = InfoRevealLevel.valueOf(id);
+                                this.selectedRevealLevel = InfoLevel.valueOf(id);
 
                                 ((AnimationExtension<Positioning>) this.revealLevel.getComponent()
                                         .positioning().animate(500, Easing.LINEAR, PersonalityClient.customRelative(-200, 50)).forwards())

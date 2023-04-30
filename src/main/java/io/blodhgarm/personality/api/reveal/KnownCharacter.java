@@ -28,7 +28,7 @@ public class KnownCharacter implements BaseCharacter {
 
     public int aliasIndex = -1;
 
-    public InfoRevealLevel level;
+    public InfoLevel level;
 
     public final List<Identifier> specificKnownInfo;
 
@@ -70,7 +70,7 @@ public class KnownCharacter implements BaseCharacter {
         return DebugCharacters.ERROR;
     }
 
-    public void updateInfoLevel(InfoRevealLevel level){
+    public void updateInfoLevel(InfoLevel level){
         this.level = level;
     }
 

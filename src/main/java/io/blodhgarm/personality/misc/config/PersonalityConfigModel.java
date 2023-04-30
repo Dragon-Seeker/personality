@@ -1,7 +1,7 @@
 package io.blodhgarm.personality.misc.config;
 
 import io.blodhgarm.personality.PersonalityMod;
-import io.blodhgarm.personality.api.reveal.InfoRevealLevel;
+import io.blodhgarm.personality.api.reveal.InfoLevel;
 import io.wispforest.owo.config.Option;
 import io.wispforest.owo.config.annotation.*;
 import net.minecraft.util.Identifier;
@@ -38,7 +38,7 @@ public class PersonalityConfigModel {
     // Info Reveal Configurations
 
     @Sync(value = Option.SyncMode.OVERRIDE_CLIENT)
-    public InfoRevealLevel minimumInfo = InfoRevealLevel.NONE;
+    public InfoLevel minimumInfo = InfoLevel.NONE;
 
     @Sync(value = Option.SyncMode.OVERRIDE_CLIENT)
     public List<Identifier> none_tier = List.of();

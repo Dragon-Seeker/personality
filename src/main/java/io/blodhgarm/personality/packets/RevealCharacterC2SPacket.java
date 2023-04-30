@@ -2,19 +2,15 @@ package io.blodhgarm.personality.packets;
 
 import io.blodhgarm.personality.api.character.Character;
 import io.blodhgarm.personality.api.character.CharacterManager;
+import io.blodhgarm.personality.api.reveal.InfoLevel;
 import io.blodhgarm.personality.api.reveal.RevelInfoManager;
-import io.blodhgarm.personality.api.reveal.InfoRevealLevel;
 import io.wispforest.owo.network.ServerAccess;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.List;
 import java.util.UUID;
 
-public record RevealCharacterC2SPacket(InfoRevealLevel level, RevelInfoManager.RevealRange range, String uuid) {
-
-    public RevealCharacterC2SPacket(InfoRevealLevel level, RevelInfoManager.RevealRange range){
-        this(level, range, "");
-    }
+public record RevealCharacterC2SPacket(InfoLevel level, RevelInfoManager.RevealRange range, String uuid) {
 
     public static void revealInformationToPlayers(RevealCharacterC2SPacket message, ServerAccess access){
         CharacterManager<ServerPlayerEntity> manager = CharacterManager.getManger(access.player());

@@ -8,11 +8,11 @@ import com.google.gson.JsonObject;
 import io.blodhgarm.personality.Networking;
 import io.blodhgarm.personality.api.character.Character;
 import io.blodhgarm.personality.api.character.CharacterManager;
+import io.blodhgarm.personality.api.reveal.InfoLevel;
 import io.blodhgarm.personality.api.utils.PlayerAccess;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.api.events.FinalizedPlayerConnectionEvent;
-import io.blodhgarm.personality.api.reveal.InfoRevealLevel;
 import io.blodhgarm.personality.api.reveal.KnownCharacter;
 import io.blodhgarm.personality.packets.SyncS2CPackets;
 import io.blodhgarm.personality.utils.DebugCharacters;
@@ -289,7 +289,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     //----------------------------------------------------
 
     @Override
-    public void revealCharacterInfo(ServerPlayerEntity source, Collection<ServerPlayerEntity> targets, InfoRevealLevel level) {
+    public void revealCharacterInfo(ServerPlayerEntity source, Collection<ServerPlayerEntity> targets, InfoLevel level) {
         Character sourceCharacter = this.getCharacter(source);
 
         if (sourceCharacter == null) return;
@@ -302,7 +302,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     }
 
     @Override
-    public void revealCharacterInfo(Character sourceC, Character targetC, ServerPlayerEntity packetTarget, InfoRevealLevel level) {
+    public void revealCharacterInfo(Character sourceC, Character targetC, ServerPlayerEntity packetTarget, InfoLevel level) {
         KnownCharacter sourceKnownCharacter = targetC.getKnownCharacters().get(sourceC.getUUID());
 
         ReturnInformation returnPacket = null;

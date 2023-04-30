@@ -4,7 +4,7 @@ import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.PersonalityEntrypoint;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.addon.BaseAddon;
-import io.blodhgarm.personality.api.reveal.InfoRevealLevel;
+import io.blodhgarm.personality.api.reveal.InfoLevel;
 import io.blodhgarm.personality.api.reveal.InfoRevealRegistry;
 import net.minecraft.util.Identifier;
 import virtuoel.pehkui.api.*;
@@ -65,6 +65,6 @@ public class PehkuiAddonRegistry implements PersonalityEntrypoint {
 
     @Override
     public void infoRevealRegistry(InfoRevealRegistry registry) {
-        registry.registerValueForRevealing(InfoRevealLevel.GENERAL, addonId, () -> new ScaleAddon(-1).shouldShowHeight(false));
+        registry.registerValueForRevealing(InfoLevel.GENERAL, addonId, () -> new ScaleAddon(-1).shouldShowHeight(false));
     }
 }

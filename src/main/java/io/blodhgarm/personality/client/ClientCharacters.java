@@ -9,7 +9,6 @@ import io.blodhgarm.personality.api.character.CharacterManager;
 import io.blodhgarm.personality.api.utils.PlayerAccess;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.core.KnownCharacterLookup;
-import io.blodhgarm.personality.api.reveal.InfoRevealLevel;
 import io.blodhgarm.personality.api.reveal.KnownCharacter;
 import io.blodhgarm.personality.misc.pond.CharacterToPlayerLink;
 import io.blodhgarm.personality.packets.SyncS2CPackets;
@@ -19,13 +18,11 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Consumer;
 
 /**
  * Client Specific Implementation of {@link CharacterManager}

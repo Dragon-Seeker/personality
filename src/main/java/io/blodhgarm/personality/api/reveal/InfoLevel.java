@@ -7,7 +7,7 @@ import net.minecraft.text.Text;
  * within {@link KnownCharacter} to store what info is available to
  * a given character
  */
-public enum InfoRevealLevel {
+public enum InfoLevel {
     UNDISCOVERED("undiscovered"),
     NONE("none"), //No Information shown
     GENERAL("general"), //DESCRIPTION, ALIAS(Unknown if such is real)
@@ -15,7 +15,7 @@ public enum InfoRevealLevel {
     TRUSTED("trusted"), //NAME
     CONFIDANT("confidant"); //BIOGRAPHY
 
-    public static final InfoRevealLevel[] VALID_VALUES = new InfoRevealLevel[]{
+    public static final InfoLevel[] VALID_VALUES = new InfoLevel[]{
             NONE,
             GENERAL,
             ASSOCIATE,
@@ -25,7 +25,7 @@ public enum InfoRevealLevel {
 
     private final String name;
 
-    InfoRevealLevel(String name){
+    InfoLevel(String name){
         this.name = name;
     }
 
@@ -33,7 +33,7 @@ public enum InfoRevealLevel {
         return Text.translatable("personality.info." + this.name);
     }
 
-    public boolean shouldUpdateLevel(InfoRevealLevel level){
+    public boolean shouldUpdateLevel(InfoLevel level){
         return true; //this.ordinal() < level.ordinal();
     }
 

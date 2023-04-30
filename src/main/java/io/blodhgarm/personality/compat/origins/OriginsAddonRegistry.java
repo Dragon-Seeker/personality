@@ -5,15 +5,13 @@ import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.PersonalityEntrypoint;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.addon.BaseAddon;
-import io.blodhgarm.personality.api.reveal.InfoRevealLevel;
+import io.blodhgarm.personality.api.reveal.InfoLevel;
 import io.blodhgarm.personality.api.reveal.InfoRevealRegistry;
 import io.blodhgarm.personality.mixin.OriginLayerAccessor;
-import io.github.apace100.origins.Origins;
 import io.github.apace100.origins.origin.*;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtInt;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.util.Identifier;
@@ -142,12 +140,12 @@ public class OriginsAddonRegistry implements PersonalityEntrypoint {
 
         OriginLayers.getLayers().forEach(layer -> {
             Identifier layerId = layer.getIdentifier();
-            InfoRevealLevel level = InfoRevealLevel.TRUSTED;
+            InfoLevel level = InfoLevel.TRUSTED;
 
             if(layerId.equals(new Identifier("origins-classes", "class"))) {
-                level = InfoRevealLevel.GENERAL;
+                level = InfoLevel.GENERAL;
             } else if(layerId.equals(new Identifier("origins", "origin"))) {
-                level = InfoRevealLevel.ASSOCIATE;
+                level = InfoLevel.ASSOCIATE;
             }
 
             System.out.println("OriginInfoReveal ID: " + layerId);

@@ -4,10 +4,9 @@ import io.blodhgarm.personality.api.character.BaseCharacter;
 import io.blodhgarm.personality.api.character.Character;
 import io.blodhgarm.personality.api.character.CharacterManager;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
-import io.blodhgarm.personality.api.reveal.InfoRevealLevel;
+import io.blodhgarm.personality.api.reveal.InfoLevel;
 import io.blodhgarm.personality.api.reveal.KnownCharacter;
 import io.blodhgarm.personality.client.gui.GenderSelection;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.entity.player.PlayerEntity;
 
 import java.nio.charset.StandardCharsets;
@@ -125,7 +124,7 @@ public class DebugCharacters {
 
             KnownCharacter wrappedCharacter = new KnownCharacter(DEBUG_CHARACTERS_LIST.get(i));
 
-            wrappedCharacter.updateInfoLevel(InfoRevealLevel.VALID_VALUES[i]);
+            wrappedCharacter.updateInfoLevel(InfoLevel.VALID_VALUES[i]);
 
             REVEAL_TEST.getKnownCharacters().put(character.getUUID(), wrappedCharacter);
 

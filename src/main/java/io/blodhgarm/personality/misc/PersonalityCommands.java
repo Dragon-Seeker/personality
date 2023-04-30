@@ -8,14 +8,14 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import com.mojang.brigadier.tree.CommandNode;
+import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.api.character.BaseCharacter;
 import io.blodhgarm.personality.api.character.Character;
 import io.blodhgarm.personality.Networking;
+import io.blodhgarm.personality.api.reveal.InfoLevel;
 import io.blodhgarm.personality.api.reveal.KnownCharacter;
 import io.blodhgarm.personality.client.gui.CharacterViewMode;
-import io.blodhgarm.personality.api.reveal.InfoRevealLevel;
 import io.blodhgarm.personality.client.gui.GenderSelection;
 import io.blodhgarm.personality.packets.OpenPersonalityScreenS2CPacket;
 import io.blodhgarm.personality.server.PrivilegeManager;
@@ -24,7 +24,6 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.argument.UuidArgumentType;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.stat.Stats;
@@ -38,7 +37,6 @@ import org.slf4j.Logger;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -60,15 +58,16 @@ public class PersonalityCommands {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     public static final SuggestionProvider<ServerCommandSource> REVEAL_LEVEL_SUGGESTION =
-            (c, b) -> CommandSource.suggestMatching(Arrays.stream(InfoRevealLevel.values()).map(InfoRevealLevel::name), b);
+            (c, b) -> CommandSource.suggestMatching(Arrays.stream(InfoLevel.VALID_VALUES).map(InfoLevel::name), b);
 
     public static void register() {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
-            dispatcher.register(buildCommand("personality"));
-            dispatcher.register(buildCommand("p"));
+            LiteralCommandNode<ServerCommandSource> personalityCommandNode = dispatcher.register(buildCommand("personality"));
+            dispatcher.register(literal("p").redirect(personalityCommandNode));
 
-            dispatcher.register(buildCharacterCommands("cm", dispatcher));
-            dispatcher.register(buildCharacterCommands("characterManager", dispatcher));
+            LiteralCommandNode<ServerCommandSource> characterManagerCommandNode = dispatcher.register(buildCharacterCommands("characterManager", dispatcher));
+            dispatcher.register(literal("cm").redirect(characterManagerCommandNode));
+
         });
     }
 
@@ -131,7 +130,7 @@ public class PersonalityCommands {
                     literal("add").requires(PrivilegeManager.privilegeCheck("known_add"))
                         .then(
                             buildKnowledgeCommand(
-                                argument("reveal_level", string()).suggests(REVEAL_LEVEL_SUGGESTION),
+                                argument("info_level", string()).suggests(REVEAL_LEVEL_SUGGESTION),
                                 PersonalityCommands::addKnownCharacter
                             )
                         )
@@ -155,16 +154,16 @@ public class PersonalityCommands {
 
             .then(literal("delete").requires(PrivilegeManager.privilegeCheck("delete"))
                 .requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(1))
-                .executes(c -> deleteCharacter(c, 0))
-                .then(argument(PLAYERS_KEY, players())
-                        .executes(c -> deleteCharacter(c, 3)))
+//                .executes(c -> deleteCharacter(c, 0))
+//                .then(argument(PLAYERS_KEY, players())
+//                        .executes(c -> deleteCharacter(c, 3)))
                 .then(argument(CHARACTER_UUID_KEY, UuidArgumentType.uuid())
                         .executes(c -> deleteCharacter(c, 2)))
             )
 
             .then(literal("kill").requires(PrivilegeManager.privilegeCheck("kill"))
 //                .requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(1))
-                .executes(c -> killCharacter(c, 0))
+//                .executes(c -> killCharacter(c, 0))
                 .then(argument(PLAYERS_KEY, players())
                         .executes(c -> killCharacter(c, 3)))
                 .then(argument(CHARACTER_UUID_KEY, UuidArgumentType.uuid())
@@ -326,9 +325,9 @@ public class PersonalityCommands {
 
         try {
             if(range != -1) {
-                ServerCharacters.INSTANCE.revealCharacterInfo(player, range, InfoRevealLevel.GENERAL);
+                ServerCharacters.INSTANCE.revealCharacterInfo(player, range, InfoLevel.GENERAL);
             } else {
-                ServerCharacters.INSTANCE.revealCharacterInfo(player, getPlayers(context, PLAYERS_KEY), InfoRevealLevel.GENERAL);
+                ServerCharacters.INSTANCE.revealCharacterInfo(player, getPlayers(context, PLAYERS_KEY), InfoLevel.GENERAL);
             }
 
             return msg(context, "Identity Revealed");
@@ -401,7 +400,7 @@ public class PersonalityCommands {
     private static int addKnownCharacter(CommandContext<ServerCommandSource> context, boolean removeViaPlayers) {
         ServerPlayerEntity player = context.getSource().getPlayer();
 
-        InfoRevealLevel level = getRevealLevel(context);
+        InfoLevel level = getRevealLevel(context);
 
         if(level == null) return errorMsg(context);
 
@@ -573,9 +572,9 @@ public class PersonalityCommands {
         return null;
     }
 
-    public static InfoRevealLevel getRevealLevel(CommandContext<ServerCommandSource> context){
+    public static InfoLevel getRevealLevel(CommandContext<ServerCommandSource> context){
         try {
-            return InfoRevealLevel.valueOf(getString(context, "reveal_level"));
+            return InfoLevel.valueOf(getString(context, "info_level"));
         } catch (Exception e){ e.printStackTrace(); }
 
         return null;

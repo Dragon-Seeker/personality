@@ -9,7 +9,6 @@ import org.apache.commons.collections4.map.LinkedMap;
 
 import javax.annotation.Nullable;
 import java.util.*;
-import java.util.function.Consumer;
 
 /**
  * Registry used for Registering Obfuscated replacements for given Info about a Character
@@ -18,14 +17,19 @@ public class InfoRevealRegistry extends BaseRegistry {
 
     public static InfoRevealRegistry INSTANCE = new InfoRevealRegistry();
 
-    public final LinkedMap<InfoRevealLevel, List<Identifier>> REGISTRY = new LinkedMap<>();
+    public final LinkedMap<InfoLevel, List<Identifier>> FINALIZED_REGISTRY = new LinkedMap<>();
+
+    public final LinkedMap<InfoLevel, List<Identifier>> REGISTRY = new LinkedMap<>();
 
     private final Map<Identifier, ObfuscatedReplacement<?>> OBFUSCATED_REPLACEMENT = new HashMap<>();
 
     public InfoRevealRegistry(){
         super();
 
-        Arrays.stream(InfoRevealLevel.values()).forEach(level -> REGISTRY.put(level, new ArrayList<>()));
+        Arrays.stream(InfoLevel.VALID_VALUES).forEach(level -> {
+            REGISTRY.put(level, new ArrayList<>());
+            FINALIZED_REGISTRY.put(level, new ArrayList<>());
+        });
     }
 
     /**
@@ -36,7 +40,7 @@ public class InfoRevealRegistry extends BaseRegistry {
      * @param replacementInfo A Helper used to show the Obfuscated info if the character doesn't know that info
      * @return
      */
-    public InfoRevealRegistry registerValueForRevealing(InfoRevealLevel level, Identifier valueId, ObfuscatedReplacement<?> replacementInfo){
+    public InfoRevealRegistry registerValueForRevealing(InfoLevel level, Identifier valueId, ObfuscatedReplacement<?> replacementInfo){
         List<Identifier> valueForLevel = REGISTRY.get(level);
 
         boolean alreadyRegisteredRevealLevel = valueForLevel.contains(valueId);
@@ -54,19 +58,19 @@ public class InfoRevealRegistry extends BaseRegistry {
         return this;
     }
 
-    public boolean showInformation(InfoRevealLevel level, Identifier identifier){
-        if(REGISTRY.get(level).contains(identifier)) return true;
+    public boolean showInformation(InfoLevel level, Identifier identifier){
+        if(FINALIZED_REGISTRY.get(level).contains(identifier)) return true;
 
-        int currentRevelLevel = REGISTRY.indexOf(level);
+        int currentRevelLevel = FINALIZED_REGISTRY.indexOf(level);
 
         for(int i = 0; i < currentRevelLevel; i++){
-            if(REGISTRY.getValue(i).contains(identifier)) return true;
+            if(FINALIZED_REGISTRY.getValue(i).contains(identifier)) return true;
         }
 
         return false;
     }
 
-    public <T> InfoRevealResult<T> defaultOrReplace(InfoRevealLevel level, Identifier identifier, T defaultValue){
+    public <T> InfoRevealResult<T> defaultOrReplace(InfoLevel level, Identifier identifier, T defaultValue){
         if(showInformation(level, identifier)) return new InfoRevealResult<>(false, defaultValue);
 
         ObfuscatedReplacement<T> replacement = getReplacement(identifier);
@@ -92,6 +96,8 @@ public class InfoRevealRegistry extends BaseRegistry {
     @Override
     public void clearRegistry() {
         this.REGISTRY.forEach((level, listOfIds) -> listOfIds.clear());
+        this.FINALIZED_REGISTRY.forEach((level, listOfIds) -> listOfIds.clear());
+
         this.OBFUSCATED_REPLACEMENT.clear();
 
         if(FabricLoader.getInstance().isDevelopmentEnvironment()) LOGGER.info("[" + this.getRegistryId() + "]: Registry has been cleared!");
