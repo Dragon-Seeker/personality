@@ -82,8 +82,10 @@ dependencies {
 
 	modCompileOnly("maven.modrinth:additionalentityattributes:1.2.0+1.19.2")
 	modCompileOnly("com.github.apace100:apoli:v2.6.0", { exclude group: "com.github.DaFuqs", module: "AdditionalEntityAttributes" })
+	modCompileOnly("com.github.apace100:origins-fabric:${project.origin_version}", { exclude group: "com.github.apace100", module: "apoli" })
 
-	modImplementation("com.github.apace100:origins-fabric:${project.origin_version}", { exclude group: "com.github.apace100", module: "apoli" })
+	/*modImplementation*/modRuntimeOnly("com.github.apace100:origins-fabric:${project.origin_version}")
+
 
 	modImplementation("dev.emi:trinkets:${trinkets_version}")
 
@@ -97,7 +99,9 @@ dependencies {
 	modLocalRuntime("maven.modrinth:ferrite-core:5.0.3-fabric")
 	modLocalRuntime("maven.modrinth:smoothboot-fabric:1.19-1.7.1")
 
-	modLocalRuntime "io.wispforest:gadget:${project.gadget_version}"
+	modLocalRuntime("maven.modrinth:carpet:1.4.84")
+
+//	modLocalRuntime "io.wispforest:gadget:${project.gadget_version}"
 	//
 }
 
@@ -130,7 +134,7 @@ loom {
 							.iterator().forEachRemaining {runConfig.vmArg "-javaagent:\"${(project.configurations.compileClasspath.files(it).iterator().next().getPath())}\"" }
 				}
 
-				vmArg "-Dowo.renderdocPath=C:\\Program Files\\RenderDoc\\renderdoc.dll"
+//				vmArg "-Dowo.renderdocPath=C:\\Program Files\\RenderDoc\\renderdoc.dll"
 
 				vmArg "-Dlog4j.configurationFile=${file(".gradle/loom-cache/log4j.xml").toString()}"
 				vmArg "-Dfabric.log.disableAnsi=false"

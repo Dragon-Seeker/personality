@@ -4,6 +4,8 @@ import io.blodhgarm.personality.api.character.BaseCharacter;
 import io.blodhgarm.personality.api.character.CharacterManager;
 import io.blodhgarm.personality.client.glisco.InWorldTooltipProvider;
 import io.blodhgarm.personality.misc.pond.CharacterToPlayerLink;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextRenderer;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;

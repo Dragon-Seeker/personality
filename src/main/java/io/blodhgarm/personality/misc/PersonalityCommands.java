@@ -10,11 +10,12 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.mojang.logging.LogUtils;
+import io.blodhgarm.personality.Networking;
 import io.blodhgarm.personality.api.character.BaseCharacter;
 import io.blodhgarm.personality.api.character.Character;
-import io.blodhgarm.personality.Networking;
 import io.blodhgarm.personality.api.reveal.InfoLevel;
 import io.blodhgarm.personality.api.reveal.KnownCharacter;
+import io.blodhgarm.personality.api.reveal.RevelInfoManager;
 import io.blodhgarm.personality.client.gui.CharacterViewMode;
 import io.blodhgarm.personality.client.gui.GenderSelection;
 import io.blodhgarm.personality.packets.OpenPersonalityScreenS2CPacket;
@@ -40,11 +41,13 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static com.mojang.brigadier.arguments.IntegerArgumentType.*;
-import static com.mojang.brigadier.arguments.LongArgumentType.*;
+import static com.mojang.brigadier.arguments.IntegerArgumentType.getInteger;
+import static com.mojang.brigadier.arguments.IntegerArgumentType.integer;
+import static com.mojang.brigadier.arguments.LongArgumentType.longArg;
 import static com.mojang.brigadier.arguments.StringArgumentType.*;
 import static net.minecraft.command.argument.EntityArgumentType.*;
-import static net.minecraft.server.command.CommandManager.*;
+import static net.minecraft.server.command.CommandManager.argument;
+import static net.minecraft.server.command.CommandManager.literal;
 
 public class PersonalityCommands {
 
@@ -71,7 +74,6 @@ public class PersonalityCommands {
         });
     }
 
-
     public static LiteralArgumentBuilder<ServerCommandSource> buildCharacterCommands(String base, CommandDispatcher<ServerCommandSource> dispatcher){
         return literal(base)
 
@@ -97,10 +99,10 @@ public class PersonalityCommands {
 
             .then(literal("disassociate").requires(PrivilegeManager.privilegeCheck("disassociate"))
                     .then(argument(PLAYER_KEY, player())
-                            .executes(c -> disassociate(c, getPlayer(c, PLAYER_KEY).getUuidAsString(), true))
+                            .executes(c -> disassociate(c, getPlayer(c, PLAYER_KEY).getUuidAsString(), false))
                     )
                     .then(argument(CHARACTER_UUID_KEY, UuidArgumentType.uuid())
-                            .executes(c -> disassociate(c, getUUID(c, CHARACTER_UUID_KEY), false))
+                            .executes(c -> disassociate(c, getUUID(c, CHARACTER_UUID_KEY), true))
                     )
             )
 
@@ -191,15 +193,15 @@ public class PersonalityCommands {
     public static LiteralArgumentBuilder<ServerCommandSource> buildCommand(String base) {
         return literal(base)
             .then(literal("reveal")
-                .then(literal("small").executes(c -> revealRange(c, 3)))
-                .then(literal("medium").executes(c -> revealRange(c, 7)))
-                .then(literal("large").executes(c -> revealRange(c, 15)))
+                .then(revealCommandBuilder(literal("small"), c -> RevelInfoManager.RevealRange.SMALL.range))
+                .then(revealCommandBuilder(literal("medium"), c -> RevelInfoManager.RevealRange.MEDIUM.range))
+                .then(revealCommandBuilder(literal("large"), c -> RevelInfoManager.RevealRange.LARGE.range))
                 .then(literal("range")
-                    .then(argument("range", integer(0))
-                        .executes(c -> revealRange(c, getInteger(c,"range")))))
+                    .then(revealCommandBuilder(argument("range", integer(0)), c -> getInteger(c,"range")))
+                )
                 .then(literal("players").requires(PrivilegeManager.privilegeCheck("reveal_players"))
-                    .then(argument(PLAYERS_KEY, players())
-                        .executes(c -> revealRange(c, -1))))
+                    .then(revealCommandBuilder(argument(PLAYERS_KEY, players()), c -> -1))
+                )
             )
             .then(literal("screen")
                 .requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(1))
@@ -214,6 +216,13 @@ public class PersonalityCommands {
                 )
             );
     }
+
+    private static <T extends ArgumentBuilder> T revealCommandBuilder(T b, Function<CommandContext<ServerCommandSource>, Integer> intFunc) {
+        return (T) b.then(
+                argument("info_level", string()).suggests(REVEAL_LEVEL_SUGGESTION)
+                        .executes(c -> revealRange(c, intFunc.apply(c)))
+        );
+    };
 
     private static LiteralArgumentBuilder<ServerCommandSource> buildScreenCommand(LiteralArgumentBuilder<ServerCommandSource> node, CharacterViewMode mode, String type){
         node
@@ -306,10 +315,10 @@ public class PersonalityCommands {
         return msg(context, msg);
     }
 
-    private static int disassociate(CommandContext<ServerCommandSource> context, String UUID, boolean isPlayer) {
-        String playerUUID = ServerCharacters.INSTANCE.dissociateUUID(UUID, isPlayer);
+    private static int disassociate(CommandContext<ServerCommandSource> context, String UUID, boolean isCharacter) {
+        String playerUUID = ServerCharacters.INSTANCE.dissociateUUID(UUID, isCharacter);
 
-        String targetType = (isPlayer ? "Player" : "Character");
+        String targetType = (isCharacter ? "Player" : "Character");
 
         String returnMsg = playerUUID == null
                 ? "§cTargeted " + targetType + " was not found to be Associated to anything"

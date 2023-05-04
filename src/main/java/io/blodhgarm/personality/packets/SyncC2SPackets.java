@@ -63,6 +63,8 @@ public class SyncC2SPackets {
 
             c.getAddons().putAll(modifiedAddonsMap);
 
+            ServerCharacters.INSTANCE.attemptApplyAddonOnSave(c);
+
             //TODO: Should we reapply addons and how should such be handled for clients or not?
         }
     }
@@ -93,10 +95,14 @@ public class SyncC2SPackets {
 
             Map<Identifier, String> addonsData = ServerCharacters.INSTANCE.saveAddonsForCharacter(c, addonMap, false);
 
+            c.getAddons().putAll(addonMap);
+
             //Should such matter if there are less addons within the servers' registry?
             if(characterData != null || addonsData.size() < AddonRegistry.INSTANCE.getRegisteredIds().size()) {
-                Networking.sendC2S(new SyncS2CPackets.SyncCharacterData(characterData, addonsData));
+                Networking.sendToAll(new SyncS2CPackets.SyncCharacterData(characterData, addonsData));
             }
+
+            ServerCharacters.INSTANCE.attemptApplyAddonOnSave(c);
 
             if(message.immediateAssociation){
                 ServerCharacters.INSTANCE.associateCharacterToPlayer(c.getUUID(), access.player().getUuidAsString());

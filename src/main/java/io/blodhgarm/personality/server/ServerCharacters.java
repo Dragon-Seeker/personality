@@ -346,7 +346,11 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
         String characterJson = GSON.toJson(character);
 
-        if(syncCharacter) Networking.sendToAll(new SyncS2CPackets.SyncCharacterData(characterJson, Map.of()));
+        if(syncCharacter){
+            this.attemptApplyAddonOnSave(character);
+
+            Networking.sendToAll(new SyncS2CPackets.SyncCharacterData(characterJson, Map.of()));
+        }
 
         try {
             File characterFile = getCharacterInfo(character.getUUID()).toAbsolutePath().toFile();
@@ -375,13 +379,15 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     public Map<Identifier, String> saveAddonsForCharacter(Character c, Map<Identifier, BaseAddon> newAddons, boolean syncAddons){
         Map<Identifier, String> addonData = Util.make(new HashMap<>(), map -> {
             newAddons.forEach((addonId, addon) -> {
-                String addonJson = saveAddonForCharacter(c, addonId, addon, false);
+                String addonJson = saveAddonForCharacter(c, addonId, addon);
 
                 if (addonJson != null) map.put(addonId, addonJson);
             });
         });
 
-        if(syncAddons) Networking.sendToAll(new SyncS2CPackets.SyncAddonData(c.getUUID(), addonData));
+        if(syncAddons){
+            Networking.sendToAll(new SyncS2CPackets.SyncAddonData(c.getUUID(), addonData));
+        }
 
         return addonData;
     }
@@ -393,10 +399,9 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
      * @param c Character of which addons should be saved
      * @param addonId Current Addon ID that is being saved
      * @param addon Addon in question being saved
-     * @param syncAddons whether to send a packet to sync clients of the data change
-     * @return the deserialized form of the saved addon
+     * @return the deserialized form of the saved addon or null depending on if it fails or isn't any different from previous form
      */
-    public String saveAddonForCharacter(Character c, Identifier addonId, @Nullable BaseAddon addon, boolean syncAddons){
+    public String saveAddonForCharacter(Character c, Identifier addonId, @Nullable BaseAddon addon){
         if(addon != null){
             BaseAddon prevAddon = c.getAddon(addonId);
 
@@ -413,8 +418,6 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
                     Files.writeString(addonFile.toPath(), addonJson);
                 }
 
-                if(syncAddons) Networking.sendToAll(new SyncS2CPackets.SyncAddonData(c.getUUID(), Map.of(addonId, addonJson)));
-
                 return addonJson;
             } catch (IOException e){
                 LOGGER.error("[AddonLoading] {} addon for [Name: {}, UUID: {}] was unable to be save to Disc, data was not saved.", addonId, c.getName(), c.getUUID());
@@ -426,6 +429,14 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
         }
 
         return null;
+    }
+
+    public void attemptApplyAddonOnSave(Character character){
+        PlayerAccess<ServerPlayerEntity> playerAccess = this.getPlayer(character);
+
+        if(!playerAccess.valid() || playerAccess.player() == null) return;
+
+        this.applyAddons(playerAccess.player());
     }
 
     public static Path getBasePath() {

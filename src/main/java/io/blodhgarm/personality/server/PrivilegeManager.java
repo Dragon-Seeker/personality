@@ -29,9 +29,6 @@ public class PrivilegeManager {
         actionMap.put("screen_view_player", PrivilegeLevel.MODERATOR);
         actionMap.put("screen_view_uuid", PrivilegeLevel.MODERATOR);
 
-        actionMap.put("screen_edit_player", PrivilegeLevel.MODERATOR);
-        actionMap.put("screen_edit_uuid", PrivilegeLevel.MODERATOR);
-
         //-------------------------------------------------------------
 
         actionMap.put("set", PrivilegeLevel.ADMIN);
@@ -48,9 +45,11 @@ public class PrivilegeManager {
         actionMap.put("kill", PrivilegeLevel.ADMIN);
         actionMap.put("delete", PrivilegeLevel.ADMIN);
 
-
         actionMap.put("screen_creation", PrivilegeLevel.ADMIN);
         actionMap.put("screen_creation_targeted", PrivilegeLevel.ADMIN);
+
+        actionMap.put("screen_edit_player", PrivilegeLevel.ADMIN);
+        actionMap.put("screen_edit_uuid", PrivilegeLevel.ADMIN);
     }
 
     public static PrivilegeLevel getLevel(String action){

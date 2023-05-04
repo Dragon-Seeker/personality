@@ -141,7 +141,7 @@ public class AddonRegistry<A extends BaseAddon> extends BaseRegistry {
                 LOGGER.error("[AddonLoading] {} addon for [Name: {}, UUID: {}] was unable to be loaded from the Disc, setting such to default and saved to disc.", s, c.getName(), c.getUUID());
 
                 addon = registryHelper.defaultAddon.get();
-                ServerCharacters.INSTANCE.saveAddonForCharacter(c, s, addon, false);
+                ServerCharacters.INSTANCE.saveAddonForCharacter(c, s, addon);
 
                 e.printStackTrace();
             } catch (JsonSyntaxException e){

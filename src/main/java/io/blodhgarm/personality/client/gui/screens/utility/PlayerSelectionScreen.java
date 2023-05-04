@@ -212,4 +212,9 @@ public class PlayerSelectionScreen extends BaseOwoScreen<FlowLayout> {
 
         selectedAction.accept(this.selectedPlayers);
     }
+
+    @Override
+    public boolean shouldPause() {
+        return false;
+    }
 }

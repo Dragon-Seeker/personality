@@ -113,4 +113,8 @@ public class ConfirmationScreen extends BaseOwoScreen<FlowLayout> {
         rootComponent.child(confirmationLayout);
     }
 
+    @Override
+    public boolean shouldPause() {
+        return false;
+    }
 }
