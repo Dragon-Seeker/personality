@@ -15,7 +15,7 @@ public class ConfigHelper {
 //        return config.START_VALUE() + percentageInAgeRange*valueRange;
 //    }
 
-    public static float apply(GradualValue config, Character character) {
+    public static float apply(io.blodhgarm.personality.misc.config.PersonalityConfig.GradualValue config, Character character) {
         double a = calculateCurveModifier(config);
         double x = character.getPreciseAge() - config.minAge();
         float m = config.startingValue();

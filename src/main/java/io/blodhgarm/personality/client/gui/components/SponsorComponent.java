@@ -32,7 +32,6 @@ public class SponsorComponent extends VerticalFlowLayout {
     }
 
     public void build(){
-        if(PersonalityMod.CONFIG.disableSponsorComponent()) return;
 
         // 48 32 | 36 24 | 29 19
 

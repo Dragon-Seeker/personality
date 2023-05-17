@@ -22,6 +22,7 @@
     "client.MessageHandlerMixin",
     "client.PlayerEntityMixin",
     "client.TextFieldWidgetMixin",
+    "client.MouseMixin",
     "client.accessor.EditBoxAccessor",
     "client.accessor.EditBoxWidgetAccessor",
     "client.accessor.NinePatchRendererAccessor",

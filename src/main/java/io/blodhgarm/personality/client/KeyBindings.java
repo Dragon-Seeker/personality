@@ -3,6 +3,7 @@ package io.blodhgarm.personality.client;
 import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.character.Character;
 import io.blodhgarm.personality.api.character.CharacterManager;
+import io.blodhgarm.personality.client.glisco.DescriptionRenderer;
 import io.blodhgarm.personality.client.gui.screens.CharacterInfoScreen;
 import io.blodhgarm.personality.client.gui.screens.PersonalitySubScreen;
 import io.blodhgarm.personality.client.gui.screens.RevealIdentityScreen;
@@ -23,6 +24,9 @@ public class KeyBindings {
     public static KeyBinding REVEAL_KEYBIND;
     public static KeyBinding OPEN_SUB_SCREEN_KEYBIND;
 
+    public static KeyBinding TOGGLE_DESCRIPTION_VIEW;
+    public static KeyBinding TOGGLE_AUTOMATIC_SCROLLING;
+
     private static KeyBinding register(String key, int defaultKey) {
         KeyBinding binding = new KeyBinding("personality.keybind." + key, InputUtil.Type.KEYSYM, defaultKey, "category." + PersonalityMod.MODID);
         KeyBindingHelper.registerKeyBinding(binding);
@@ -42,22 +46,66 @@ public class KeyBindings {
             }
         }
 
-        while (OPEN_SUB_SCREEN_KEYBIND.wasPressed())
-            if(PrivilegeManager.PrivilegeLevel.MODERATOR.test(MinecraftClient.getInstance().player) || FabricLoader.getInstance().isDevelopmentEnvironment()){
+        while (OPEN_SUB_SCREEN_KEYBIND.wasPressed()) {
+            if (PrivilegeManager.PrivilegeLevel.MODERATOR.test(MinecraftClient.getInstance().player) || FabricLoader.getInstance().isDevelopmentEnvironment()) {
                 client.setScreen(new PersonalitySubScreen());
             } else {
                 Character character = CharacterManager.getManger(world).getCharacter(client.player);
 
-                if(character != null || FabricLoader.getInstance().isDevelopmentEnvironment()){
+                if (character != null || FabricLoader.getInstance().isDevelopmentEnvironment()) {
                     client.setScreen(new CharacterInfoScreen());
                 } else {
                     client.player.sendMessage(Text.of("Character Info Menu requires a characters before being able to be used."));
                 }
             }
+        }
+
+        if(PersonalityMod.CONFIG.descriptionConfig.descriptionView()) {
+            boolean toggleMode = PersonalityMod.CONFIG.descriptionConfig.descriptionKeybindingControl().toggle();
+
+            if (PersonalityMod.CONFIG.descriptionConfig.descriptionKeybindingControl().toggle()) {
+                while (TOGGLE_DESCRIPTION_VIEW.wasPressed()) {
+                    DescriptionRenderer.INSTANCE.disableRenderer = !DescriptionRenderer.INSTANCE.disableRenderer;
+
+                    if (!DescriptionRenderer.INSTANCE.disableRenderer) {
+                        client.getMessageHandler().onGameMessage(Text.of("Enabled Description View"), true);
+                    } else {
+                        client.getMessageHandler().onGameMessage(Text.of("Disable Description View"), true);
+                    }
+                }
+            } else {
+                var enableDescriptionView = TOGGLE_DESCRIPTION_VIEW.isPressed();
+
+                if (DescriptionRenderer.INSTANCE.disableRenderer != enableDescriptionView) {
+//                if(enableDescriptionView){
+//                    client.getMessageHandler().onGameMessage(Text.of("Enabled Description View"), true);
+//                } else {
+//                    client.getMessageHandler().onGameMessage(Text.of("Disable Description View"), true);
+//                }
+
+                    DescriptionRenderer.INSTANCE.disableRenderer = enableDescriptionView;
+                }
+            }
+
+            while (PersonalityMod.CONFIG.descriptionConfig.automaticScrolling() && TOGGLE_AUTOMATIC_SCROLLING.wasPressed()){
+                DescriptionRenderer.INSTANCE.disableAutomaticScrolling = !DescriptionRenderer.INSTANCE.disableAutomaticScrolling;
+
+                if(!DescriptionRenderer.INSTANCE.disableAutomaticScrolling){
+                    DescriptionRenderer.INSTANCE.lineSpeedHandler.reset(0.0f);
+
+                    client.getMessageHandler().onGameMessage(Text.of("Enabled Auto Scrolling"), true);
+                } else {
+                    client.getMessageHandler().onGameMessage(Text.of("Disabled Auto Scrolling"), true);
+                }
+            }
+        }
     }
 
     public static void init(){
         REVEAL_KEYBIND = register("reveal", GLFW.GLFW_KEY_J);
         OPEN_SUB_SCREEN_KEYBIND = register("open_subscreen", GLFW.GLFW_KEY_I);
+
+        TOGGLE_DESCRIPTION_VIEW = register("toggle_description_view", GLFW.GLFW_KEY_U);
+        TOGGLE_AUTOMATIC_SCROLLING = register("toggle_automatic_scrolling", GLFW.GLFW_KEY_Y);
     }
 }

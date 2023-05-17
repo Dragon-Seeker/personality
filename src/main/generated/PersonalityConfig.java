@@ -54,8 +54,9 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
     private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.ThemeMode> themeMode = this.optionForKey(new Option.Key("themeMode"));
     private final Option<java.lang.Boolean> showPlayerNameInChat = this.optionForKey(new Option.Key("showPlayerNameInChat"));
     private final Option<java.lang.Boolean> showPlayerNamePlateAtChestLevel = this.optionForKey(new Option.Key("showPlayerNamePlateAtChestLevel"));
-    private final Option<java.lang.Boolean> disableSponsorComponent = this.optionForKey(new Option.Key("disableSponsorComponent"));
-    private final Option<java.lang.Boolean> disableInWorldDescriptionTooltipComponent = this.optionForKey(new Option.Key("disableInWorldDescriptionTooltipComponent"));
+    private final Option<java.lang.Boolean> descriptionConfig_descriptionView = this.optionForKey(new Option.Key("descriptionConfig.descriptionView"));
+    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.ControlType> descriptionConfig_descriptionKeybindingControl = this.optionForKey(new Option.Key("descriptionConfig.descriptionKeybindingControl"));
+    private final Option<java.lang.Boolean> descriptionConfig_automaticScrolling = this.optionForKey(new Option.Key("descriptionConfig.automaticScrolling"));
 
     private PersonalityConfig() {
         super(io.blodhgarm.personality.misc.config.PersonalityConfigModel.class);
@@ -441,22 +442,33 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         showPlayerNamePlateAtChestLevel.set(value);
     }
 
-    public boolean disableSponsorComponent() {
-        return disableSponsorComponent.value();
-    }
+    public final DescriptionConfig descriptionConfig = new DescriptionConfig();
+    public class DescriptionConfig implements DescriptionViewConfig {
+        public boolean descriptionView() {
+            return descriptionConfig_descriptionView.value();
+        }
 
-    public void disableSponsorComponent(boolean value) {
-        disableSponsorComponent.set(value);
-    }
+        public void descriptionView(boolean value) {
+            descriptionConfig_descriptionView.set(value);
+        }
 
-    public boolean disableInWorldDescriptionTooltipComponent() {
-        return disableInWorldDescriptionTooltipComponent.value();
-    }
+        public io.blodhgarm.personality.misc.config.PersonalityConfigModel.ControlType descriptionKeybindingControl() {
+            return descriptionConfig_descriptionKeybindingControl.value();
+        }
 
-    public void disableInWorldDescriptionTooltipComponent(boolean value) {
-        disableInWorldDescriptionTooltipComponent.set(value);
-    }
+        public void descriptionKeybindingControl(io.blodhgarm.personality.misc.config.PersonalityConfigModel.ControlType value) {
+            descriptionConfig_descriptionKeybindingControl.set(value);
+        }
 
+        public boolean automaticScrolling() {
+            return descriptionConfig_automaticScrolling.value();
+        }
+
+        public void automaticScrolling(boolean value) {
+            descriptionConfig_automaticScrolling.set(value);
+        }
+
+    }
 
     public interface ExtraLife {
         int minAge();
@@ -481,6 +493,14 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         void endingValue(float value);
         io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve calculationCurve();
         void calculationCurve(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value);
+    }
+    public interface DescriptionViewConfig {
+        boolean descriptionView();
+        void descriptionView(boolean value);
+        io.blodhgarm.personality.misc.config.PersonalityConfigModel.ControlType descriptionKeybindingControl();
+        void descriptionKeybindingControl(io.blodhgarm.personality.misc.config.PersonalityConfigModel.ControlType value);
+        boolean automaticScrolling();
+        void automaticScrolling(boolean value);
     }
 
 }

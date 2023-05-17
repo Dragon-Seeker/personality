@@ -5,6 +5,8 @@ import io.blodhgarm.personality.Networking;
 import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddonRegistry;
 import io.blodhgarm.personality.api.core.BaseRegistry;
+import io.blodhgarm.personality.client.glisco.DescriptionRenderer;
+import io.blodhgarm.personality.client.glisco.InWorldTooltipRenderer;
 import io.blodhgarm.personality.compat.origins.client.gui.OriginSelectionDisplayAddon;
 import io.blodhgarm.personality.compat.pehkui.client.PehkuiScaleDisplayAddon;
 import io.blodhgarm.personality.compat.trinkets.TrinketsGlasses;
@@ -36,6 +38,10 @@ public class PersonalityClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        InWorldTooltipRenderer.INSTANCE.initialize();
+
+        DescriptionRenderer.init();
+
         Networking.registerNetworkingClient();
 		ShaderEffectRenderCallback.EVENT.register(new BlurryVisionShaderEffect());
 

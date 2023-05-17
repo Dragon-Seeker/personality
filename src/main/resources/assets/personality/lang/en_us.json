@@ -131,21 +131,27 @@
   "text.config.personality.option.minimumInfo" : "Minimum Info Level",
   "text.config.personality.option.minimumInfo.tooltip" : "Set what the Minimum starting knowledge everyone will get when giving info",
 
-  "text.config.personality.option.none_tier" : "None Tier Info",
-  "text.config.personality.option.none_tier.tooltip" : "Information that will be given when at this given Tier for Knowing someone",
+  "text.config.personality.enum.infoLevel.undiscovered" : "Undiscovered",
+  "text.config.personality.enum.infoLevel.none" : "None",
+  "text.config.personality.enum.infoLevel.general" : "General",
+  "text.config.personality.enum.infoLevel.associate" : "Associate",
+  "text.config.personality.enum.infoLevel.trusted" : "Trusted",
+  "text.config.personality.enum.infoLevel.confidant" : "Confidant",
 
-  "text.config.personality.option.general_tier" : "General Tier Info",
-  "text.config.personality.option.general_tier.tooltip" : "Information that will be given when at this given Tier for Knowing someone",
+  "text.config.personality.category.descriptionConfig" : "Description View Config",
+  "text.config.personality.category.descriptionConfig.tooltip" : "Main config for changing aspects of the Description View",
 
-  "text.config.personality.option.associate_tier" : "Associate Tier Info",
-  "text.config.personality.option.associate_tier.tooltip" : "Information that will be given when at this given Tier for Knowing someone",
+  "text.config.personality.option.descriptionConfig.descriptionView" : "Enable Description View",
+  "text.config.personality.option.descriptionConfig.descriptionView.tooltip" : "Used to control if Description View shows within the Game",
 
-  "text.config.personality.option.trusted_tier" : "Trusted Tier Info",
-  "text.config.personality.option.trusted_tier.tooltip" : "Information that will be given when at this given Tier for Knowing someone",
+  "text.config.personality.option.descriptionConfig.descriptionKeybindingControl" : "Description Keybinding Control",
+  "text.config.personality.option.descriptionConfig.descriptionKeybindingControl.tooltip" : "Controls how the Description View Keybinding Works",
 
-  "text.config.personality.option.confidant_tier" : "Confidant Tier Info",
-  "text.config.personality.option.confidant_tier.tooltip" : "Information that will be given when at this given Tier for Knowing someone",
+  "text.config.personality.option.descriptionConfig.automaticScrolling" : "Enable Automatic Scrolling",
+  "text.config.personality.option.descriptionConfig.automaticScrolling.tooltip" : "Used to to control if the Description View will automatically scroll",
 
+  "text.config.personality.enum.controlType.toggle" : "Toggle",
+  "text.config.personality.enum.controlType.hold" : "Hold",
 
   "category.personality": "Personality"
 }

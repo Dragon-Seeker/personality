@@ -83,9 +83,25 @@ public class PersonalityConfigModel {
     // --- Used to change the position of the players' nameplate ---
     public boolean showPlayerNamePlateAtChestLevel = false;
 
-    public boolean disableSponsorComponent = false;
+    @Nest
+    public DescriptionViewConfig descriptionConfig = new DescriptionViewConfig();
 
-    public boolean disableInWorldDescriptionTooltipComponent = true;
+    public static class DescriptionViewConfig {
+        public boolean descriptionView = false;
+
+        public ControlType descriptionKeybindingControl = ControlType.TOGGLE;
+
+        public boolean automaticScrolling = false;
+    }
+
+    public enum ControlType {
+        TOGGLE,
+        HOLD;
+
+        public boolean toggle(){
+            return this == TOGGLE;
+        }
+    }
 
     //-----------------------------------------------
 
@@ -98,17 +114,10 @@ public class PersonalityConfigModel {
     public enum Curve { NONE, LINEAR, QUADRATIC, SQRT, EXPONENTIAL, LOGARITHMIC, EXPONENTIAL_EXTREME, LOGARITHMIC_EXTREME }
 
     public static class GradualValue {
-        @RangeConstraint(min = 0, max = 1000)
-        public int minAge;
-
-        @RangeConstraint(min = 0, max = 1000)
-        public int maxAge;
-
-        @RangeConstraint(min = 0, max = 100F)
-        public float startingValue;
-
-        @RangeConstraint(min = 0, max = 100F)
-        public float endingValue;
+        @RangeConstraint(min = 0, max = 1000) public int minAge;
+        @RangeConstraint(min = 0, max = 1000) public int maxAge;
+        @RangeConstraint(min = 0, max = 100F) public float startingValue;
+        @RangeConstraint(min = 0, max = 100F) public float endingValue;
 
         public Curve calculationCurve;
 
@@ -119,23 +128,13 @@ public class PersonalityConfigModel {
             endingValue = endValue;
             calculationCurve = curve;
         }
-
-
     }
 
     public static class ExtraLife {
-
-        @RangeConstraint(min = 0, max = 1000)
-        public int minAge;
-
-        @RangeConstraint(min = 0, max = 1000)
-        public int maxAge;
-
-        @RangeConstraint(min = 0, max = Float.MAX_VALUE)
-        public float minimumHoursForExtraLife;
-
-        @RangeConstraint(min = 0, max = 100F)
-        public float multiplier;
+        @RangeConstraint(min = 0, max = 1000) public int minAge;
+        @RangeConstraint(min = 0, max = 1000) public int maxAge;
+        @RangeConstraint(min = 0, max = Float.MAX_VALUE) public float minimumHoursForExtraLife;
+        @RangeConstraint(min = 0, max = 100F) public float multiplier;
 
         public Curve calculationCurve;
 
@@ -147,6 +146,5 @@ public class PersonalityConfigModel {
             this.multiplier = multiplier;
             this.calculationCurve = calculationCurve;
         }
-
     }
 }

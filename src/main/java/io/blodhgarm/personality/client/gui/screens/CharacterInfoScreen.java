@@ -7,7 +7,6 @@ import io.blodhgarm.personality.api.reveal.KnownCharacter;
 import io.blodhgarm.personality.client.ClientCharacters;
 import io.blodhgarm.personality.client.gui.ThemeHelper;
 import io.blodhgarm.personality.client.gui.CharacterViewMode;
-import io.blodhgarm.personality.client.gui.components.SponsorComponent;
 import io.blodhgarm.personality.client.gui.components.character.CharacterBasedGridLayout;
 import io.blodhgarm.personality.client.gui.components.grid.LabeledGridLayout;
 import io.blodhgarm.personality.client.gui.components.character.CharacterViewComponent;
