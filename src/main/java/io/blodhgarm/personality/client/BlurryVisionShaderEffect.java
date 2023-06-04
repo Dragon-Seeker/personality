@@ -20,8 +20,8 @@ public class BlurryVisionShaderEffect implements ShaderEffectRenderCallback {
 
     private static final MinecraftClient client = MinecraftClient.getInstance();
 
-    private static List<GlassesCheck> GLASSES_CHECKERS = Lists.newArrayList(player -> {
-        return client.player.getEquippedStack(EquipmentSlot.HEAD).isIn(PersonalityTags.VISION_GLASSES);
+    private static final List<GlassesCheck> GLASSES_CHECKERS = Lists.newArrayList(player -> {
+        return client.player.getEquippedStack(EquipmentSlot.HEAD).isIn(PersonalityTags.Items.VISION_GLASSES);
     });
 
     private final ManagedShaderEffect blur = ShaderEffectManager.getInstance().manage(new Identifier("blur", "shaders/post/fade_in_blur.json"),

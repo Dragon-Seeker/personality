@@ -27,6 +27,8 @@ public class KeyBindings {
     public static KeyBinding TOGGLE_DESCRIPTION_VIEW;
     public static KeyBinding TOGGLE_AUTOMATIC_SCROLLING;
 
+    public static KeyBinding TOGGLE_AUTO_DISCOVERY;
+
     private static KeyBinding register(String key, int defaultKey) {
         KeyBinding binding = new KeyBinding("personality.keybind." + key, InputUtil.Type.KEYSYM, defaultKey, "category." + PersonalityMod.MODID);
         KeyBindingHelper.registerKeyBinding(binding);
@@ -61,13 +63,13 @@ public class KeyBindings {
         }
 
         if(PersonalityMod.CONFIG.descriptionConfig.descriptionView()) {
-            boolean toggleMode = PersonalityMod.CONFIG.descriptionConfig.descriptionKeybindingControl().toggle();
+            var renderer = DescriptionRenderer.INSTANCE;
 
             if (PersonalityMod.CONFIG.descriptionConfig.descriptionKeybindingControl().toggle()) {
                 while (TOGGLE_DESCRIPTION_VIEW.wasPressed()) {
-                    DescriptionRenderer.INSTANCE.disableRenderer = !DescriptionRenderer.INSTANCE.disableRenderer;
+                    renderer.disableRenderer = !renderer.disableRenderer;
 
-                    if (!DescriptionRenderer.INSTANCE.disableRenderer) {
+                    if (!renderer.disableRenderer) {
                         client.getMessageHandler().onGameMessage(Text.of("Enabled Description View"), true);
                     } else {
                         client.getMessageHandler().onGameMessage(Text.of("Disable Description View"), true);
@@ -76,19 +78,11 @@ public class KeyBindings {
             } else {
                 var enableDescriptionView = TOGGLE_DESCRIPTION_VIEW.isPressed();
 
-                if (DescriptionRenderer.INSTANCE.disableRenderer != enableDescriptionView) {
-//                if(enableDescriptionView){
-//                    client.getMessageHandler().onGameMessage(Text.of("Enabled Description View"), true);
-//                } else {
-//                    client.getMessageHandler().onGameMessage(Text.of("Disable Description View"), true);
-//                }
-
-                    DescriptionRenderer.INSTANCE.disableRenderer = enableDescriptionView;
-                }
+                if (renderer.disableRenderer != enableDescriptionView) renderer.disableRenderer = enableDescriptionView;
             }
 
             while (PersonalityMod.CONFIG.descriptionConfig.automaticScrolling() && TOGGLE_AUTOMATIC_SCROLLING.wasPressed()){
-                DescriptionRenderer.INSTANCE.disableAutomaticScrolling = !DescriptionRenderer.INSTANCE.disableAutomaticScrolling;
+                renderer.disableAutomaticScrolling = !renderer.disableAutomaticScrolling;
 
                 if(!DescriptionRenderer.INSTANCE.disableAutomaticScrolling){
                     DescriptionRenderer.INSTANCE.lineSpeedHandler.reset(0.0f);
@@ -98,14 +92,24 @@ public class KeyBindings {
                     client.getMessageHandler().onGameMessage(Text.of("Disabled Auto Scrolling"), true);
                 }
             }
+
+            while (TOGGLE_AUTO_DISCOVERY.wasPressed() && PersonalityMod.CONFIG.autoDiscovery()){
+                ClientCharacterTick.INSTANCE.disableDiscovery = !ClientCharacterTick.INSTANCE.disableDiscovery;
+
+                client.getMessageHandler().onGameMessage(
+                        Text.of((!ClientCharacterTick.INSTANCE.disableDiscovery) ? "Enabled Auto Discovery" : "Disabled Auto Discovery"),
+                        true
+                );
+            }
         }
     }
 
     public static void init(){
         REVEAL_KEYBIND = register("reveal", GLFW.GLFW_KEY_J);
-        OPEN_SUB_SCREEN_KEYBIND = register("open_subscreen", GLFW.GLFW_KEY_I);
+        OPEN_SUB_SCREEN_KEYBIND = register("open_subscreen", GLFW.GLFW_KEY_K);
 
-        TOGGLE_DESCRIPTION_VIEW = register("toggle_description_view", GLFW.GLFW_KEY_U);
         TOGGLE_AUTOMATIC_SCROLLING = register("toggle_automatic_scrolling", GLFW.GLFW_KEY_Y);
+        TOGGLE_DESCRIPTION_VIEW = register("toggle_description_view", GLFW.GLFW_KEY_U);
+        TOGGLE_AUTO_DISCOVERY = register("toggle_auto_discovery", GLFW.GLFW_KEY_I);
     }
 }

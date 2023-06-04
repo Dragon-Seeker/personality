@@ -3,7 +3,6 @@ package io.blodhgarm.personality.mixin.client;
 import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.character.BaseCharacter;
 import io.blodhgarm.personality.api.character.Character;
-import io.blodhgarm.personality.api.character.CharacterManager;
 import io.blodhgarm.personality.client.ClientCharacters;
 import io.blodhgarm.personality.utils.Constants;
 import net.minecraft.client.network.PlayerListEntry;
@@ -40,23 +39,23 @@ public abstract class MessageHandlerMixin {
             if(playerListEntry != null){
                 String playerUUID = DynamicSerializableUuid.getUuidFromProfile(playerListEntry.getProfile()).toString();
 
-                BaseCharacter character = ClientCharacters.INSTANCE.getKnownCharacter(DynamicSerializableUuid.getUuidFromProfile(playerListEntry.getProfile()).toString());
+                Character clientCharacter = ClientCharacters.INSTANCE.getClientCharacter();
 
-                MutableText mutableText = null;
+                if(clientCharacter != null) {
+                    BaseCharacter otherCharacter = clientCharacter.getKnownCharacter(playerUUID, true);
 
-                if(character != null){
-                    mutableText = Text.literal(character.getName());
-                } else {
-                    Character clientCharacter = CharacterManager.getClientCharacter();
+                    MutableText mutableText;
 
-                    if(clientCharacter != null) {
-                        mutableText = Objects.equals(clientCharacter.getUUID(), ClientCharacters.INSTANCE.getCharacterUUID(playerUUID))
-                                ? Text.literal(clientCharacter.getName())
-                                : Text.literal("Obscured");
+                    if (otherCharacter != null) {
+                        mutableText = Text.literal(otherCharacter.getName());
+                    } else {
+                        mutableText = Text.literal(
+                                Objects.equals(clientCharacter.getUUID(), ClientCharacters.INSTANCE.getCharacterUUID(playerUUID))
+                                        ? clientCharacter.getName()
+                                        : "Obscured"
+                        );
                     }
-                }
 
-                if(mutableText != null){
                     mutableText = Text.literal("*")
                             .append(mutableText);
 
@@ -65,7 +64,7 @@ public abstract class MessageHandlerMixin {
 
                         mutableText = value.name()
                                 .copy()
-                                .append(" | ")
+                                .append(Text.literal(" | ").formatted(Formatting.WHITE))
                                 .append(mutableText);
                     } else {
                         mutableText.setStyle(value.name().getStyle());

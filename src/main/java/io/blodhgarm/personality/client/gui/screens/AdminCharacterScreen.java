@@ -5,26 +5,29 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import io.blodhgarm.personality.Networking;
 import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.character.Character;
-import io.blodhgarm.personality.api.character.CharacterManager;
 import io.blodhgarm.personality.client.ClientCharacters;
 import io.blodhgarm.personality.client.gui.CharacterViewMode;
 import io.blodhgarm.personality.client.gui.ThemeHelper;
-import io.blodhgarm.personality.client.gui.utils.owo.layout.ButtonAddon;
+import io.blodhgarm.personality.client.gui.components.character.CharacterBasedGridLayout;
 import io.blodhgarm.personality.client.gui.components.grid.LabeledGridLayout;
 import io.blodhgarm.personality.client.gui.components.grid.MultiToggleButton;
 import io.blodhgarm.personality.client.gui.components.grid.SearchbarComponent;
-import io.blodhgarm.personality.client.gui.components.character.CharacterBasedGridLayout;
 import io.blodhgarm.personality.client.gui.screens.utility.ConfirmationScreen;
 import io.blodhgarm.personality.client.gui.screens.utility.PlayerSelectionScreen;
-import io.blodhgarm.personality.client.gui.utils.owo.ExtraSurfaces;
 import io.blodhgarm.personality.client.gui.utils.ModifiableCollectionHelper;
+import io.blodhgarm.personality.client.gui.utils.UIOps;
+import io.blodhgarm.personality.client.gui.utils.owo.ExtraSurfaces;
 import io.blodhgarm.personality.client.gui.utils.owo.VariantButtonSurface;
+import io.blodhgarm.personality.client.gui.utils.owo.layout.ButtonAddon;
 import io.blodhgarm.personality.client.gui.utils.polygons.ComponentAsPolygon;
+import io.blodhgarm.personality.client.gui.utils.profiles.DelayableGameProfile;
 import io.blodhgarm.personality.misc.pond.owo.ButtonAddonDuck;
 import io.blodhgarm.personality.misc.pond.owo.InclusiveBoundingArea;
-import io.blodhgarm.personality.packets.AdminActionPackets.*;
+import io.blodhgarm.personality.packets.AdminActionPackets.AssociateAction;
+import io.blodhgarm.personality.packets.AdminActionPackets.CharacterBasedAction;
+import io.blodhgarm.personality.packets.AdminActionPackets.DisassociateAction;
 import io.blodhgarm.personality.server.PrivilegeManager;
-import io.blodhgarm.personality.server.ServerCharacters;
+import io.blodhgarm.personality.utils.Constants;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.Components;
@@ -41,13 +44,13 @@ import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.MathHelper;
 import org.apache.commons.collections4.list.UnmodifiableList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -65,12 +68,14 @@ public class AdminCharacterScreen extends BaseOwoScreen<FlowLayout> implements M
     private final List<Character> defaultCharacterView = UnmodifiableList.unmodifiableList(ClientCharacters.INSTANCE.characterLookupMap().valueList());
     private final List<Character> characterView = new ArrayList<>();
 
-    private CharacterBasedGridLayout characterLayout;
+    private CharacterBasedGridLayout<Character> characterLayout;
 
     private final List<String> selectedCharacters = new ArrayList<>();
 
     @Nullable private FilterFunc<Character> cached_filter = null;
     @Nullable private Comparator<Character> cached_comparator = null;
+
+    private final Deque<Runnable> componentChanges = new ArrayDeque<>();
 
     @Override
     protected @NotNull OwoUIAdapter<FlowLayout> createAdapter() {
@@ -79,6 +84,8 @@ public class AdminCharacterScreen extends BaseOwoScreen<FlowLayout> implements M
 
     @Override
     public void tick() {
+        while(componentChanges.peek() != null) componentChanges.pop().run();
+
         if(waitTimeToUpdatePages == 0){
             TextBoxComponent component = this.uiAdapter.rootComponent.childById(TextBoxComponent.class, "per_page_amount");
 
@@ -236,7 +243,7 @@ public class AdminCharacterScreen extends BaseOwoScreen<FlowLayout> implements M
             List<Component> components = List.of(
                     //Edit Action
                     buildAdminButton("Edit", 32, 3, component -> {
-                        CharacterBasedGridLayout layout = this.uiAdapter.rootComponent.childById(CharacterBasedGridLayout.class, "character_list");
+                        CharacterBasedGridLayout<Character> layout = this.uiAdapter.rootComponent.childById(CharacterBasedGridLayout.class, "character_list");
 
                         layout.changeMode((layout.getMode() == CharacterViewMode.VIEWING) ? CharacterViewMode.EDITING : CharacterViewMode.VIEWING);
                     }),
@@ -354,8 +361,8 @@ public class AdminCharacterScreen extends BaseOwoScreen<FlowLayout> implements M
         List<MultiToggleButton> buttons = new ArrayList<>();
 
         //TODO: MULTI THREAD THIS TO PREVENT HUGE SPIKE THE STALES MINECRAFT
-        CharacterBasedGridLayout characterLayout = new CharacterBasedGridLayout(Sizing.content(), Sizing.content(), this)
-                .configure((CharacterBasedGridLayout layout) -> {
+        CharacterBasedGridLayout<Character> characterLayout = new CharacterBasedGridLayout<Character>(Sizing.content(), Sizing.content(), this)
+                .configure((CharacterBasedGridLayout<Character> layout) -> {
                     layout.openAsAdmin(true)
                             .setRowDividingLine(1)
                             .setColumnDividingLine(1)
@@ -412,36 +419,63 @@ public class AdminCharacterScreen extends BaseOwoScreen<FlowLayout> implements M
                 ).addBuilder(
                         isParentVertical -> Components.label(Text.of("Created By")),
                         (character, mode, isParentVertical) -> {
-                            MutableText name = Text.literal("");
+                            //TODO: Figure out why Multithreading causing "Cannot invoke "io.wispforest.owo.ui.util.FocusHandler.lastFocusSource()" because "focusHandler" is null"
+                            /*
+                             * This is most likely caused by the dismounting of a component from when such is mounted and layed out on the main thread leading to
+                             * the consequence of the parent being null and more issues. What must be done is the data is sent to the main thread to be updated
+                             * and properly go thru the actions of dismounting their
+                             */
+                            LabelComponent component = (LabelComponent) Components.label(Text.of("Waiting for Response...              "))
+                                    .maxWidth(125)
+                                    .horizontalSizing(Sizing.fixed(125))
+                                    .margins(Insets.of(2));
 
-                            AtomicBoolean wasSuccessful = new AtomicBoolean();
+                            UUID uuid = null;
 
                             try {
-                                GameProfile profile = MinecraftClient.getInstance().getSessionService()
-                                        .fillProfileProperties(new GameProfile(UUID.fromString(character.getPlayerUUID()), ""), false);
-
-                                String playerNameString = profile.getName();
-
-                                if(!playerNameString.isBlank()){
-                                    name = Text.literal(playerNameString);
-
-                                    wasSuccessful.set(true);
-                                }
+                                uuid = UUID.fromString(character.getPlayerUUID());
                             } catch (IllegalArgumentException ignored){}
 
-                            if(!wasSuccessful.get()){
-                                name = (!character.getPlayerUUID().isBlank()
-                                        ? Text.literal(character.getPlayerUUID())
-                                        : Text.literal("Error: Character missing Player UUID Info!"))
-                                        .formatted(Formatting.RED);
+                            Consumer<@Nullable GameProfile> consumer = (profile1) -> componentChanges.add(() -> {
+                                if(profile1 != null && !Constants.isErrored(profile1) && !profile1.getName().isBlank()) {
+                                    component.text(Text.literal(profile1.getName()));
+                                } else {
+                                    String text = character.getPlayerUUID().isBlank()
+                                            ? "Error: Character missing Player uuid Info!"
+                                            : character.getPlayerUUID();
+
+                                    component.text(Text.literal(text).formatted(Formatting.RED))
+                                            .tooltip(Text.of("Could not find the given Players name, showing uuid"));
+                                }
+                            });
+
+                            if(uuid != null){
+                                DelayableGameProfile profile = UIOps.getDelayedProfile(uuid.toString());
+
+                                Util.getIoWorkerExecutor()
+                                        .submit(profile.wrapRunnable(consumer));
+                            } else {
+                                consumer.accept(null);
                             }
 
-                            return Components.label(name)
-                                    .maxWidth(125)
-                                    .margins(Insets.of(2))
-                                    .configure(component -> {
-                                        if(!wasSuccessful.get()) component.tooltip(Text.of("Could not find the given Players name, showing UUID"));
-                                    });
+                            return component;
+
+//                            LabelComponent component = Components.label(Text.empty());
+//
+//                            GameProfile profile = UIOps.getProfile(character.getPlayerUUID());
+//
+//                            if(Constants.isErrored(profile)){
+//                                component.text(Text.literal(profile.getName()));
+//                            } else {
+//                                String text = !character.getPlayerUUID().isBlank()
+//                                        ? character.getPlayerUUID()
+//                                        : "Error: Character missing Player UUID Info!";
+//
+//                                component.text(Text.literal(text).formatted(Formatting.RED))
+//                                        .tooltip(Text.of("Could not find the given Players name, showing UUID"));
+//                            }
+//
+//                            return component.maxWidth(125).margins(Insets.of(2));
                         }
                 ).addBuilder(
                         isParentVertical -> {

@@ -34,7 +34,11 @@ public enum InfoLevel {
     }
 
     public boolean shouldUpdateLevel(InfoLevel level){
-        return true; //this.ordinal() < level.ordinal();
+        return shouldUpdateLevel(level, false);
+    }
+
+    public boolean shouldUpdateLevel(InfoLevel level, boolean allowDowngrading){
+        return allowDowngrading || this.ordinal() < level.ordinal();
     }
 
 }

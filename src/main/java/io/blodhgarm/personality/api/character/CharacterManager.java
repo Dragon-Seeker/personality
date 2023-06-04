@@ -2,14 +2,17 @@ package io.blodhgarm.personality.api.character;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import com.google.gson.Gson;
 import com.mojang.logging.LogUtils;
+import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.reveal.RevelInfoManager;
 import io.blodhgarm.personality.api.utils.PlayerAccess;
 import io.blodhgarm.personality.client.ClientCharacters;
-import io.blodhgarm.personality.mixin.PlayerEntityMixin;
 import io.blodhgarm.personality.utils.DebugCharacters;
 import io.blodhgarm.personality.utils.ReflectionUtils;
+import io.blodhgarm.personality.utils.gson.ExtraTokenData;
+import io.blodhgarm.personality.utils.gson.WrappedTypeToken;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -17,26 +20,24 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.world.World;
 import org.apache.commons.collections4.map.ListOrderedMap;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
+import javax.annotation.Nullable;
 import javax.annotation.Nonnull;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Supplier;
+import java.util.Objects;
 
 /**
  * Base interface for storing and managing Character data
  * @param <P> Is a version of player either {@link ClientPlayerEntity} or {@link ServerPlayerEntity}
  */
-public abstract class CharacterManager<P extends PlayerEntity> implements RevelInfoManager<P> {
+public abstract class CharacterManager<P extends PlayerEntity, C extends Character> implements RevelInfoManager<P> {
 
     protected static final Logger LOGGER = LogUtils.getLogger();
 
-    private static final Map<String, CharacterManager<?>> MANAGER_REGISTRY = new HashMap<>();
-
-    protected static Supplier<Character> getClientCharacterFunc = () -> null;
+    private static final Map<String, CharacterManager<?, ?>> MANAGER_REGISTRY = new HashMap<>();
 
     protected BiMap<String, String> playerIDToCharacterID = HashBiMap.create();
     protected ListOrderedMap<String, Character> characterIDToCharacter = new ListOrderedMap<>();
@@ -45,32 +46,29 @@ public abstract class CharacterManager<P extends PlayerEntity> implements RevelI
         MANAGER_REGISTRY.put(mangerId, this);
     }
 
+    /**
+     * @return The Character of the Client in which used only in {@link ClientCharacters}
+     */
+    @Nullable
+    public Character getClientCharacter() {
+        return null;
+    }
+
     //-----------------------------------------------------------------------------------------
 
     @Nullable
-    public static <P extends PlayerEntity> CharacterManager<P> getManger(PlayerEntity entity){
+    public static <P extends PlayerEntity> CharacterManager<P, Character> getManger(PlayerEntity entity){
         return entity.getWorld() != null ? getManger(entity.getWorld()) : null;
     }
 
     @Nullable
-    public static <P extends PlayerEntity> CharacterManager<P> getManger(World world){
+    public static <P extends PlayerEntity> CharacterManager<P, Character> getManger(World world){
         return getManger(world.isClient() ? "client" : "server");
     }
 
     @Nullable
-    public static <P extends PlayerEntity> CharacterManager<P> getManger(String managerId){
-        return (CharacterManager<P>) MANAGER_REGISTRY.get(managerId);
-    }
-
-    /**
-     * Method used to get the clients current character for instances that don't reference
-     * the main {@link ClientCharacters}. See example in {@link PlayerEntityMixin}
-     *
-     * @return the current clients character or null
-     */
-    @Nullable
-    public static Character getClientCharacter(){
-        return getClientCharacterFunc.get();
+    public static <P extends PlayerEntity> CharacterManager<P, Character> getManger(String managerId){
+        return (CharacterManager<P, Character>) MANAGER_REGISTRY.get(managerId);
     }
 
     //-----------------------------------------------------------------------------------------
@@ -84,7 +82,7 @@ public abstract class CharacterManager<P extends PlayerEntity> implements RevelI
     }
 
     /**
-     * A Map holding the Character Reference to its UUID
+     * A Map holding the Character Reference to its uuid
      */
     @Nonnull
     public ListOrderedMap<String, Character> characterLookupMap(){
@@ -107,7 +105,7 @@ public abstract class CharacterManager<P extends PlayerEntity> implements RevelI
     }
 
     /**
-     * Attempt to get the Character based on the player's possible character reference UUID
+     * Attempt to get the Character based on the player's possible character reference uuid
      *
      * @param player The Possible Player for a Character
      * @return If a Character for a player or null if none are found
@@ -122,31 +120,64 @@ public abstract class CharacterManager<P extends PlayerEntity> implements RevelI
     }
 
     /**
-     * Attempt to get the Character based on the player's UUID
+     * Attempt to get the Character based on the player's uuid
      *
-     * @param UUID The Possible UUID of a Character
-     * @return A Character linked to the given UUID
+     * @param cUUID The Possible uuid of a Character
+     * @return A Character linked to the given uuid
      */
     @Nullable
-    public Character getCharacter(String UUID){
-        Character character = characterLookupMap().get(UUID);
+    public Character getCharacter(String cUUID){
+        Character character = characterLookupMap().get(cUUID);
 
         if(FabricLoader.getInstance().isDevelopmentEnvironment() && character == null){
-            character = DebugCharacters.DEBUG_CHARACTERS_MAP.get(UUID);
+            character = DebugCharacters.DEBUG_CHARACTERS_MAP.get(cUUID);
         }
 
         return character;
     }
 
     /**
-     * Attempt to get the Character based on the player's UUID
+     * Attempt to get the Character based on the player's uuid
      *
-     * @param UUID The Possible UUID of a player for a Character
+     * @param pUUID The Possible uuid of a player for a Character
      * @return If a Character for a player or null if none are found
      */
-    public String getCharacterUUID(String UUID){
-        return playerToCharacterReferences().getOrDefault(UUID, "INVALID");
+    public String getCharacterUUID(String pUUID){
+        return playerToCharacterReferences().getOrDefault(pUUID, "INVALID");
     }
+
+    /**
+     * @return if such player has an associated Character
+     */
+    public boolean hasCharacter(P player){
+        return this.hasCharacter(player.getUuidAsString());
+    }
+
+    /**
+     * @return if such player's UUID has an associated Character
+     */
+    public boolean hasCharacter(String pUUID){
+        return !Objects.equals(getCharacterUUID(pUUID), "INVALID");
+    }
+
+    @ApiStatus.Internal
+    public C deserializeCharacter(String json){
+        return deserializeCharacter(json, null);
+    }
+
+    @ApiStatus.Internal
+    public C deserializeCharacter(String json, @Nullable ExtraTokenData data){
+        return (C) getGson().fromJson(json, getToken().setExtraData(data))
+                .setCharacterManager(this);
+    }
+
+    @ApiStatus.Internal
+    protected abstract WrappedTypeToken<C> getToken();
+
+    @ApiStatus.Internal
+    public abstract Gson getGson();
+
+    //----
 
     /**
      * Attempt to get the Player based on the Character
@@ -154,25 +185,31 @@ public abstract class CharacterManager<P extends PlayerEntity> implements RevelI
      * @param c The Character that may be connected to a player
      * @return A Player if a Character is associated to such or null if none are found
      */
-    public PlayerAccess<P> getPlayer(Character c){
-        return c == null ? (PlayerAccess<P>) PlayerAccess.EMPTY : getPlayer(c.getUUID());
+    public PlayerAccess<P> getPlayerFromCharacter(Character c){
+        return c == null ? (PlayerAccess<P>) PlayerAccess.EMPTY : getPlayerFromCharacter(c.getUUID());
     }
 
     /**
-     * Attempt to get the Player based on the Characters UUID
+     * Attempt to get the Player based on the Characters uuid
      *
-     * @param UUID A characters UUID
+     * @param cUUID A characters uuid
      * @return A Player if a Character is associated to such or null if none are found
      */
-    public PlayerAccess<P> getPlayer(String UUID){
+    public PlayerAccess<P> getPlayerFromCharacter(String cUUID){
+        return getPlayer(this.playerIDToCharacterID.inverse().get(cUUID));
+    }
+
+    public PlayerAccess<P> getPlayer(@Nullable String pUUID){
         return (PlayerAccess<P>) PlayerAccess.EMPTY;
     }
 
+    //----
+
     /**
-     * Attempt to get the Player's UUID based on the Character
+     * Attempt to get the Player's uuid based on the Character
      *
      * @param c A character
-     * @return A Player's UUID if a Character is associated to such or null if none are found
+     * @return A Player's uuid if a Character is associated to such or null if none are found
      */
     @Nullable
     public String getPlayerUUID(Character c){
@@ -180,10 +217,10 @@ public abstract class CharacterManager<P extends PlayerEntity> implements RevelI
     }
 
     /**
-     * Attempt to get the Player's UUID based on the Character's UUID
+     * Attempt to get the Player's uuid based on the Character's uuid
      *
-     * @param cUUID A character's UUID
-     * @return A Player's UUID if a Character is associated to such or null if none are found
+     * @param cUUID A character's uuid
+     * @return A Player's uuid if a Character is associated to such or null if none are found
      */
     @Nullable
     public String getPlayerUUID(String cUUID){
@@ -194,8 +231,8 @@ public abstract class CharacterManager<P extends PlayerEntity> implements RevelI
     /**
      * Method used to associate a Player to a given character within the Reference Map
      *
-     * @param cUUID Characters UUID
-     * @param playerUUID Player UUID
+     * @param cUUID Characters uuid
+     * @param playerUUID Player uuid
      *
      * @return if the character was found within the {@link #characterLookupMap()}
      */
@@ -204,7 +241,7 @@ public abstract class CharacterManager<P extends PlayerEntity> implements RevelI
 
         playerToCharacterReferences().put(playerUUID, cUUID);
 
-        PlayerAccess<P> playerAccess = getPlayer(cUUID);
+        PlayerAccess<P> playerAccess = getPlayerFromCharacter(cUUID);
 
         if(playerAccess.player() != null) applyAddons(playerAccess.player());
 
@@ -231,9 +268,9 @@ public abstract class CharacterManager<P extends PlayerEntity> implements RevelI
     }
 
     /**
-     * Remove the given UUID (Player or Character) from the Player Character Reference Map
+     * Remove the given uuid (Player or Character) from the Player Character Reference Map
      *
-     * @return Player UUID removed if found within the map
+     * @return Player uuid removed if found within the map
      */
     @Nullable
     public String dissociateUUID(String UUID, boolean isCharacterUUID){
@@ -247,9 +284,9 @@ public abstract class CharacterManager<P extends PlayerEntity> implements RevelI
     }
 
     /**
-     * Method will dissociate the given Character UUID and remove it from the main lookup map
+     * Method will dissociate the given Character uuid and remove it from the main lookup map
      *
-     * @param cUUID Selected Character UUID as a String
+     * @param cUUID Selected Character uuid as a String
      */
     public void removeCharacter(String cUUID){
         dissociateUUID(cUUID, true);

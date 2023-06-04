@@ -5,12 +5,14 @@ import io.blodhgarm.personality.api.character.BaseCharacter;
 import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.client.gui.ThemeHelper;
 import io.blodhgarm.personality.client.gui.CharacterViewMode;
+import io.blodhgarm.personality.client.gui.utils.polygons.ComponentAsPolygon;
 import io.blodhgarm.personality.compat.origins.OriginAddon;
 import io.blodhgarm.personality.compat.origins.client.gui.components.OriginHeaderComponent;
 import io.blodhgarm.personality.compat.origins.client.gui.components.OriginImpactComponent;
 import io.blodhgarm.personality.compat.origins.client.gui.components.OriginInfoContainer;
 import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddon;
 import io.blodhgarm.personality.client.gui.utils.owo.ExtraSurfaces;
+import io.blodhgarm.personality.misc.pond.owo.InclusiveBoundingArea;
 import io.github.apace100.origins.Origins;
 import io.github.apace100.origins.origin.*;
 import io.github.apace100.origins.registry.ModItems;
@@ -433,7 +435,12 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
 
     @Override
     public Component buildBranchComponent(BaseParentComponent rootComponent) {
-        return Containers.horizontalFlow(Sizing.content(), Sizing.fixed(26 + 12 + 4))
+        ButtonComponent button = Components.button(Text.of(this.mode.isModifiableMode() ? "✎" : "♢"), c -> getObserver().pushScreenAddon(this));
+
+        button.sizing(Sizing.fixed(12))
+                .positioning(Positioning.absolute(ThemeHelper.guiScale4OrAbove() ? 86 : 106, 30));
+
+        FlowLayout layout = Containers.horizontalFlow(Sizing.content(), Sizing.fixed(26 + 7))
                 .child(
                         new OriginHeaderComponent(Sizing.fixed(122), Sizing.fixed(32), getCurrentOrigin(), layerList.get(currentLayerIndex))
                                 .shortVersion(true)
@@ -446,14 +453,11 @@ public class OriginSelectionDisplayAddon extends PersonalityScreenAddon {
                                 .id("addon_component_origin_header")
 //                                .margins(Insets.right(2))
                 )
-                .child(
-                        Components.button(Text.of(this.mode.isModifiableMode() ? "✎" : "♢"),
-                                        (ButtonComponent component) -> getObserver().pushScreenAddon(this)
-                                )
-                                .sizing(Sizing.fixed(12))
-                                .positioning(Positioning.absolute(ThemeHelper.guiScale4OrAbove() ? 86 : 106, 30))
-                )
-                .allowOverflow(true)
+                .child(button);
+
+        ((InclusiveBoundingArea<FlowLayout>) layout).addInclusionZone(new ComponentAsPolygon(button));
+
+        return layout.allowOverflow(true)
                 //.horizontalAlignment(HorizontalAlignment.CENTER)
                 //.verticalAlignment(VerticalAlignment.CENTER)
                 .margins(Insets.of(2, 0, 3, 0));

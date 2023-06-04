@@ -1,70 +1,71 @@
 package io.blodhgarm.personality.api.character;
 
 import com.google.common.reflect.TypeToken;
-import com.google.gson.InstanceCreator;
-import com.google.gson.TypeAdapter;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
 import io.blodhgarm.personality.api.addon.BaseAddon;
+import io.blodhgarm.personality.api.core.KnownCharacterLookup;
 import io.blodhgarm.personality.api.reveal.KnownCharacter;
 import io.blodhgarm.personality.api.utils.PlayerAccess;
 import io.blodhgarm.personality.server.ServerCharacters;
 import io.blodhgarm.personality.misc.PersonalityTags;
 import io.blodhgarm.personality.utils.Constants;
 import io.blodhgarm.personality.utils.DebugCharacters;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.stat.Stats;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
 
 /**
  * Main Class implementation for a Character within Personality
  */
-public class Character implements BaseCharacter {
-
-    public static final Type REF_MAP_TYPE = new TypeToken<Map<Identifier, BaseAddon>>() {}.getType();
+public class Character implements BaseCharacter, KnownCharacterLookup {
 
     public boolean isDead;
 
-    private final String uuid;
-    private final String playerUUID;
+    protected final String uuid;
+    protected final String playerUUID;
 
-    private String name;
+    protected String name;
 
-    private List<String> aliases = new ArrayList<>();
+    protected List<String> aliases = new ArrayList<>();
 
-    @Nullable private String alias = null;
+    @Nullable protected String alias = null;
 
-    private String gender;
-    private String description;
-    private String biography;
+    protected String gender;
+    protected String description;
+    protected String biography;
 
-    private int ageOffset;
-    private long created;
+    protected int startingAgeOffset;
 
-    private int playtimeOffset;
+    protected long created;
 
-    private Map<String, KnownCharacter> knownCharacters = new HashMap<>();
+    protected int totalPlaytime;
 
-    private transient Map<Identifier, BaseAddon> characterAddons = new HashMap<>();
+    protected transient int currentPlaytime = 0;
 
-    public Character(String playerUUID, String name, String gender, String description, String biography, int ageOffset, int activityOffset) {
-        this(UUID.randomUUID().toString(), playerUUID, name, gender, description, biography, ageOffset, activityOffset);
+    protected int currentDeathWindow;
+
+    protected Map<String, KnownCharacter> knownCharacters = new HashMap<>();
+
+    protected transient Map<Identifier, BaseAddon> characterAddons = new HashMap<>();
+
+    protected transient CharacterManager<PlayerEntity, Character> manager;
+
+    public Character(String playerUUID, String name, String gender, String description, String biography, int ageOffset) {
+        this(UUID.randomUUID().toString(), playerUUID, name, gender, description, biography, ageOffset);
     }
 
-    public Character(String uuid, String playerUUID, String name, String gender, String description, String biography, int ageOffset, int activityOffset) {
-        this(uuid, System.currentTimeMillis(), playerUUID, name, gender, description, biography, ageOffset, activityOffset);
+    public Character(String uuid, String playerUUID, String name, String gender, String description, String biography, int ageOffset) {
+        this(uuid, System.currentTimeMillis(), playerUUID, name, gender, description, biography, ageOffset);
     }
 
-    public Character(String uuid, Long created, String playerUUID, String name, String gender, String description, String biography, int ageOffset, int activityOffset) {
+    public Character(String uuid, Long created, String playerUUID, String name, String gender, String description, String biography, int ageOffset) {
         this.uuid = uuid;
         this.playerUUID = playerUUID;
 
@@ -72,15 +73,25 @@ public class Character implements BaseCharacter {
         this.gender = gender;
         this.description = description;
         this.biography = biography;
-        this.ageOffset = ageOffset;
+        this.startingAgeOffset = ageOffset;
         this.created = created;
-        this.playtimeOffset = activityOffset;
         this.isDead = false;
+
+        this.totalPlaytime = 0;
     }
 
     @Override
-    public void beforeSaving() {
-        knownCharacters.values().forEach(KnownCharacter::beforeSaving);
+    public void beforeEvent(String event) {
+        if(!event.equals("save")) return;
+
+        knownCharacters.values().forEach(k -> k.beforeEvent(event));
+    }
+
+    @Override
+    public BaseCharacter setCharacterManager(CharacterManager<? extends PlayerEntity, ? extends Character> manager) {
+        this.manager = (CharacterManager<PlayerEntity, Character>) manager;
+
+        return this;
     }
 
     //---------------------------
@@ -183,6 +194,11 @@ public class Character implements BaseCharacter {
         return isDead;
     }
 
+    @Override
+    public int getDeathWindow() {
+        return this.currentDeathWindow;
+    }
+
     public void setIsDead(boolean isDead) {
         this.isDead = isDead;
     }
@@ -194,46 +210,37 @@ public class Character implements BaseCharacter {
     }
 
     public int getAge() {
-        return ageOffset + (int)((System.currentTimeMillis() - getCreatedAt()) / Constants.WEEK_IN_MILLISECONDS);
+        return Math.round(getPreciseAge());
     }
 
     public float getPreciseAge() {
-        return ageOffset + ((float)(System.currentTimeMillis() - getCreatedAt()) / Constants.WEEK_IN_MILLISECONDS);
+        return startingAgeOffset + ((float) (System.currentTimeMillis() - getCreatedAt()) / Constants.WEEK_IN_MILLISECONDS);
     }
 
     public void setAge(int age) {
-        ageOffset = age - (int)((System.currentTimeMillis() - getCreatedAt()) / Constants.WEEK_IN_MILLISECONDS);
+        startingAgeOffset = age - (int)((System.currentTimeMillis() - getCreatedAt()) / Constants.WEEK_IN_MILLISECONDS);
+    }
+
+    //---------------------------
+
+    @Override
+    public int getTotalPlaytime() {
+        return this.currentPlaytime + totalPlaytime;
     }
 
     @Override
-    public int getPlaytime() {
-        PlayerAccess<ServerPlayerEntity> player = ServerCharacters.INSTANCE.getPlayer(uuid);
-
-        return player.valid() && player.player() != null
-                ? player.player().getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME)) - playtimeOffset
-                : 0;
-    }
-
-    public boolean setPlaytime(int playtime) {
-        PlayerAccess<ServerPlayerEntity> player = ServerCharacters.INSTANCE.getPlayer(uuid);
-
-        if (player.valid() && player.player() != null) {
-            playtimeOffset = playtime - player.player().getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME));
-
-            return true;
-        }
-
-        return false;
+    public int getCurrentPlaytime() {
+        return this.currentPlaytime;
     }
 
     //---------------------------
 
     public boolean isObscured() {
-        PlayerAccess<ServerPlayerEntity> player = ServerCharacters.INSTANCE.getPlayer(uuid);
+        PlayerAccess<ServerPlayerEntity> player = ServerCharacters.INSTANCE.getPlayerFromCharacter(uuid);
 
-        if (player.valid() && player.player() != null) {
+        if (player.playerValid()) {
             for (ItemStack stack : player.player().getItemsEquipped()) {
-                if (stack.isIn(PersonalityTags.OBSCURES_IDENTITY)) return true;
+                if (stack.isIn(PersonalityTags.Items.OBSCURES_IDENTITY)) return true;
             }
         }
 
@@ -252,12 +259,51 @@ public class Character implements BaseCharacter {
                 ",\n gender=" + gender +
                 ",\n description=" + description +
                 ",\n biography=" + biography +
-                ",\n ageOffset=" + ageOffset +
+                ",\n ageOffset=" + startingAgeOffset +
                 ",\n created=" + created +
-                ",\n activityOffset=" + playtimeOffset +
+                ",\n totalPlaytime=" + totalPlaytime +
                 ",\n knowCharacters=" + knownCharacters +
                 "\n}";
     }
 
     //--------------------------------------------
+
+    @Override
+    public void addKnownCharacter(KnownCharacter wrappedC) {
+        this.getKnownCharacters().put(wrappedC.wrappedCharacterUUID, wrappedC);
+    }
+
+    @Override
+    public void removeKnownCharacter(String cUUID) {
+        this.getKnownCharacters().remove(cUUID);
+    }
+
+    @Override
+    public boolean doseKnowCharacter(String UUID, boolean isPlayerUUID) {
+        String cUUID = isPlayerUUID ? manager.getCharacterUUID(UUID) : UUID;
+
+        if(Objects.equals(cUUID, "INVALID")) return false;
+
+        return getKnownCharacters().containsKey(cUUID);
+    }
+
+    @Override
+    @Nullable
+    public KnownCharacter getKnownCharacter(String UUID, boolean isPlayerUUID) {
+        String cUUID = isPlayerUUID ? manager.getCharacterUUID(UUID) : UUID;
+
+        if(Objects.equals(cUUID, "INVALID")) return null;
+
+        return getKnownCharacters().get(cUUID);
+    }
+
+    @Override
+    @Nullable
+    public Character getOwnerCharacter() {
+        return this;
+    }
+
+    //--------------------------------------------
+
+
 }

@@ -10,18 +10,13 @@ public class WalkingStickModel extends AnimatedGeoModel<WoodenCane> {
     private static final Identifier textureId = PersonalityMod.id("textures/items/cane_texture.png");
     private static final Identifier animationId = PersonalityMod.id("");
 
-    @Override
-    public Identifier getModelResource(WoodenCane object) {
+    @Override public Identifier getModelResource(WoodenCane object) {
         return modelId;
     }
-
-    @Override
-    public Identifier getTextureResource(WoodenCane object) {
+    @Override public Identifier getTextureResource(WoodenCane object) {
         return textureId;
     }
-
-    @Override
-    public Identifier getAnimationResource(WoodenCane animatable) {
+    @Override public Identifier getAnimationResource(WoodenCane animatable) {
         return animationId;
     }
 }

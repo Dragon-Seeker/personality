@@ -18,6 +18,7 @@ import io.blodhgarm.personality.api.reveal.KnownCharacter;
 import io.blodhgarm.personality.api.reveal.RevelInfoManager;
 import io.blodhgarm.personality.client.gui.CharacterViewMode;
 import io.blodhgarm.personality.client.gui.GenderSelection;
+import io.blodhgarm.personality.packets.CharacterDeathPackets;
 import io.blodhgarm.personality.packets.OpenPersonalityScreenS2CPacket;
 import io.blodhgarm.personality.server.PrivilegeManager;
 import io.blodhgarm.personality.server.ServerCharacters;
@@ -27,17 +28,16 @@ import net.minecraft.command.argument.UuidArgumentType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.stat.Stats;
 import net.minecraft.text.HoverEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
+import org.apache.commons.lang3.function.TriFunction;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -53,10 +53,12 @@ public class PersonalityCommands {
 
     private static final String
             CHARACTER_UUID_KEY = "character_uuid",
+            TARGET_CHARACTER_UUID_KEY = "character_uuid",
             PLAYER_UUID_KEY = "player_uuid",
             PLAYER_KEY = "player",
-            PLAYERS_KEY = "players",
-            TARGET_PLAYER_KEY = "target_player";
+            TARGET_PLAYER_KEY = "target_player",
+            PLAYERS_KEY = "players";
+
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -173,20 +175,25 @@ public class PersonalityCommands {
             );
     }
 
-    public static ArgumentBuilder<ServerCommandSource, ?> buildKnowledgeCommand(ArgumentBuilder<ServerCommandSource, ?> base, BiFunction<CommandContext<ServerCommandSource>, Boolean, Integer> func){
-        return base
-                .then(argument(PLAYERS_KEY, players())
+    public static ArgumentBuilder<ServerCommandSource, ?> buildKnowledgeCommand(ArgumentBuilder<ServerCommandSource, ?> base, TriFunction<CommandContext<ServerCommandSource>, Integer, Integer, Integer> func){
+        return base.then(literal("self")
                         .then(argument(PLAYERS_KEY, players())
-                                .executes(c -> func.apply(c, true)))
+                                .executes(c -> func.apply(c, 0, 3)))
                         .then(argument(CHARACTER_UUID_KEY, UuidArgumentType.uuid())
-                                .executes(c -> func.apply(c, true)))
-                        .executes(c -> func.apply(c, true))
+                                .executes(c -> func.apply(c, 0, 2)))
+                        .executes(c -> func.apply(c, 0, 0))
+                ).then(argument(PLAYER_KEY, players())
+                        .then(argument(PLAYERS_KEY, players())
+                                .executes(c -> func.apply(c, 1, 3)))
+                        .then(argument(CHARACTER_UUID_KEY, UuidArgumentType.uuid())
+                                .executes(c -> func.apply(c, 1, 2)))
+                        .executes(c -> func.apply(c, 1, 0))
                 ).then(argument(CHARACTER_UUID_KEY, UuidArgumentType.uuid())
                         .then(argument(PLAYERS_KEY, players())
-                                .executes(c -> func.apply(c, false)))
+                                .executes(c -> func.apply(c, 2, 3)))
                         .then(argument(CHARACTER_UUID_KEY, UuidArgumentType.uuid())
-                                .executes(c -> func.apply(c, false)))
-                        .executes(c -> func.apply(c, false))
+                                .executes(c -> func.apply(c, 2, 2)))
+                        .executes(c -> func.apply(c, 2, 0))
                 );
     }
 
@@ -213,6 +220,29 @@ public class PersonalityCommands {
                 )
                 .then(
                     buildScreenCommand(literal("edit"), CharacterViewMode.EDITING, "edit")
+                ).then(
+                    literal("kill")
+                        .then(literal("self").requires(PrivilegeManager.privilegeCheck("screen_kill_targeted"))
+                                .executes(c -> {
+                                    Networking.sendS2C(c.getSource().getPlayer(), new CharacterDeathPackets.OpenCharacterDeathScreen());
+
+                                    return msg(c, "Opening Screen");
+                                })
+                        ).then(argument(TARGET_PLAYER_KEY, player()).requires(PrivilegeManager.privilegeCheck("screen_kill_targeted"))
+                                .executes(c -> {
+                                    PlayerEntity player;
+
+                                    try {
+                                        player = getPlayer(c, "target_player");
+                                    } catch (CommandSyntaxException e){
+                                        return msg(c, "Could not find the target person to open the screen for!");
+                                    }
+
+                                    Networking.sendS2C(player, new CharacterDeathPackets.OpenCharacterDeathScreen());
+
+                                    return msg(c, "Opening Screen");
+                                })
+                        )
                 )
             );
     }
@@ -258,9 +288,9 @@ public class PersonalityCommands {
             .then(literal("biography").then(argument("biography", greedyString())
                     .executes(c -> setProperty(c, () -> { character.apply(c).setBiography(getString(c, "biography")); return msg(c, "Biography Set"); }))))
             .then(literal("age").then(argument("age", integer(17))
-                    .executes(c -> setProperty(c, () -> { character.apply(c).setAge(getInteger(c, "age")); return msg(c, "Age Set"); }))))
-            .then(literal("playtime").then(argument("playtime",  longArg())
-                    .executes(c -> setProperty(c, () -> { boolean success = character.apply(c).setPlaytime(getInteger(c, "playtime")); return msg(c, success ? "Playtime Set" : "Couldn't set Playtime, player not online"); }))));
+                    .executes(c -> setProperty(c, () -> { character.apply(c).setAge(getInteger(c, "age")); return msg(c, "Age Set"); }))));
+            /*.then(literal("playtime").then(argument("playtime",  longArg())
+                    .executes(c -> setProperty(c, () -> { boolean success = character.apply(c).setPlaytime(getInteger(c, "playtime")); return msg(c, success ? "Playtime Set" : "Couldn't set Playtime, player not online"); })))); */
     }
 
     private static int create(CommandContext<ServerCommandSource> context) {
@@ -275,12 +305,15 @@ public class PersonalityCommands {
                     getString(context, "gender"),
                     getString(context, "description"),
                     getString(context, "biography"),
-                    getInteger(context, "age"),
-                    player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME))
+                    getInteger(context, "age")
+                    //player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME))
             );
 
-            ServerCharacters.INSTANCE.playerToCharacterReferences().put(player.getUuidAsString(), c.getUUID());
-            ServerCharacters.INSTANCE.saveCharacter(c);
+            c.setCharacterManager(ServerCharacters.INSTANCE);
+
+            ServerCharacters.INSTANCE.associateCharacterToPlayer(c.getUUID(), player.getUuidAsString());
+
+            ServerCharacters.INSTANCE.pushToSaveQueue(c);
             ServerCharacters.INSTANCE.saveCharacterReference();
 
             return msg(context, "Character Created");
@@ -292,16 +325,16 @@ public class PersonalityCommands {
     private static int get(CommandContext<ServerCommandSource> context, Character c) {
         if (c == null) return msg(context, "§cYou don't have a Character");
 
-        context.getSource().sendFeedback(Text.literal("\n§nCharacter: " + c.getInfo() + "\n"), false);
+        context.getSource().sendFeedback(Text.literal("\n§nCharacter: " + c.getInfo(true) + "\n"), false);
 
         return 1;
     }
 
     private static int setProperty(CommandContext<ServerCommandSource> context, Supplier<Integer> code) {
         try {
-            int out = code.get();
-            ServerCharacters.INSTANCE.saveCharacter(ServerCharacters.INSTANCE.getCharacter(context.getSource().getPlayer()));
-            return out;
+            ServerCharacters.INSTANCE.pushToSaveQueue(ServerCharacters.INSTANCE.getCharacter(context.getSource().getPlayer()));
+
+            return code.get();
         } catch (Exception e) { e.printStackTrace(); }
 
         return errorMsg(context);
@@ -332,11 +365,15 @@ public class PersonalityCommands {
 
         if(player == null) return requiresPlayerOperatorMsg(context);
 
+        InfoLevel level = getRevealLevel(context);
+
+        if(level == null) return errorMsg(context);
+
         try {
             if(range != -1) {
-                ServerCharacters.INSTANCE.revealCharacterInfo(player, range, InfoLevel.GENERAL);
+                ServerCharacters.INSTANCE.revealCharacterInfo(player, range, level);
             } else {
-                ServerCharacters.INSTANCE.revealCharacterInfo(player, getPlayers(context, PLAYERS_KEY), InfoLevel.GENERAL);
+                ServerCharacters.INSTANCE.revealCharacterInfo(player, getPlayers(context, PLAYERS_KEY), level);
             }
 
             return msg(context, "Identity Revealed");
@@ -364,9 +401,9 @@ public class PersonalityCommands {
 
                 if(pc != null) {
                     text.append(Text.literal(pc.getName() + "\n").setStyle(Style.EMPTY.withHoverEvent(
-                            new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("§n" + pc.getInfo())))));
+                            new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("§n" + pc.getInfo(true))))));
                 } else {
-                    LOGGER.error("A known Character of [{}] wasn't found by the character manager: [UUID: {}]", player, characterUUID);
+                    LOGGER.error("A known Character of [{}] wasn't found by the character manager: [uuid: {}]", player, characterUUID);
                 }
             }
 
@@ -393,7 +430,7 @@ public class PersonalityCommands {
 
             ServerCharacters.INSTANCE.characterLookupMap().values().forEach(character -> {
                 text.append(Text.literal(character.getName() + "\n").setStyle(Style.EMPTY.withHoverEvent(
-                        new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("§n" + character.getInfo())))));
+                        new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("§n" + character.getInfo(true))))));
             });
 
             player.sendMessage(text);
@@ -406,33 +443,47 @@ public class PersonalityCommands {
     }
 
     //TODO: CREATE COMMAND FOR MODIFYING OTHER CHARACTERS
-    private static int addKnownCharacter(CommandContext<ServerCommandSource> context, boolean removeViaPlayers) {
-        ServerPlayerEntity player = context.getSource().getPlayer();
-
+    private static int addKnownCharacter(CommandContext<ServerCommandSource> context, int sourceCharacterType, int targetCharacterType) {
         InfoLevel level = getRevealLevel(context);
 
         if(level == null) return errorMsg(context);
 
-        Character c = ServerCharacters.INSTANCE.getCharacter(player);
+        Character sourceC = getCharacter(context, sourceCharacterType);
 
-        if(c == null) return errorNoCharacterMsg(context, player);
+        if(sourceC == null) return errorNoCharacterMsg(context);
 
-        if(removeViaPlayers){
+        Function<String, KnownCharacter> buildFunc = owner -> {
+            return (KnownCharacter) new KnownCharacter(owner, sourceC.getUUID())
+                    .setDiscoveredTime()
+                    .updateInfoLevel(level)
+                    .setCharacterManager(ServerCharacters.INSTANCE);
+        };
+
+        if(targetCharacterType > 2){
             try {
                 for (ServerPlayerEntity p : getPlayers(context, PLAYERS_KEY)) {
-                    Character pCharacter = ServerCharacters.INSTANCE.getCharacter(p);
+                    Character targetC = ServerCharacters.INSTANCE.getCharacter(p);
 
-                    if(pCharacter != null) {
-                        KnownCharacter wrappedPCharacter = c.getKnownCharacters().get(pCharacter.getUUID());
+                    if(targetC == null) {
+                        LOGGER.error("Could not add [{}] from [{}] Known Map as its Character wasn't found by the character manager", sourceC, p);
 
-                        if(wrappedPCharacter == null) wrappedPCharacter = new KnownCharacter(c.getUUID(), pCharacter.getUUID());
-
-                        wrappedPCharacter.updateInfoLevel(level);
-
-                        c.getKnownCharacters().put(pCharacter.getUUID(), wrappedPCharacter);
-                    } else {
-                        LOGGER.error("Could not add a known Character to [{}] as it wasn't found by the character manager: [Player: {}]", player, p);
+                        continue;
                     }
+
+                    KnownCharacter wrappedSourceC;
+
+                    if(targetC.doseKnowCharacter(sourceC)){
+                        wrappedSourceC = targetC.getKnownCharacter(sourceC);
+                    } else {
+                        wrappedSourceC = buildFunc.apply(targetC.getUUID());
+
+                        targetC.addKnownCharacter(wrappedSourceC);
+                    }
+
+                    wrappedSourceC.updateInfoLevel(level);
+
+                    //TODO: Change to a huge packet that bulk sends this info?
+                    ServerCharacters.INSTANCE.pushToSaveQueue(targetC);
                 }
             } catch (CommandSyntaxException e){
                 e.printStackTrace();
@@ -440,50 +491,72 @@ public class PersonalityCommands {
                 return errorMsg(context);
             }
         } else {
-            String characterUUID = getUUID(context, CHARACTER_UUID_KEY);
+            Character targetC = getCharacter(context, true, targetCharacterType);
 
-            KnownCharacter wrappedCharacter = new KnownCharacter(c.getUUID(), characterUUID);
+            if(targetC == null) {
+                LOGGER.error("Could not add [{}] from Target Known Map as it wasn't found by the character manager", sourceC);
 
-            wrappedCharacter.updateInfoLevel(level);
+                return errorNoCharacterMsg(context);
+            }
 
-            c.getKnownCharacters().put(characterUUID, wrappedCharacter);
+            KnownCharacter wrappedSourceC;
+
+            if(targetC.doseKnowCharacter(sourceC)){
+                wrappedSourceC = targetC.getKnownCharacter(sourceC);
+            } else {
+                wrappedSourceC = buildFunc.apply(targetC.getUUID());
+
+                targetC.addKnownCharacter(wrappedSourceC);
+            }
+
+            wrappedSourceC.updateInfoLevel(level);
+
+            ServerCharacters.INSTANCE.pushToSaveQueue(targetC);
         }
-
-        ServerCharacters.INSTANCE.saveCharacter(c);
 
         return msg(context, "Character(s) Added");
     }
 
-    private static int removeKnownCharacter(CommandContext<ServerCommandSource> context, boolean removeViaPlayers) {
-        ServerPlayerEntity player = context.getSource().getPlayer();
+    private static int removeKnownCharacter(CommandContext<ServerCommandSource> context, int sourceCharacterType, int targetCharacterType) {
+        Character c = getCharacter(context, sourceCharacterType);
 
-        Character c = ServerCharacters.INSTANCE.getCharacter(player);
+        if(c == null) return errorNoCharacterMsg(context);
 
-        if(c == null) return errorNoCharacterMsg(context, context.getSource().getPlayer());
-
-        if(removeViaPlayers) {
+        if(targetCharacterType > 2) {
             try {
                 for (ServerPlayerEntity p : getPlayers(context, PLAYERS_KEY)) {
                     Character pCharacter = ServerCharacters.INSTANCE.getCharacter(p);
 
-                    if (pCharacter != null) {
-                        c.getKnownCharacters().remove(pCharacter.getUUID());
-                    } else {
-                        LOGGER.error("Could not remove a known Character of [{}] as it wasn't found by the character manager: [Player: {}]", player, p);
+                    if (pCharacter == null) {
+                        LOGGER.error("Could not remove [{}] from [{}] Known Map as its Character wasn't found by the character manager", c, p);
+
+                        continue;
                     }
+
+                    pCharacter.removeKnownCharacter(c.getUUID());
+
+                    //TODO: Change to a huge packet that bulk sends this info?
+                    ServerCharacters.INSTANCE.pushToSaveQueue(pCharacter);
                 }
             } catch (CommandSyntaxException e){
                 e.printStackTrace();
 
                 return errorMsg(context);
             }
+
         } else {
-            String characterUUID = getString(context, "character_uuid");
+            Character pCharacter = getCharacter(context, true, targetCharacterType);
 
-            c.getKnownCharacters().put(characterUUID, new KnownCharacter(c.getUUID(), characterUUID));
+            if(pCharacter == null) {
+                LOGGER.error("Could not remove [{}] from Target Known Map as it wasn't found by the character manager", c);
+
+                return errorNoCharacterMsg(context);
+            }
+
+            pCharacter.removeKnownCharacter(c.getUUID());
+
+            ServerCharacters.INSTANCE.pushToSaveQueue(pCharacter);
         }
-
-        ServerCharacters.INSTANCE.saveCharacter(c);
 
         return msg(context, "Character(s) Removed");
     }
@@ -517,10 +590,7 @@ public class PersonalityCommands {
         }
 
         ServerCharacters.ReturnInformation info = ServerCharacters.INSTANCE.attemptActionOn(
-                characters.stream()
-                        .filter(Objects::nonNull)
-                        .map(Character::getUUID)
-                        .toList(),
+                characters.stream().filter(Objects::nonNull).map(Character::getUUID).toList(),
                 action,
                 context.getSource().getPlayer()
         );
@@ -569,11 +639,16 @@ public class PersonalityCommands {
 
     @Nullable
     private static Character getCharacter(CommandContext<ServerCommandSource> context, int characterSelectionType) {
+        return getCharacter(context, false, characterSelectionType);
+    }
+
+    @Nullable
+    private static Character getCharacter(CommandContext<ServerCommandSource> context, boolean isTarget, int characterSelectionType) {
         try {
             return switch (characterSelectionType) {
                 case 0 -> ServerCharacters.INSTANCE.getCharacter(context.getSource().getPlayer());
-                case 1 -> ServerCharacters.INSTANCE.getCharacter(getPlayer(context, PLAYER_KEY));
-                case 2 -> ServerCharacters.INSTANCE.getCharacter(getUUID(context, CHARACTER_UUID_KEY));
+                case 1 -> ServerCharacters.INSTANCE.getCharacter(getPlayer(context, isTarget ? TARGET_PLAYER_KEY : PLAYER_KEY));
+                case 2 -> ServerCharacters.INSTANCE.getCharacter(getUUID(context, isTarget ? TARGET_CHARACTER_UUID_KEY : CHARACTER_UUID_KEY));
                 default -> null;
             };
         } catch (Exception e) { e.printStackTrace(); }
@@ -616,11 +691,11 @@ public class PersonalityCommands {
     }
 
     private static int errorNoCharacterMsg(CommandContext<ServerCommandSource> context, ServerPlayerEntity player){
-        return msg(context, "§cThe current Player could not be found within the CharacterManager: [Player: " + context.getSource().getPlayer().toString()  + "] ");
+        return msg(context, "§cThe current Player could not be found within the CharacterManager: [Player: " + player.toString()  + "] ");
     }
 
-    private static int errorNoCharactersMsg(CommandContext<ServerCommandSource> context, Collection<ServerPlayerEntity> players){
-        return msg(context, "§cThe given Players could not be found within the CharacterManager: [Players: " + players.toString()  + "] ");
+    private static int errorNoCharacterMsg(CommandContext<ServerCommandSource> context){
+        return msg(context, "§cThe given Target's Character could not be found within the CharacterManager!");
     }
 
 }

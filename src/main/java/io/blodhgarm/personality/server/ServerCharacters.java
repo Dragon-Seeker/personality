@@ -3,19 +3,26 @@ package io.blodhgarm.personality.server;
 import com.google.common.collect.HashBiMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.google.gson.InstanceCreator;
 import com.google.gson.JsonObject;
+import com.mojang.authlib.GameProfile;
 import io.blodhgarm.personality.Networking;
+import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.character.Character;
 import io.blodhgarm.personality.api.character.CharacterManager;
+import io.blodhgarm.personality.api.character.ServerCharacter;
+import io.blodhgarm.personality.api.events.OnWorldSaveEvent;
 import io.blodhgarm.personality.api.reveal.InfoLevel;
 import io.blodhgarm.personality.api.utils.PlayerAccess;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.api.events.FinalizedPlayerConnectionEvent;
 import io.blodhgarm.personality.api.reveal.KnownCharacter;
+import io.blodhgarm.personality.misc.pond.OfflineStatExtension;
 import io.blodhgarm.personality.packets.SyncS2CPackets;
+import io.blodhgarm.personality.utils.CharacterReferenceData;
 import io.blodhgarm.personality.utils.DebugCharacters;
+import io.blodhgarm.personality.utils.gson.WrappedTypeToken;
 import io.wispforest.owo.Owo;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
@@ -23,6 +30,8 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.stat.StatHandler;
+import net.minecraft.stat.Stats;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
 import net.minecraft.util.WorldSavePath;
@@ -36,29 +45,43 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
+import java.util.concurrent.Future;
+import java.util.function.*;
 
 /**
  * Client Specific Implementation of {@link CharacterManager}
  */
-public class ServerCharacters extends CharacterManager<ServerPlayerEntity> implements FinalizedPlayerConnectionEvent.Finish, ServerLifecycleEvents.ServerStarted, ServerLifecycleEvents.ServerStopped {
-
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting()
-            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeTypeAdapter())
-            .create();
-    private static final Type REF_MAP_TYPE = new TypeToken<Map<String, String>>() {}.getType();
+public class ServerCharacters extends CharacterManager<ServerPlayerEntity, ServerCharacter> implements FinalizedPlayerConnectionEvent.Finish, ServerLifecycleEvents.ServerStarted, ServerLifecycleEvents.ServerStopped, OnWorldSaveEvent.Save {
 
     public static ServerCharacters INSTANCE = new ServerCharacters();
 
+    private static final Type REF_MAP_TYPE = new TypeToken<Map<String, String>>() {}.getType();
     private static final Type EDITOR_MAP_TYPE = new TypeToken<Map<String, ArrayList<EditorHistory>>>() {}.getType();
+
+    //-----------------
+
+    private final Gson GSON = PersonalityMod.GSON.newBuilder()
+            .registerTypeAdapter(ServerCharacter.class, (InstanceCreator<ServerCharacter>) type -> {
+                Character c = CharacterReferenceData.attemptGetCharacter(type);
+
+                if(c == null) c = new ServerCharacter("", "", "", "", "", -1);
+
+                return (ServerCharacter) c.setCharacterManager(this);
+            })
+            .registerTypeAdapter(KnownCharacter.class, (InstanceCreator<KnownCharacter>) type -> {
+                return (KnownCharacter) new KnownCharacter("", "")
+                        .setCharacterManager(this);
+            })
+            .create();
+
     private Map<String, List<EditorHistory>> characterUUIDToEditInfo = new HashMap<>();
 
     private static Path BASE_PATH;
     private static Path CHARACTER_PATH;
     private static Path REFERENCE_PATH;
     private static Path EDITOR_PATH;
+
+    public boolean saveCharacterReference = false;
 
     public ServerCharacters() {
         super("server");
@@ -67,25 +90,27 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     /**
      * Similar method to {@link CharacterManager#getCharacter} but will attempt to load the character
      *
-     * @param uuid The Possible UUID of a Character
+     * @param cUUID The Possible uuid of a Character
      * @return the character bond to the given uuid or null
      */
     @Nullable
     @Override
-    public Character getCharacter(String uuid) {
-        Character c = super.getCharacter(uuid);
+    public Character getCharacter(String cUUID) {
+        Character c = super.getCharacter(cUUID);
 
         if(c == null) {
             try {
-                Path path = getCharacterInfo(uuid);
+                Path path = getCharacterInfo(cUUID);
 
                 if (!Files.exists(path)) return null;
 
                 String characterJson = Files.readString(path);
 
-                c = GSON.fromJson(characterJson, Character.class);
+                c = deserializeCharacter(characterJson);
 
-                characterLookupMap().put(uuid, c);
+                c.setCharacterManager(ServerCharacters.INSTANCE);
+
+                characterLookupMap().put(cUUID, c);
 
                 sortCharacterLookupMap();
 
@@ -99,12 +124,41 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     }
 
     @Override
-    public PlayerAccess<ServerPlayerEntity> getPlayer(String characterUUID) {
-        String playerUUID = playerToCharacterReferences().inverse().get(characterUUID);
+    protected WrappedTypeToken<ServerCharacter> getToken() {
+        return new WrappedTypeToken<>(){};
+    }
 
-        if(playerUUID != null) return new PlayerAccess<>(playerUUID, getPlayerFromServer(playerUUID));
+    @Override
+    public Gson getGson() {
+        return GSON;
+    }
 
-        return super.getPlayer(characterUUID);
+    //--------------
+
+    @Override
+    public PlayerAccess<ServerPlayerEntity> getPlayer(@Nullable String pUUID) {
+        if(pUUID != null) return new PlayerAccess<>(pUUID, getPlayerFromServer(pUUID));
+
+        return super.getPlayer(pUUID);
+    }
+
+    @Nullable
+    public StatHandler getStats(String playerUUID){
+        PlayerAccess<ServerPlayerEntity> playerAccess = ServerCharacters.INSTANCE.getPlayer(playerUUID);
+
+        if(playerAccess.isEmpty()) return null;
+
+        return playerAccess.playerValid()
+                ? ServerCharacters.INSTANCE.getStats(playerAccess.player())
+                : ServerCharacters.INSTANCE.getStats(playerAccess.getProfile());
+    }
+
+    public StatHandler getStats(ServerPlayerEntity player) {
+        return player.getStatHandler();
+    }
+
+    public StatHandler getStats(GameProfile profile) {
+        return ((OfflineStatExtension) Owo.currentServer().getPlayerManager()).loadStatHandler(profile);
     }
 
     @Override
@@ -115,9 +169,16 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
         if(!super.associateCharacterToPlayer(characterUUID, playerUUID)) return false;
 
+        StatHandler handler = getStats(playerUUID);
+
+        if(handler != null) {
+            ((ServerCharacter) this.getCharacter(characterUUID))
+                    .setStartingPlaytime(handler.getStat(Stats.CUSTOM.getOrCreateStat(Stats.PLAY_TIME)));
+        }
+
         Networking.sendToAll(new SyncS2CPackets.Association(characterUUID, playerUUID));
 
-        saveCharacterReference();
+        saveCharacterReference = true;
 
         return true;
     }
@@ -125,17 +186,21 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     @Override
     @Nullable
     public String dissociateUUID(String UUID, boolean isCharacterUUID) {
-        String playerUUID = super.dissociateUUID(UUID, isCharacterUUID);
+        String playerUUID = (isCharacterUUID) ? this.getPlayerUUID(UUID) : UUID;
 
-        if(playerUUID != null) {
-            Networking.sendToAll(new SyncS2CPackets.Dissociation(UUID, isCharacterUUID));
+        if(playerUUID == null) return null;
 
-            ServerPlayerEntity player = getPlayerFromServer(playerUUID);
+        Character character = this.getCharacter((isCharacterUUID) ? UUID : getCharacterUUID(UUID));
 
-            if (player != null) AddonRegistry.INSTANCE.checkAndDefaultPlayerAddons(player);
+        if(character != null) character.beforeEvent("disassociate");
 
-            saveCharacterReference();
-        }
+        super.dissociateUUID(UUID, isCharacterUUID);
+
+        Networking.sendToAll(new SyncS2CPackets.Dissociation(UUID, isCharacterUUID));
+
+        ServerPlayerEntity player = getPlayerFromServer(playerUUID);
+
+        if (player != null) AddonRegistry.INSTANCE.checkAndDefaultPlayerAddons(player);
 
         return playerUUID;
     }
@@ -144,7 +209,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     public void removeCharacter(String characterUUID) {
         Networking.sendToAll(new SyncS2CPackets.RemoveCharacter(characterUUID));
 
-        saveCharacterReference();
+        saveCharacterReference = true;
 
         super.removeCharacter(characterUUID);
     }
@@ -157,14 +222,11 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     }
 
     public void reviveCharacter(Character c, @Nullable String playerUUID) {
-        //TODO: Decide on a future way of handling Dead Players to prevent large amounts of memory usage if they won't be revived
-        //this.removeCharacter(c.getUUID());
-
         c.setIsDead(false);
 
         if(playerUUID != null && !playerUUID.isBlank()) associateCharacterToPlayer(c.getUUID(), playerUUID);
 
-        saveCharacter(c, true);
+        pushToSaveQueue(c, true);
     }
 
     /**
@@ -177,7 +239,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
         c.setIsDead(true);
 
-        saveCharacter(c, true);
+        pushToSaveQueue(c, true);
     }
 
     /**
@@ -189,7 +251,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
         this.removeCharacter(uuid);
 
         try {
-            Files.delete(getCharacterInfo(uuid));
+            Files.delete(getCharacterPath(uuid));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -250,7 +312,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
             } else {
                 action.accept(c, playerUUID);
 
-                returnMessage = c.getName() + " is now " + action.formalActionName() + "! [UUID: " + c.getUUID() + "]";
+                returnMessage = c.getName() + " is now " + action.formalActionName() + "! [uuid: " + c.getUUID() + "]";
                 success = true;
             }
         } else {
@@ -286,71 +348,86 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
     public record ReturnInformation(String returnMessage, String action, boolean success){}
 
+    public interface ReturnPacketBuilder{
+        Record getPacket(String message, String action);
+    }
+
     //----------------------------------------------------
 
     @Override
     public void revealCharacterInfo(ServerPlayerEntity source, Collection<ServerPlayerEntity> targets, InfoLevel level) {
-        Character sourceCharacter = this.getCharacter(source);
+        Character sourceC = this.getCharacter(source);
 
-        if (sourceCharacter == null) return;
+        if (sourceC == null) return;
 
-        for (ServerPlayerEntity otherPlayer : targets) {
-            Character targetCharacter = this.getCharacter(otherPlayer);
+        for (ServerPlayerEntity targetP : targets) {
+            Character targetC = this.getCharacter(targetP);
 
-            if(targetCharacter != null) revealCharacterInfo(sourceCharacter, targetCharacter, otherPlayer, level);
+            if(targetC != null) revealCharacterInfo(sourceC, targetC, targetP, level, (message, action) -> new ReturnInformation(message, action, true));
         }
     }
 
     @Override
-    public void revealCharacterInfo(Character sourceC, Character targetC, ServerPlayerEntity packetTarget, InfoLevel level) {
-        KnownCharacter sourceKnownCharacter = targetC.getKnownCharacters().get(sourceC.getUUID());
+    public void revealCharacterInfo(Character sourceC, Character targetC, ServerPlayerEntity packetTarget, InfoLevel level, ReturnPacketBuilder returnPacketBuilder) {
+        KnownCharacter wrappedSourceC = targetC.getKnownCharacter(sourceC);
 
-        ReturnInformation returnPacket = null;
+        Record returnPacket = null;
 
-        if (sourceKnownCharacter == null) {
-            sourceKnownCharacter = new KnownCharacter(targetC.getUUID(), sourceC.getUUID());
+        if (wrappedSourceC == null) {
+            wrappedSourceC = (KnownCharacter) new KnownCharacter(targetC.getUUID(), sourceC.getUUID())
+                    .setDiscoveredTime()
+                    .updateInfoLevel(level)
+                    .setCharacterManager(ServerCharacters.INSTANCE);
 
-            sourceKnownCharacter.updateInfoLevel(level);
-
-            targetC.getKnownCharacters().put(sourceC.getUUID(), sourceKnownCharacter);
+            targetC.addKnownCharacter(wrappedSourceC);
 
             LOGGER.info("[ServerCharacter] A new Character (Character Name: {}) was revealed to {}", sourceC.getName(), targetC.getName());
 
-            returnPacket = new ReturnInformation(sourceC.getName() + " introduced themselves for the first time!", "New Character Introduced", true);
-        } else if(sourceKnownCharacter.level.shouldUpdateLevel(level)) {
-            sourceKnownCharacter.updateInfoLevel(level);
+            returnPacket = returnPacketBuilder.getPacket(sourceC.getName() + " introduced themselves for the first time!", "New Character Introduced");
+        } else if(wrappedSourceC.level.shouldUpdateLevel(level)) {
+            wrappedSourceC.updateInfoLevel(level);
 
             LOGGER.info("[ServerCharacter] A already known Character (Character Name: {}) had more info revealed to {}", sourceC.getName(), targetC.getName());
 
-            returnPacket = new ReturnInformation(sourceC.getName() + " told more about themselves!", "Known Character Revealed", true);
+            returnPacket = returnPacketBuilder.getPacket(sourceC.getName() + " told more about themselves!", "Known Character Revealed");
         } else {
             LOGGER.info("[ServerCharacter] A already known Character (Character Name: {}) didn't have anymore info revealed to {}", sourceC.getName(), targetC.getName());
         }
 
-        if(returnPacket != null){
-            saveCharacter(targetC);
+        if(returnPacket == null) return;
 
-            Networking.sendS2C(packetTarget, returnPacket);
-        }
+        pushToSaveQueue(targetC);
+
+        Networking.sendS2C(packetTarget, returnPacket);
     }
 
     //----------------------------------------------------
 
-    public void saveCharacter(Character character) {
-        saveCharacter(character, true);
+    public void pushToSaveQueue(Character character) {
+        pushToSaveQueue(character, true);
     }
 
     @Nullable
-    public String saveCharacter(Character character, boolean syncCharacter) {
-        character.beforeSaving();
+    public String pushToSaveQueue(Character character, boolean syncCharacter) {
+        character.beforeEvent("save");
 
         String characterJson = GSON.toJson(character);
 
-        if(syncCharacter){
+        if(syncCharacter) {
             this.attemptApplyAddonOnSave(character);
 
             Networking.sendToAll(new SyncS2CPackets.SyncCharacterData(characterJson, Map.of()));
         }
+
+        characterSavingQueue.push(character.getUUID());
+
+        return characterJson;
+    }
+
+    public void saveCharacter(Character character) {
+        character.beforeEvent("save");
+
+        String characterJson = GSON.toJson(character);
 
         try {
             File characterFile = getCharacterInfo(character.getUUID()).toAbsolutePath().toFile();
@@ -359,14 +436,10 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
             Files.writeString(characterFile.toPath(), characterJson);
         } catch (IOException e) {
-            LOGGER.error("[ServerCharacters] A Character [Name:{}, UUID:{}] was unable to be saved to disc", character.getName(), character.getUUID());
+            LOGGER.error("[ServerCharacters] A Character [Name:{}, uuid:{}] was unable to be saved to disc", character.getName(), character.getUUID());
 
             e.printStackTrace();
-
-            return null;
         }
-
-        return characterJson;
     }
 
     /**
@@ -385,9 +458,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
             });
         });
 
-        if(syncAddons){
-            Networking.sendToAll(new SyncS2CPackets.SyncAddonData(c.getUUID(), addonData));
-        }
+        if(syncAddons) Networking.sendToAll(new SyncS2CPackets.SyncAddonData(c.getUUID(), addonData));
 
         return addonData;
     }
@@ -420,7 +491,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
                 return addonJson;
             } catch (IOException e){
-                LOGGER.error("[AddonLoading] {} addon for [Name: {}, UUID: {}] was unable to be save to Disc, data was not saved.", addonId, c.getName(), c.getUUID());
+                LOGGER.error("[AddonLoading] {} addon for [Name: {}, uuid: {}] was unable to be save to Disc, data was not saved.", addonId, c.getName(), c.getUUID());
 
                 e.printStackTrace();
             }
@@ -432,19 +503,11 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     }
 
     public void attemptApplyAddonOnSave(Character character){
-        PlayerAccess<ServerPlayerEntity> playerAccess = this.getPlayer(character);
+        PlayerAccess<ServerPlayerEntity> playerAccess = this.getPlayerFromCharacter(character);
 
-        if(!playerAccess.valid() || playerAccess.player() == null) return;
+        if(!playerAccess.playerValid()) return;
 
         this.applyAddons(playerAccess.player());
-    }
-
-    public static Path getBasePath() {
-        return BASE_PATH;
-    }
-
-    public static Path getReferencePath() {
-        return REFERENCE_PATH;
     }
 
     public static Path getSpecificCharacterPath(String uuid) {
@@ -488,11 +551,11 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
             JsonObject editorJsonObject = GSON.fromJson(Files.readString(EDITOR_PATH), JsonObject.class);
             characterUUIDToEditInfo = new HashMap<>(GSON.fromJson(editorJsonObject.getAsJsonObject("history"), EDITOR_MAP_TYPE));
 
-            for (Map.Entry<String, List<EditorHistory>> entry : characterUUIDToEditInfo.entrySet()){
-                System.out.println(entry.getKey());
-                for (EditorHistory history : entry.getValue()) System.out.println("  ^--> " + history);
-                System.out.println();
-            }
+//            for (Map.Entry<String, List<EditorHistory>> entry : characterUUIDToEditInfo.entrySet()){
+//                System.out.println(entry.getKey());
+//                for (EditorHistory history : entry.getValue()) System.out.println("  ^--> " + history);
+//                System.out.println();
+//            }
         }
         catch (NoSuchFileException fileException) { saveEditorMap(); }
         catch (IOException e) { e.printStackTrace(); }
@@ -521,9 +584,8 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
     }
 
     public void logCharacterEditing(ServerPlayerEntity editor, Character c, List<String> elementsChanges){
-        List<EditorHistory> history = characterUUIDToEditInfo.computeIfAbsent(c.getUUID(), s -> new ArrayList<>());
-
-        history.add(new EditorHistory(editor.getUuidAsString(), LocalDateTime.now(), elementsChanges));
+        characterUUIDToEditInfo.computeIfAbsent(c.getUUID(), s -> new ArrayList<>())
+                .add(new EditorHistory(editor.getUuidAsString(), LocalDateTime.now(), elementsChanges));
 
         saveEditorMap();
     }
@@ -546,7 +608,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
                 if (!Files.exists(path)) continue;
 
-                Character c = GSON.fromJson(Files.readString(path), Character.class);
+                Character c = deserializeCharacter(Files.readString(path));
 
                 characterLookupMap().put(c.getUUID(), c);
 
@@ -572,7 +634,7 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
         boolean loadRegistries = true;
 
-        //Prevent Integrated player from receiving the message to load addon registries
+        //Prevent Integrated player from receiving the deathMessage to load addon registries
         if(!server.isDedicated() && server.isHost(handler.player.getGameProfile())) loadRegistries = false;
 
         Networking.sendS2C(handler.player, new SyncS2CPackets.Initial(characters, playerToCharacterReferences(), loadRegistries));
@@ -586,6 +648,53 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity> imple
 
         if(FabricLoader.getInstance().isDevelopmentEnvironment()) LOGGER.info("[Server-CharacterManager]: Manager has been cleared!");
     }
+
+    //----------------
+
+    private final Deque<String> characterSavingQueue = new ArrayDeque<>();
+
+    @Nullable private Future<?> lastSaveFuture = null;
+
+    @Override
+    public void onSave(boolean suppressLogs, boolean flush, boolean force) {
+        Runnable saveFunc = () -> {
+            // Loop to save all active players given online counter stuff
+            for(ServerPlayerEntity player : Owo.currentServer().getPlayerManager().getPlayerList()){
+                Character c = ServerCharacters.INSTANCE.getCharacter(player);
+
+                if(c == null) continue;
+
+                ServerCharacters.INSTANCE.saveCharacter(c);
+            }
+
+            String currentCharacter = characterSavingQueue.poll();
+
+            //Primary way for all characters who get modified to be saved
+            while(currentCharacter != null){
+                Character c = ServerCharacters.INSTANCE.getCharacter(currentCharacter);
+
+                if(c == null) continue;
+
+                ServerCharacters.INSTANCE.saveCharacter(c);
+
+                currentCharacter = characterSavingQueue.poll();
+            }
+        };
+
+        if(flush){
+            if(lastSaveFuture != null && !lastSaveFuture.isDone()) lastSaveFuture.cancel(false);
+
+            saveFunc.run();
+        } else {
+            lastSaveFuture = Util.getMainWorkerExecutor().submit(saveFunc);
+        }
+
+        if(saveCharacterReference){
+            saveCharacterReference();
+
+            saveCharacterReference = false;
+        }
+    };
 
     public static final class EditorHistory {
         private final String editorUUID;

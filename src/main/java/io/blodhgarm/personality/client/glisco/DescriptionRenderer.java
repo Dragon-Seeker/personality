@@ -40,6 +40,8 @@ public class DescriptionRenderer implements InWorldTooltipRenderer.Renderer, Hot
 
     public float YOffset = 0.0f;
 
+    public float maxTextHeight = 0;
+
     //----
 
     public float endingWait = -2f;
@@ -50,7 +52,8 @@ public class DescriptionRenderer implements InWorldTooltipRenderer.Renderer, Hot
             .setUnitConversion(delta -> {
                 boolean disableSpeed = !PersonalityMod.CONFIG.descriptionConfig.automaticScrolling()
                         || disableAutomaticScrolling
-                        || endingWait != -2f;
+                        || endingWait != -2f
+                        || isTextSizeLessThanWindow();
 
                 return ((delta * (disableSpeed ? 0f : lineSpeedHandler.get())) / totalLineCount);
             })
@@ -69,9 +72,11 @@ public class DescriptionRenderer implements InWorldTooltipRenderer.Renderer, Hot
     public UnitHandler<Float> startFadeHandler = new UnitHandler<>(0.0f, (delta) -> {
         float progress; //= (currViewTime - 5 - Math.round(YOffset / 10f)) / 15;
 
-        float diff = (YOffset / 10) - ((delta * totalLineCount) - 12);
+        float diff = (YOffset / 10) - ((delta * (isTextSizeLessThanWindow() ? (maxTextHeight / 10) : totalLineCount)) - 12);
 
         float windowSize = 10.0f;
+
+        //if(isTextSizeLessThanWindow()) return 1.0f;
 
         if(diff > windowSize) { progress = 0.0f; }
         else if(diff < 0.0f) { progress = 1.0f; }
@@ -98,13 +103,13 @@ public class DescriptionRenderer implements InWorldTooltipRenderer.Renderer, Hot
         var maxTextWidth = 200; //200
         var textRender = MinecraftClient.getInstance().textRenderer;
 
-        var maxBqHeight = ((hitResult.targetShape().maxY + .15) / 0.01);
+        var maxBqHeight = ((hitResult.targetShape().maxY + .15) / 0.01) - 30;
 
         var tenthPlace = maxBqHeight % 10;
 
         maxBqHeight += (tenthPlace > 6 ? 10 : 0) - tenthPlace;
 
-        float maxTextHeight = (float) (maxBqHeight - 10);
+        maxTextHeight = (float) (maxBqHeight - 10);
 
         if(newProvider){
             convertedData = entries.stream()
@@ -118,13 +123,15 @@ public class DescriptionRenderer implements InWorldTooltipRenderer.Renderer, Hot
 
             totalLineCount = convertedData.size();
 
-            totalLineCount = totalLineCount - Math.round(((float) Math.floor(maxTextHeight + 10) / 10));
+            if(!isTextSizeLessThanWindow()) {
+                totalLineCount = totalLineCount - Math.round(((float) Math.floor(maxTextHeight + 10) / 10));
+            }
 
             handlers.forEach(UpdateHandler::reset);
 
             lineSpeedHandler.waitValue = 2.5f;
 
-            startFadeHandler.updateCutoffValue(totalLineCount);
+            startFadeHandler.updateCutoffValue(isTextSizeLessThanWindow() ? (maxTextHeight / 10) : totalLineCount);
 
             disableAutomaticScrolling = false;
         }
@@ -147,18 +154,28 @@ public class DescriptionRenderer implements InWorldTooltipRenderer.Renderer, Hot
 
         matrices.push();
 
-        matrices.translate(0,-10, 0);
+//        matrices.translate(0,-10, 0);
+//
+//        matrices.translate(0,-12,0);
+
+        matrices.translate(0,8,0);
 
         //---- Background
 
         int padding = 8;
 
         matrices.push();
+
         matrices.translate(textXOffset, -4.5, -5); // -0.5
 
-        Drawer.fill(matrices, -padding, -padding, Math.round(padding * 1.5f) + this.maxTextWidth, (padding * 2) + Math.round((float) maxBqHeight), bqHandler.get().argb());
+        Drawer.fill(matrices, -padding, -padding, Math.round(padding * 1.5f) + maxTextWidth, (padding * 2) + Math.round((float) maxBqHeight) + 12, bqHandler.get().argb());
 
         matrices.pop();
+
+        textRender.draw(matrices, Text.of("Description"), textXOffset, 0, (Math.max(4, (int) (0xFF * startFadeHandler.get())) << 24) | 0xFFFFFF);
+
+        matrices.translate(0, 12, 0);
+
 
         //----
 
@@ -195,18 +212,23 @@ public class DescriptionRenderer implements InWorldTooltipRenderer.Renderer, Hot
 
         if(YOffset - maxTextHeight > 0){
             scrolledProgress = (10 - (YOffset - Math.round(maxTextHeight))) / 10f;
-        } else if(YOffset < 0 && YOffset >= -10) {
-            scrolledProgress = (10 + YOffset) / 10f;
+        } else if(YOffset < 5 ) { //&& YOffset >= 0
+            scrolledProgress = (((disableAutomaticScrolling) ? 10 : 3) + YOffset) / 10f;
         }
 
         return MathHelper.clamp(Math.min(scrolledProgress, startProgress), 0, 1);
+    }
+
+    public boolean isTextSizeLessThanWindow(){
+        return (totalLineCount * 10) < maxTextHeight;
     }
 
     @Override
     public boolean allowMouseScroll(ClientPlayerEntity player, double horizontalAmount, double verticalAmount) {
         boolean bl = disableRenderer
                 || !InWorldTooltipRenderer.INSTANCE.attemptingRendering()
-                || !InWorldTooltipRenderer.INSTANCE.lastProvider.getTooltipId().equals(PersonalityMod.id("description"));
+                || !InWorldTooltipRenderer.INSTANCE.lastProvider.getTooltipId().equals(PersonalityMod.id("description"))
+                || isTextSizeLessThanWindow();
 
         if(bl) return true;
 
@@ -223,9 +245,10 @@ public class DescriptionRenderer implements InWorldTooltipRenderer.Renderer, Hot
         return false;
     }
 
-    @Override
-    public boolean shouldResetRenderer(boolean targetViewGap, boolean differingProvider) {
-        return InWorldTooltipRenderer.Renderer.super.shouldResetRenderer(targetViewGap, differingProvider);
+    public boolean currentlyActive(){
+        var provider = InWorldTooltipRenderer.INSTANCE.lastProvider;
+
+        return provider != null && InWorldTooltipRenderer.INSTANCE.REGISTERED_RENDERS.get(provider.getTooltipId()) instanceof DescriptionRenderer;
     }
 
     public static abstract class UpdateHandler<T, H extends UpdateHandler<T, H>> implements Supplier<T> {
@@ -274,7 +297,7 @@ public class DescriptionRenderer implements InWorldTooltipRenderer.Renderer, Hot
         public T get() {
             float finalMaxValue = this.waitValue + cutoffValue;
 
-            float delta = (this.currentValue < finalMaxValue)
+            float delta = (this.currentValue <= finalMaxValue)
                     ? Math.max(this.currentValue - this.waitValue, 0.0f) * (1.0f / (cutoffValue))
                     : 1.0f;
 

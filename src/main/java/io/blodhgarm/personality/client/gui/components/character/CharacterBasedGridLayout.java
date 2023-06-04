@@ -2,16 +2,15 @@ package io.blodhgarm.personality.client.gui.components.character;
 
 import com.mojang.authlib.GameProfile;
 import io.blodhgarm.personality.api.character.BaseCharacter;
-import io.blodhgarm.personality.api.character.Character;
 import io.blodhgarm.personality.client.ClientCharacters;
 import io.blodhgarm.personality.client.gui.CharacterViewMode;
 import io.blodhgarm.personality.client.gui.components.builders.LabelComponentBuilder;
 import io.blodhgarm.personality.client.gui.components.builders.LabeledObjectToComponent;
 import io.blodhgarm.personality.client.gui.components.CustomButtonComponent;
-import io.blodhgarm.personality.client.gui.components.CustomEntityComponent;
 import io.blodhgarm.personality.client.gui.components.grid.LabeledGridLayout;
 import io.blodhgarm.personality.client.gui.screens.CharacterViewScreen;
-import io.blodhgarm.personality.utils.Constants;
+import io.blodhgarm.personality.client.gui.utils.profiles.DelayableGameProfile;
+import io.blodhgarm.personality.client.gui.utils.UIOps;
 import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.container.Containers;
@@ -21,15 +20,12 @@ import io.wispforest.owo.ui.core.Positioning;
 import io.wispforest.owo.ui.core.Sizing;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.network.PlayerListEntry;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
 import org.apache.commons.lang3.function.TriFunction;
 
-import javax.annotation.Nullable;
 import java.util.*;
 
-public class CharacterBasedGridLayout extends LabeledGridLayout<BaseCharacter> {
+public class CharacterBasedGridLayout<T extends BaseCharacter> extends LabeledGridLayout<T> {
 
     private final List<ButtonComponent> buttons = new ArrayList<>();
 
@@ -50,26 +46,7 @@ public class CharacterBasedGridLayout extends LabeledGridLayout<BaseCharacter> {
                     ButtonComponent buttonComponent = new CustomButtonComponent(
                             Text.of(mode.isModifiableMode() ? "✎" : "☰"),
                             (ButtonComponent component) -> {
-                                String playerUUID = ClientCharacters.INSTANCE.getPlayerUUID(character.getUUID());
-
-                                GameProfile playerProfile = Constants.ERROR_PROFILE;
-
-                                if(playerUUID != null){
-                                    Optional<PlayerListEntry> playerEntry = MinecraftClient.getInstance().getNetworkHandler().getPlayerList().stream()
-                                            .filter(entry -> Objects.equals(entry.getProfile().getId().toString(), playerUUID))
-                                            .findAny();
-
-                                    if(playerEntry.isPresent()){
-                                        playerProfile = playerEntry.get().getProfile();
-                                    } else {
-                                        GameProfile possibleProfile = MinecraftClient.getInstance().getSessionService()
-                                                .fillProfileProperties(new GameProfile(UUID.fromString(playerUUID), "ERROR"), false);
-
-                                        if(!Objects.equals(possibleProfile.getName(), "ERROR")){
-                                            playerProfile = possibleProfile;
-                                        }
-                                    }
-                                }
+                                GameProfile playerProfile = UIOps.getProfile(ClientCharacters.INSTANCE.getPlayerUUID(character.getUUID()));
 
                                 CharacterViewScreen screen = new CharacterViewScreen(this.mode, playerProfile, character)
                                         .adminMode(openAsAdmin)
@@ -77,19 +54,20 @@ public class CharacterBasedGridLayout extends LabeledGridLayout<BaseCharacter> {
 
                                 MinecraftClient.getInstance().setScreen(screen);
                             }
-                    )
-                            .configure(component -> {
-                                component.sizing(Sizing.fixed(10)) //13
-                                        .positioning(Positioning.absolute(16, 1))
-                                        .zIndex(10);
-                            });
+                    ).configure(component -> {
+                        component.sizing(Sizing.fixed(10)) //13
+                                .positioning(Positioning.absolute(16, 1))
+                                .zIndex(10);
+                    });
 
                     buttons.add(buttonComponent);
+
+                    DelayableGameProfile profile = UIOps.getDelayedProfile(ClientCharacters.INSTANCE.getPlayerUUID(character.getUUID()));
 
                     return Containers.verticalFlow(Sizing.fixed(28), Sizing.fixed(24))
                             .child(buttonComponent)
                             .child(
-                                    CustomEntityComponent.playerEntityComponent(Sizing.fixed(20), null)
+                                    UIOps.playerEntityComponent(Sizing.fixed(20), profile)
                                             .scale(0.4f)
                                             .allowMouseRotation(true)
                                             //.tooltip(character.getFormattedName())
@@ -106,31 +84,31 @@ public class CharacterBasedGridLayout extends LabeledGridLayout<BaseCharacter> {
         );
     }
 
-    public CharacterBasedGridLayout openAsAdmin(boolean value){
+    public CharacterBasedGridLayout<T> openAsAdmin(boolean value){
         this.openAsAdmin = value;
 
         return this;
     }
 
-    public CharacterBasedGridLayout addBuilder(Text text, TriFunction<BaseCharacter, CharacterViewMode, Boolean, Component> builder){
+    public CharacterBasedGridLayout<T> addBuilder(Text text, TriFunction<T, CharacterViewMode, Boolean, Component> builder){
         this.addBuilder(-1, isParentVertical -> Components.label(text), builder);
 
         return this;
     }
 
-    public CharacterBasedGridLayout addBuilder(LabelComponentBuilder label, TriFunction<BaseCharacter, CharacterViewMode, Boolean, Component> builder){
+    public CharacterBasedGridLayout<T> addBuilder(LabelComponentBuilder label, TriFunction<T, CharacterViewMode, Boolean, Component> builder){
         this.addBuilder(-1, label, builder);
 
         return this;
     }
 
-    public CharacterBasedGridLayout addBuilder(int index, LabelComponentBuilder label, TriFunction<BaseCharacter, CharacterViewMode, Boolean, Component> builder){
+    public CharacterBasedGridLayout<T> addBuilder(int index, LabelComponentBuilder label, TriFunction<T, CharacterViewMode, Boolean, Component> builder){
         this.addBuilder(index, new LabeledObjectToComponent<>(label, new CharacterToComponent(() -> this.mode, builder)));
 
         return this;
     }
 
-    public CharacterBasedGridLayout changeMode(CharacterViewMode mode){
+    public CharacterBasedGridLayout<T> changeMode(CharacterViewMode mode){
         this.mode = mode;
 
         for (ButtonComponent b : buttons) b.setMessage(Text.of(mode.isModifiableMode() ? "✎" : "☰"));
@@ -142,7 +120,7 @@ public class CharacterBasedGridLayout extends LabeledGridLayout<BaseCharacter> {
         return this.mode;
     }
 
-    public List<BaseCharacter> getCharactersWithinLayout(){
+    public List<T> getCharactersWithinLayout(){
         return this.entryToComponents.keyList()
                 .stream()
                 .filter(Objects::nonNull)
@@ -150,7 +128,7 @@ public class CharacterBasedGridLayout extends LabeledGridLayout<BaseCharacter> {
     }
 
     @Override
-    public LabeledGridLayout<BaseCharacter> clearEntries() {
+    public LabeledGridLayout<T> clearEntries() {
         this.buttons.clear();
 
         return super.clearEntries();

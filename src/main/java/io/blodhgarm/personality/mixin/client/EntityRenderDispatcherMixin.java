@@ -6,13 +6,15 @@ import org.spongepowered.asm.mixin.Mixin;
 
 //Based on owo implementation
 @Mixin(EntityRenderDispatcher.class)
-public class EntityRenderDispatcherMixin implements ShouldRenderNameTagExtension {
+public class EntityRenderDispatcherMixin implements ShouldRenderNameTagExtension<EntityRenderDispatcher> {
 
     private boolean personality$shouldShowNameTag = true;
 
     @Override
-    public void personality$setShouldNameTagRender(boolean value) {
+    public EntityRenderDispatcher personality$setShouldNameTagRender(boolean value) {
         this.personality$shouldShowNameTag = value;
+
+        return (EntityRenderDispatcher)(Object) this;
     }
 
     @Override

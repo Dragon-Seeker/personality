@@ -42,18 +42,19 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
     private final Option<java.lang.Float> extraAgeConfiguration_multiplier = this.optionForKey(new Option.Key("extraAgeConfiguration.multiplier"));
     private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> extraAgeConfiguration_calculationCurve = this.optionForKey(new Option.Key("extraAgeConfiguration.calculationCurve"));
     private final Option<java.lang.Integer> maximumExtraAge = this.optionForKey(new Option.Key("maximumExtraAge"));
-    private final Option<io.blodhgarm.personality.api.reveal.InfoLevel> minimumInfo = this.optionForKey(new Option.Key("minimumInfo"));
-    private final Option<java.util.List<net.minecraft.util.Identifier>> none_tier = this.optionForKey(new Option.Key("none_tier"));
-    private final Option<java.util.List<net.minecraft.util.Identifier>> general_tier = this.optionForKey(new Option.Key("general_tier"));
-    private final Option<java.util.List<net.minecraft.util.Identifier>> associate_tier = this.optionForKey(new Option.Key("associate_tier"));
-    private final Option<java.util.List<net.minecraft.util.Identifier>> trusted_tier = this.optionForKey(new Option.Key("trusted_tier"));
-    private final Option<java.util.List<net.minecraft.util.Identifier>> confidant_tier = this.optionForKey(new Option.Key("confidant_tier"));
+    private final Option<java.lang.Integer> characterDeathWindow = this.optionForKey(new Option.Key("characterDeathWindow"));
+    private final Option<java.lang.Boolean> killPlayerOnCharacterDeath = this.optionForKey(new Option.Key("killPlayerOnCharacterDeath"));
+    private final Option<io.blodhgarm.personality.api.reveal.InfoLevel> minimumBaseInfo = this.optionForKey(new Option.Key("minimumBaseInfo"));
+    private final Option<io.blodhgarm.personality.api.reveal.InfoLevel> minimumRevealInfo = this.optionForKey(new Option.Key("minimumRevealInfo"));
+    private final Option<io.blodhgarm.personality.api.reveal.InfoLevel> minimumDiscoveryInfo = this.optionForKey(new Option.Key("minimumDiscoveryInfo"));
     private final Option<java.util.List<java.lang.String>> moderationList = this.optionForKey(new Option.Key("moderationList"));
     private final Option<java.util.List<java.lang.String>> administrationList = this.optionForKey(new Option.Key("administrationList"));
     private final Option<java.lang.Boolean> adjustWidthAndHeightOnly = this.optionForKey(new Option.Key("adjustWidthAndHeightOnly"));
     private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.ThemeMode> themeMode = this.optionForKey(new Option.Key("themeMode"));
     private final Option<java.lang.Boolean> showPlayerNameInChat = this.optionForKey(new Option.Key("showPlayerNameInChat"));
+    private final Option<java.lang.Boolean> showPlayerNameInNamePlate = this.optionForKey(new Option.Key("showPlayerNameInNamePlate"));
     private final Option<java.lang.Boolean> showPlayerNamePlateAtChestLevel = this.optionForKey(new Option.Key("showPlayerNamePlateAtChestLevel"));
+    private final Option<java.lang.Boolean> autoDiscovery = this.optionForKey(new Option.Key("autoDiscovery"));
     private final Option<java.lang.Boolean> descriptionConfig_descriptionView = this.optionForKey(new Option.Key("descriptionConfig.descriptionView"));
     private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.ControlType> descriptionConfig_descriptionKeybindingControl = this.optionForKey(new Option.Key("descriptionConfig.descriptionKeybindingControl"));
     private final Option<java.lang.Boolean> descriptionConfig_automaticScrolling = this.optionForKey(new Option.Key("descriptionConfig.automaticScrolling"));
@@ -342,52 +343,44 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         maximumExtraAge.set(value);
     }
 
-    public io.blodhgarm.personality.api.reveal.InfoLevel minimumInfo() {
-        return minimumInfo.value();
+    public int characterDeathWindow() {
+        return characterDeathWindow.value();
     }
 
-    public void minimumInfo(io.blodhgarm.personality.api.reveal.InfoLevel value) {
-        minimumInfo.set(value);
+    public void characterDeathWindow(int value) {
+        characterDeathWindow.set(value);
     }
 
-    public java.util.List<net.minecraft.util.Identifier> none_tier() {
-        return none_tier.value();
+    public boolean killPlayerOnCharacterDeath() {
+        return killPlayerOnCharacterDeath.value();
     }
 
-    public void none_tier(java.util.List<net.minecraft.util.Identifier> value) {
-        none_tier.set(value);
+    public void killPlayerOnCharacterDeath(boolean value) {
+        killPlayerOnCharacterDeath.set(value);
     }
 
-    public java.util.List<net.minecraft.util.Identifier> general_tier() {
-        return general_tier.value();
+    public io.blodhgarm.personality.api.reveal.InfoLevel minimumBaseInfo() {
+        return minimumBaseInfo.value();
     }
 
-    public void general_tier(java.util.List<net.minecraft.util.Identifier> value) {
-        general_tier.set(value);
+    public void minimumBaseInfo(io.blodhgarm.personality.api.reveal.InfoLevel value) {
+        minimumBaseInfo.set(value);
     }
 
-    public java.util.List<net.minecraft.util.Identifier> associate_tier() {
-        return associate_tier.value();
+    public io.blodhgarm.personality.api.reveal.InfoLevel minimumRevealInfo() {
+        return minimumRevealInfo.value();
     }
 
-    public void associate_tier(java.util.List<net.minecraft.util.Identifier> value) {
-        associate_tier.set(value);
+    public void minimumRevealInfo(io.blodhgarm.personality.api.reveal.InfoLevel value) {
+        minimumRevealInfo.set(value);
     }
 
-    public java.util.List<net.minecraft.util.Identifier> trusted_tier() {
-        return trusted_tier.value();
+    public io.blodhgarm.personality.api.reveal.InfoLevel minimumDiscoveryInfo() {
+        return minimumDiscoveryInfo.value();
     }
 
-    public void trusted_tier(java.util.List<net.minecraft.util.Identifier> value) {
-        trusted_tier.set(value);
-    }
-
-    public java.util.List<net.minecraft.util.Identifier> confidant_tier() {
-        return confidant_tier.value();
-    }
-
-    public void confidant_tier(java.util.List<net.minecraft.util.Identifier> value) {
-        confidant_tier.set(value);
+    public void minimumDiscoveryInfo(io.blodhgarm.personality.api.reveal.InfoLevel value) {
+        minimumDiscoveryInfo.set(value);
     }
 
     public java.util.List<java.lang.String> moderationList() {
@@ -434,12 +427,28 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         showPlayerNameInChat.set(value);
     }
 
+    public boolean showPlayerNameInNamePlate() {
+        return showPlayerNameInNamePlate.value();
+    }
+
+    public void showPlayerNameInNamePlate(boolean value) {
+        showPlayerNameInNamePlate.set(value);
+    }
+
     public boolean showPlayerNamePlateAtChestLevel() {
         return showPlayerNamePlateAtChestLevel.value();
     }
 
     public void showPlayerNamePlateAtChestLevel(boolean value) {
         showPlayerNamePlateAtChestLevel.set(value);
+    }
+
+    public boolean autoDiscovery() {
+        return autoDiscovery.value();
+    }
+
+    public void autoDiscovery(boolean value) {
+        autoDiscovery.set(value);
     }
 
     public final DescriptionConfig descriptionConfig = new DescriptionConfig();
@@ -470,18 +479,6 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
 
     }
 
-    public interface ExtraLife {
-        int minAge();
-        void minAge(int value);
-        int maxAge();
-        void maxAge(int value);
-        float minimumHoursForExtraLife();
-        void minimumHoursForExtraLife(float value);
-        float multiplier();
-        void multiplier(float value);
-        io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve calculationCurve();
-        void calculationCurve(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value);
-    }
     public interface GradualValue {
         int minAge();
         void minAge(int value);
@@ -501,6 +498,18 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         void descriptionKeybindingControl(io.blodhgarm.personality.misc.config.PersonalityConfigModel.ControlType value);
         boolean automaticScrolling();
         void automaticScrolling(boolean value);
+    }
+    public interface ExtraLife {
+        int minAge();
+        void minAge(int value);
+        int maxAge();
+        void maxAge(int value);
+        float minimumHoursForExtraLife();
+        void minimumHoursForExtraLife(float value);
+        float multiplier();
+        void multiplier(float value);
+        io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve calculationCurve();
+        void calculationCurve(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value);
     }
 
 }

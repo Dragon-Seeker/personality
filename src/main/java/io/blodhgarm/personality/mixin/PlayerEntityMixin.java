@@ -8,23 +8,14 @@ import io.blodhgarm.personality.misc.config.ConfigHelper;
 import io.blodhgarm.personality.misc.pond.CharacterToPlayerLink;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import static io.blodhgarm.personality.PersonalityMod.CONFIG;
 
 @Mixin(PlayerEntity.class)
-public abstract class PlayerEntityMixin implements CharacterToPlayerLink<PlayerEntity> {
-
-    @Nullable public BaseCharacter playersGivenCharacter = null;
-
-    @Shadow public abstract Text getName();
+public abstract class PlayerEntityMixin implements CharacterToPlayerLink {
 
     @ModifyArg(method = "addExhaustion", index = 0, at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/HungerManager;addExhaustion(F)V"))
     public float personality$addExtraExhaustionForYouth(float original) {
@@ -40,34 +31,23 @@ public abstract class PlayerEntityMixin implements CharacterToPlayerLink<PlayerE
         return original;
     }
 
-    @ModifyVariable(method = "getDisplayName", at = @At(value = "INVOKE", target = "Lnet/minecraft/scoreboard/Team;decorateName(Lnet/minecraft/scoreboard/AbstractTeam;Lnet/minecraft/text/Text;)Lnet/minecraft/text/MutableText;", shift = At.Shift.BY, by = 2))
-    private MutableText personality$attemptToAddCharacterName(MutableText mutableText){
-        PlayerEntity player = (PlayerEntity) (Object) this;
+    @Override
+    public BaseCharacter getCharacter(boolean prioritizeCL) {
+        CharacterManager<PlayerEntity, Character> manager = CharacterManager.getManger((PlayerEntity) (Object) this);
 
-        CharacterManager<PlayerEntity> manager = CharacterManager.getManger(player);
+        Character clientCharacter = manager.getClientCharacter();
 
-        if(manager instanceof KnownCharacterLookup lookup){
-            BaseCharacter character = lookup.getKnownCharacter(player);
+        BaseCharacter character = null;
 
-            Text inCharacterName = character != null
-                    ? Text.literal(character.getName())
-                    : ((CharacterManager.getClientCharacter() != null && manager.getCharacter(player) != null)
-                        ? Text.literal("Obscured")
-                        : null);
+        if(clientCharacter != null){
+            character = clientCharacter.getKnownCharacter((PlayerEntity) (Object) this);
 
-            if(inCharacterName != null) mutableText.append(" | ").append(inCharacterName);
+            if(prioritizeCL) return character;
         }
 
-        return mutableText;
+        if(character == null) character = manager.getCharacter((PlayerEntity) (Object) this);
+
+        return character;
     }
 
-    @Override
-    public BaseCharacter getCharacter() {
-        return this.playersGivenCharacter;
-    }
-
-    @Override
-    public void setCharacter(BaseCharacter character) {
-        this.playersGivenCharacter = character;
-    }
 }

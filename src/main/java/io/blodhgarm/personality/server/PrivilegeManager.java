@@ -50,6 +50,8 @@ public class PrivilegeManager {
 
         actionMap.put("screen_edit_player", PrivilegeLevel.ADMIN);
         actionMap.put("screen_edit_uuid", PrivilegeLevel.ADMIN);
+
+        actionMap.put("screen_kill_player", PrivilegeLevel.ADMIN);
     }
 
     public static PrivilegeLevel getLevel(String action){

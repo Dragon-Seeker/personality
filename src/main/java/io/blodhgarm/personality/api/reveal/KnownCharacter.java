@@ -8,12 +8,15 @@ import io.blodhgarm.personality.api.character.CharacterManager;
 import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.api.utils.InfoRevealResult;
 import io.blodhgarm.personality.utils.DebugCharacters;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -23,59 +26,78 @@ public class KnownCharacter implements BaseCharacter {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     public final String ownerCharacterUUID;
-
     public final String wrappedCharacterUUID;
 
     public int aliasIndex = -1;
 
     public InfoLevel level;
-
     public final List<Identifier> specificKnownInfo;
 
-    public transient CharacterManager<?> manager;
+    private LocalDateTime dateOfDiscovery = LocalDateTime.MIN;
+
+    public transient CharacterManager<? extends PlayerEntity, ? extends Character> manager;
 
     public KnownCharacter(String ownerCharacterUUID, String wrappedCharacterUUID) {
         this.ownerCharacterUUID = ownerCharacterUUID;
 
         this.wrappedCharacterUUID = wrappedCharacterUUID;
-        this.level = PersonalityMod.CONFIG.minimumInfo();
+        this.level = InfoLevel.UNDISCOVERED;
         this.specificKnownInfo = new ArrayList<>();
     }
 
-    public KnownCharacter(Character character) {
-        this.ownerCharacterUUID = "";
-
-        this.wrappedCharacterUUID = character.getUUID();
-        this.level = PersonalityMod.CONFIG.minimumInfo();
-        this.specificKnownInfo = new ArrayList<>();
-    }
-
-    public void setCharacterManager(CharacterManager<?> manager){
+    @Override
+    public BaseCharacter setCharacterManager(CharacterManager<? extends PlayerEntity, ? extends Character> manager){
         this.manager = manager;
+
+        return this;
+    }
+
+    public KnownCharacter updateInfoLevel(InfoLevel level){
+        this.level = level;
+
+        return this;
+    }
+
+    public InfoLevel getLevel(){
+        InfoLevel baseLevel = PersonalityMod.CONFIG.minimumBaseInfo();
+
+        if(!baseLevel.shouldUpdateLevel(this.level)) return baseLevel;
+
+        return this.level;
+    }
+
+    public KnownCharacter setDiscoveredTime(){
+        this.dateOfDiscovery = LocalDateTime.now();
+
+        return this;
+    }
+
+    public LocalDateTime getDiscoveredTime(){
+        return this.dateOfDiscovery;
     }
 
     public Character getWrappedCharacter(){
-        if(manager != null){
-            Character character = manager.getCharacter(this.wrappedCharacterUUID);
+        Character character = DebugCharacters.ERROR;
 
-            if(character != null) {
-                return character;
-            } else {
+        if(manager != null){
+            character = manager.getCharacter(this.wrappedCharacterUUID);
+
+            if(character == null) {
                 LOGGER.error("[KnownCharacter] Seems that a Known Character was attempted to be accessed but was not found!");
+
+                character = DebugCharacters.ERROR;
             }
         } else {
             LOGGER.error("[KnownCharacter] Seems that a Known Character was attempted to be accessed but that manager was not set yet!");
         }
 
-        return DebugCharacters.ERROR;
-    }
-
-    public void updateInfoLevel(InfoLevel level){
-        this.level = level;
+        return character;
     }
 
     @Override
-    public void beforeSaving() {
+    public void beforeEvent(String event) {
+        if(!event.equals("save")) return;
+
         specificKnownInfo.removeIf(valueId -> InfoRevealRegistry.INSTANCE.showInformation(level, valueId));
     }
 
@@ -163,13 +185,28 @@ public class KnownCharacter implements BaseCharacter {
     }
 
     @Override
+    public Health getHealthStage() {
+        return getResult(PersonalityMod.id("health"), getWrappedCharacter().getHealthStage()).result();
+    }
+
+    @Override
     public boolean isDead() {
         return getWrappedCharacter().isDead();
     }
 
     @Override
-    public int getPlaytime() {
-        return getWrappedCharacter().getPlaytime();
+    public int getDeathWindow() {
+        return getWrappedCharacter().getDeathWindow();
+    }
+
+    @Override
+    public int getTotalPlaytime() {
+        return getWrappedCharacter().getTotalPlaytime();
+    }
+
+    @Override
+    public int getCurrentPlaytime() {
+        return getWrappedCharacter().getCurrentPlaytime();
     }
 
     private <T> InfoRevealResult<T> getResult(Identifier valueId, T defaultValue){

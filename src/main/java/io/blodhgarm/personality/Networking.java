@@ -1,7 +1,10 @@
 package io.blodhgarm.personality;
 
+import com.eliotlash.mclib.math.functions.limit.Min;
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.client.gui.screens.AdminCharacterScreen;
+import io.blodhgarm.personality.client.gui.screens.CharacterDeathScreen;
+import io.blodhgarm.personality.misc.pond.CharacterToPlayerLink;
 import io.blodhgarm.personality.packets.*;
 import io.blodhgarm.personality.server.ServerCharacters;
 import io.wispforest.owo.Owo;
@@ -10,6 +13,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.loader.impl.util.StringUtil;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.toast.SystemToast;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
@@ -47,6 +51,16 @@ public class Networking {
 
         CHANNEL.registerClientboundDeferred(ServerCharacters.ReturnInformation.class);
 
+        CHANNEL.registerClientboundDeferred(SyncS2CPackets.SyncOnlinePlaytimes.class);
+
+        CHANNEL.registerClientboundDeferred(CharacterDeathPackets.OpenCharacterDeathScreen.class);
+
+        CHANNEL.registerClientboundDeferred(CharacterDeathPackets.CheckDeathScreenOpen.class);
+
+        CHANNEL.registerClientboundDeferred(CharacterDeathPackets.ReceivedDeathMessage.class);
+
+        CHANNEL.registerClientboundDeferred(RevealCharacterPackets.SuccessfulDiscovery.class);
+
         //C2S - Client to Server
         CHANNEL.registerServerbound(SyncC2SPackets.ModifyBaseCharacterData.class, SyncC2SPackets.ModifyBaseCharacterData::modifyCharacter);
         CHANNEL.registerServerbound(SyncC2SPackets.ModifyAddonData.class, SyncC2SPackets.ModifyAddonData::modifyAddons);
@@ -56,7 +70,8 @@ public class Networking {
 
         CHANNEL.registerServerbound(SyncC2SPackets.RegistrySync.class, SyncC2SPackets.RegistrySync::registriesSync);
 
-        CHANNEL.registerServerbound(RevealCharacterC2SPacket.class, RevealCharacterC2SPacket::revealInformationToPlayers);
+        CHANNEL.registerServerbound(RevealCharacterPackets.RevealByInfoLevel.class, RevealCharacterPackets.RevealByInfoLevel::revealInformationToPlayers);
+        CHANNEL.registerServerbound(RevealCharacterPackets.RevealByLooking.class, RevealCharacterPackets.RevealByLooking::doseRevealCharacter);
 
         CHANNEL.registerServerbound(AdminActionPackets.AssociateAction.class, AdminActionPackets.AssociateAction::attemptAssociateAction);
         CHANNEL.registerServerbound(AdminActionPackets.DisassociateAction.class, AdminActionPackets.DisassociateAction::attemptDisassociateAction);
@@ -64,6 +79,10 @@ public class Networking {
         CHANNEL.registerServerbound(AdminActionPackets.EditAction.class, AdminActionPackets.EditAction::attemptEditAction);
 
         CHANNEL.registerServerbound(AdminActionPackets.CharacterBasedAction.class, AdminActionPackets.CharacterBasedAction::attemptAction);
+
+        CHANNEL.registerServerbound(CharacterDeathPackets.DeathScreenOpenResponse.class, CharacterDeathPackets.DeathScreenOpenResponse::setIfScreenOpen);
+
+        CHANNEL.registerServerbound(CharacterDeathPackets.CustomDeathMessage.class, CharacterDeathPackets.CustomDeathMessage::useCustomDeathMessage);
     }
 
     @Environment(EnvType.CLIENT)
@@ -79,7 +98,11 @@ public class Networking {
         CHANNEL.registerClientbound(SyncS2CPackets.Dissociation.class, SyncS2CPackets.Dissociation::syncDissociation);
 
         CHANNEL.registerClientbound(ServerCharacters.ReturnInformation.class, (message, access) -> {
-            SystemToast.add(access.runtime().getToastManager(), SystemToast.Type.CHAT_PREVIEW_WARNING, Text.of(StringUtil.capitalize(message.action())), Text.of(message.returnMessage()));
+            MinecraftClient client = access.runtime();
+
+            client.getToastManager().add(
+                    SystemToast.create(client, SystemToast.Type.CHAT_PREVIEW_WARNING, Text.of(StringUtil.capitalize(message.action())), Text.of(message.returnMessage()))
+            );
 
             if(message.success()){
                 if(adminActions.contains(message.action()) && MinecraftClient.getInstance().currentScreen instanceof AdminCharacterScreen screen){
@@ -91,6 +114,22 @@ public class Networking {
                 LOGGER.error("Action: {}, Message: {}", message.action(), message.returnMessage());
             }
         });
+
+        CHANNEL.registerClientbound(SyncS2CPackets.SyncOnlinePlaytimes.class, SyncS2CPackets.SyncOnlinePlaytimes::syncOnlinePlaytimes);
+
+        CHANNEL.registerClientbound(CharacterDeathPackets.OpenCharacterDeathScreen.class, (m, a) -> {
+            if (MinecraftClient.getInstance().player.getCharacter(false) != null){
+                a.runtime().setScreen(new CharacterDeathScreen());
+
+                Networking.sendC2S(new CharacterDeathPackets.DeathScreenOpenResponse(true));
+            }
+        });
+
+        CHANNEL.registerClientbound(CharacterDeathPackets.CheckDeathScreenOpen.class, (m, a) -> Networking.sendC2S(new CharacterDeathPackets.DeathScreenOpenResponse(a.runtime().currentScreen instanceof CharacterDeathScreen)));
+
+        CHANNEL.registerClientbound(CharacterDeathPackets.ReceivedDeathMessage.class, CharacterDeathPackets.ReceivedDeathMessage::outputCustomDeathMessage);
+
+        CHANNEL.registerClientbound(RevealCharacterPackets.SuccessfulDiscovery.class, RevealCharacterPackets.SuccessfulDiscovery::onDiscovery);
     }
 
     public static <R extends Record> void sendC2S(R packet) {

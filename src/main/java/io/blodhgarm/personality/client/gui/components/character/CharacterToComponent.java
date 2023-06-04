@@ -8,17 +8,17 @@ import org.apache.commons.lang3.function.TriFunction;
 
 import java.util.function.Supplier;
 
-public class CharacterToComponent implements ObjectToComponent<BaseCharacter> {
+public class CharacterToComponent<T extends BaseCharacter> implements ObjectToComponent<T> {
 
     public final Supplier<CharacterViewMode> modeSup;
-    public final TriFunction<BaseCharacter, CharacterViewMode, Boolean, Component> builder;
+    public final TriFunction<T, CharacterViewMode, Boolean, Component> builder;
 
-    public CharacterToComponent(Supplier<CharacterViewMode> modeSup, TriFunction<BaseCharacter, CharacterViewMode, Boolean, Component> builder){
+    public CharacterToComponent(Supplier<CharacterViewMode> modeSup, TriFunction<T, CharacterViewMode, Boolean, Component> builder){
         this.modeSup = modeSup;
         this.builder = builder;
     }
 
-    public Component build(BaseCharacter entry, boolean isParentVertical) {
+    public Component build(T entry, boolean isParentVertical) {
         return builder.apply(entry, modeSup.get(), isParentVertical);
     }
 }

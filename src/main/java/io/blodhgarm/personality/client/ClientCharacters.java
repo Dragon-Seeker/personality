@@ -1,6 +1,10 @@
 package io.blodhgarm.personality.client;
 
 import com.google.common.collect.HashBiMap;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.InstanceCreator;
+import com.mojang.authlib.GameProfile;
 import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.api.character.BaseCharacter;
@@ -10,14 +14,18 @@ import io.blodhgarm.personality.api.utils.PlayerAccess;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.core.KnownCharacterLookup;
 import io.blodhgarm.personality.api.reveal.KnownCharacter;
-import io.blodhgarm.personality.misc.pond.CharacterToPlayerLink;
+import io.blodhgarm.personality.mixin.PlayerEntityMixin;
 import io.blodhgarm.personality.packets.SyncS2CPackets;
+import io.blodhgarm.personality.utils.CharacterReferenceData;
 import io.blodhgarm.personality.utils.DebugCharacters;
+import io.blodhgarm.personality.utils.gson.ExtraTokenData;
+import io.blodhgarm.personality.utils.gson.WrappedTypeToken;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.stat.StatHandler;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
@@ -27,32 +35,64 @@ import java.util.*;
 /**
  * Client Specific Implementation of {@link CharacterManager}
  */
-public class ClientCharacters extends CharacterManager<AbstractClientPlayerEntity> implements KnownCharacterLookup, ClientPlayConnectionEvents.Disconnect {
+public class ClientCharacters extends CharacterManager<AbstractClientPlayerEntity, Character> implements ClientPlayConnectionEvents.Disconnect {
 
     public static ClientCharacters INSTANCE = new ClientCharacters();
 
-    public Map<String, BaseCharacter> clientKnownCharacterMap = new HashMap<>();
+    //-----------------
+
+    private final Gson GSON = PersonalityMod.GSON.newBuilder()
+            .registerTypeAdapter(Character.class, (InstanceCreator<Character>) type -> {
+                Character c = CharacterReferenceData.attemptGetCharacter(type);
+
+                if(c == null) c = new Character("", "", "", "", "", -1);
+
+                return (Character) c.setCharacterManager(this);
+            })
+            .registerTypeAdapter(KnownCharacter.class, (InstanceCreator<KnownCharacter>) type -> {
+                return (KnownCharacter) new KnownCharacter("", "")
+                        .setCharacterManager(this);
+            })
+            .create();
 
     public ClientCharacters() {
         super("client");
-
-        CharacterManager.getClientCharacterFunc = () -> this.getCharacter(MinecraftClient.getInstance().player);
     }
 
-    public PlayerAccess<AbstractClientPlayerEntity> getPlayer(String uuid) {
-        String playerUUID = playerToCharacterReferences().inverse().get(uuid);
+    @Override
+    protected WrappedTypeToken<Character> getToken() {
+        return new WrappedTypeToken<>(){};
+    }
 
-        if(playerUUID != null) {
+    @Override
+    public Gson getGson() {
+        return GSON;
+    }
+
+    /**
+     * Method used to get the clients current character for instances that don't reference
+     * the main {@link ClientCharacters}. See example in {@link PlayerEntityMixin}
+     *
+     * @return the current clients character or null
+     */
+    @Nullable
+    public Character getClientCharacter(){
+        return getCharacter(MinecraftClient.getInstance().player);
+    }
+
+    @Override
+    public PlayerAccess<AbstractClientPlayerEntity> getPlayer(@Nullable String pUUID) {
+        if(pUUID != null) {
             AbstractClientPlayerEntity player = MinecraftClient.getInstance().world.getPlayers()
                     .stream()
-                    .filter(abstractClientPlayerEntity -> Objects.equals(abstractClientPlayerEntity.getUuidAsString(), playerUUID)) //playerUUID
+                    .filter(abstractClientPlayerEntity -> Objects.equals(abstractClientPlayerEntity.getUuidAsString(), pUUID)) //playerUUID
                     .findFirst()
                     .orElse(null);
 
-            return new PlayerAccess<>(playerUUID, player);
+            return new PlayerAccess<>(pUUID, player);
         }
 
-        return super.getPlayer(uuid);
+        return super.getPlayer(pUUID);
     }
 
     /**
@@ -64,115 +104,14 @@ public class ClientCharacters extends CharacterManager<AbstractClientPlayerEntit
         characterIDToCharacter.clear();
 
         for (SyncS2CPackets.CharacterData entry : characters) {
-            Character c = PersonalityMod.GSON.fromJson(entry.characterData(), Character.class);
+            Character c = this.deserializeCharacter(entry.characterData());
 
-            Map<Identifier, BaseAddon> addonMap = AddonRegistry.INSTANCE.deserializesAddons(c, entry.addonData(), false);
-
-            c.getAddons().putAll(addonMap);
+            c.getAddons().putAll(AddonRegistry.INSTANCE.deserializesAddons(c, entry.addonData(), false));
 
             characterIDToCharacter.put(c.getUUID(), c);
         }
 
         if(FabricLoader.getInstance().isDevelopmentEnvironment()) DebugCharacters.loadDebugCharacters(this);
-
-        clientKnownCharacterMap.clear();
-    }
-
-    //---------------
-
-    @Override
-    public boolean associateCharacterToPlayer(String cUUID, String playerUUID) {
-        if(!super.associateCharacterToPlayer(cUUID, playerUUID)) return false;
-
-        PlayerAccess<AbstractClientPlayerEntity> playerAssociated = this.getPlayer(playerUUID);
-
-        if (playerAssociated.player() != null) ((CharacterToPlayerLink<?>) playerAssociated.player()).setCharacter(this.getCharacter(cUUID));
-
-        setKnownCharacters(playerAssociated, cUUID);
-
-        return true;
-    }
-
-    public void setKnownCharacters(PlayerAccess<AbstractClientPlayerEntity> playerAccess, String cUUID){
-        Character clientC = this.getCharacter(MinecraftClient.getInstance().player);
-
-        if(playerAccess != null && clientC != null) {
-            if(playerAccess.player() != null && playerAccess.player() == MinecraftClient.getInstance().player) {
-                clientC.getKnownCharacters().forEach((s, knownCharacter) -> {
-                    knownCharacter.setCharacterManager(this);
-
-                    PlayerAccess<AbstractClientPlayerEntity> otherP = this.getPlayer(knownCharacter.getWrappedCharacter());
-
-                    if (otherP.valid()) this.addKnownCharacter(otherP.UUID(), knownCharacter);
-                });
-            } else {
-                if (clientC.getKnownCharacters().containsKey(cUUID)) {
-                    KnownCharacter knownCharacter = clientC.getKnownCharacters().get(cUUID);
-
-                    knownCharacter.setCharacterManager(this);
-
-                    this.addKnownCharacter(playerAccess.UUID(), knownCharacter);
-                }
-            }
-        }
-    }
-
-    @Override
-    @Nullable
-    public String dissociateUUID(String UUID, boolean isCharacterUUID) {
-        PlayerAccess<AbstractClientPlayerEntity> playerDissociated;
-        Character oldC;
-
-        if(isCharacterUUID){
-            oldC = this.getCharacter(UUID);
-            playerDissociated = this.getPlayer(oldC);
-        } else {
-            playerDissociated = this.getPlayer(this.getCharacterUUID(UUID));
-            oldC = this.getCharacter(this.getCharacterUUID(playerDissociated.UUID()));
-        }
-
-        if (playerDissociated.player() != null) ((CharacterToPlayerLink<?>) playerDissociated.player()).setCharacter(null);
-
-        revokeKnownCharacters(playerDissociated, oldC);
-
-        return super.dissociateUUID(UUID, isCharacterUUID);
-    }
-
-    public void revokeKnownCharacters(PlayerAccess<AbstractClientPlayerEntity> playerAccess, Character oldC){
-        Character clientC = this.getCharacter(MinecraftClient.getInstance().player);
-
-        if(playerAccess != null && clientC != null) {
-            if(playerAccess.player() != null && playerAccess.player() == MinecraftClient.getInstance().player) {
-                clientC.getKnownCharacters().forEach((s, knownCharacter) -> {
-                    PlayerAccess<AbstractClientPlayerEntity> otherP = this.getPlayer(knownCharacter.getWrappedCharacter());
-
-                    if (otherP.valid()) this.removeKnownCharacter(otherP.UUID());
-                });
-            } else {
-                if (oldC != null && this.clientKnownCharacterMap.containsKey(playerAccess.UUID())) {
-
-                    this.removeKnownCharacter(playerAccess.UUID());
-                }
-            }
-        }
-    }
-
-    //---------------
-
-    @Override
-    public void addKnownCharacter(String playerUUID, BaseCharacter character) {
-        this.clientKnownCharacterMap.put(playerUUID, character);
-    }
-
-    @Override
-    public void removeKnownCharacter(String playerUUID) {
-        this.clientKnownCharacterMap.remove(playerUUID);
-    }
-
-    @Override
-    @Nullable
-    public BaseCharacter getKnownCharacter(String UUID) {
-        return this.clientKnownCharacterMap.get(UUID);
     }
 
     //---------------
@@ -180,8 +119,6 @@ public class ClientCharacters extends CharacterManager<AbstractClientPlayerEntit
     @Override
     public void onPlayDisconnect(ClientPlayNetworkHandler handler, MinecraftClient client) {
         this.clearRegistries();
-
-        clientKnownCharacterMap.clear();
 
         if(FabricLoader.getInstance().isDevelopmentEnvironment()) LOGGER.info("[Client-CharacterManager]: Manager has been cleared!");
     }

@@ -1,6 +1,8 @@
 package io.blodhgarm.personality.mixin.client;
 
 import io.blodhgarm.personality.PersonalityMod;
+import io.blodhgarm.personality.misc.pond.CharacterToPlayerLink;
+import io.blodhgarm.personality.misc.pond.EntityComponentExtension;
 import io.blodhgarm.personality.misc.pond.ShouldRenderNameTagExtension;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.EntityRenderDispatcher;
@@ -14,6 +16,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
@@ -41,5 +44,10 @@ public abstract class EntityRendererMixin<T extends Entity> {
             matrices.scale(0.75f, 0.75f, 1.0f);
             matrices.translate(0, 0, -0.25f);
         }
+    }
+
+    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/entity/EntityRenderer;renderLabelIfPresent(Lnet/minecraft/entity/Entity;Lnet/minecraft/text/Text;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V"))
+    private void personality$togglePlayerNameInPlate(T entity, float yaw, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci){
+        if(entity instanceof CharacterToPlayerLink l) l.toggleOnlyCharacterName(!PersonalityMod.CONFIG.showPlayerNameInNamePlate());
     }
 }

@@ -5,13 +5,17 @@
   "compatibilityLevel": "JAVA_17",
   "plugin": "io.blodhgarm.personality.mixin.PersonalityMixinPlugin",
   "mixins": [
+    "ConfigWrapperAccessor",
+    "DamageSourceMixin",
+    "EntityComponentAccessor",
     "FormattingMixin",
     "HungerManagerMixin",
     "LivingEntityMixin",
     "OriginLayerAccessor",
     "PlayerEntityMixin",
     "PlayerManagerMixin",
-    "ServerLoginNetworkHandlerMixin"
+    "ServerLoginNetworkHandlerMixin",
+    "gson.TypeTokenMixin"
   ],
   "client": [
     "client.ClientWorldMixin",
@@ -20,9 +24,9 @@
     "client.EntityRendererMixin",
     "client.FontStorageMixin",
     "client.MessageHandlerMixin",
+    "client.MouseMixin",
     "client.PlayerEntityMixin",
     "client.TextFieldWidgetMixin",
-    "client.MouseMixin",
     "client.accessor.EditBoxAccessor",
     "client.accessor.EditBoxWidgetAccessor",
     "client.accessor.NinePatchRendererAccessor",

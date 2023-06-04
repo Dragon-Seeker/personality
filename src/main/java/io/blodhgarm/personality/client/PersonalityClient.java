@@ -47,6 +47,7 @@ public class PersonalityClient implements ClientModInitializer {
 
 		KeyBindings.init();
         ClientTickEvents.END_WORLD_TICK.register(KeyBindings::processKeybindings);
+        ClientTickEvents.END_WORLD_TICK.register(ClientCharacterTick.INSTANCE);
 
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             ClientCharacters.INSTANCE.onPlayDisconnect(handler, client);

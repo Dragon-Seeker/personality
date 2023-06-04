@@ -19,6 +19,9 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class LabeledGridLayout<T> extends BaseParentComponent implements LineManageable<LabeledGridLayout<T>>, ModifiableCollectionHelper<LabeledGridLayout<T>, T> {
 
@@ -53,6 +56,8 @@ public class LabeledGridLayout<T> extends BaseParentComponent implements LineMan
     private boolean setupInteractionEvents = false;
 
     //--------------------------------------------------------------------
+
+    private static boolean forceRebuildSizing = false;
 
     public int[] prevColumnSizes = new int[]{};
     public int[] prevRowSizes = new int[]{};
@@ -279,6 +284,13 @@ public class LabeledGridLayout<T> extends BaseParentComponent implements LineMan
     }
 
     @Override
+    public void onChildMutated(Component child) {
+        super.onChildMutated(child);
+
+        forceRebuildSizing = true;
+    }
+
+    @Override
     public void layout(Size space) {
         boolean rebuildSizingArrays = !this.builtYet;
 
@@ -296,12 +308,14 @@ public class LabeledGridLayout<T> extends BaseParentComponent implements LineMan
             if (child != null) child.inflate(childSpace);
         });
 
-        if(rebuildSizingArrays) {
+        if(rebuildSizingArrays || forceRebuildSizing) {
             this.determineSizes(columnSizes, false);
             this.determineSizes(rowSizes, true);
 
             this.prevColumnSizes = columnSizes;
             this.prevRowSizes = rowSizes;
+
+            forceRebuildSizing = false;
         } else {
             columnSizes = prevColumnSizes;
             rowSizes = prevRowSizes;
@@ -418,6 +432,8 @@ public class LabeledGridLayout<T> extends BaseParentComponent implements LineMan
 //                component.id("debug_line_off");
             }
         });
+
+
 
         this.drawChildren(matrices, mouseX, mouseY, partialTicks, delta, this.finalChildrenView);
     }

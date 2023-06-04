@@ -36,7 +36,11 @@
     ]
   },
   "mixins": [ "personality.mixins.json" ],
-
+  "custom": {
+    "loom:injected_interfaces": {
+      "net/minecraft/class_1657": ["io/blodhgarm/personality/misc/pond/CharacterToPlayerLink"]
+    }
+  },
   "depends": {
     "fabricloader": ">=0.14.9",
     "fabric": "*",

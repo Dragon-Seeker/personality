@@ -2,7 +2,6 @@ package io.blodhgarm.personality.packets;
 
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.Networking;
-import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.api.character.Character;
@@ -25,7 +24,9 @@ public class SyncC2SPackets {
 
     public record ModifyBaseCharacterData(String characterJson, List<String> elementsChanges) {
         public static void modifyCharacter(ModifyBaseCharacterData message, ServerAccess access) {
-            Character modifiedData = PersonalityMod.GSON.fromJson(message.characterJson, Character.class);
+            Character modifiedData = ServerCharacters.INSTANCE.deserializeCharacter(message.characterJson);
+
+            modifiedData.setCharacterManager(ServerCharacters.INSTANCE);
 
             if(message.elementsChanges != null) ServerCharacters.INSTANCE.logCharacterEditing(access.player(), modifiedData, message.elementsChanges);
 
@@ -34,14 +35,14 @@ public class SyncC2SPackets {
             if(oldData != null){
                 modifiedData.getAddons().putAll(oldData.getAddons());
             } else {
-                LOGGER.warn("[ModifyBaseCharacterData]: It seems that this packet was sent to modify a Character but such was not found on the server! [UUID: {}]", modifiedData.getUUID());
+                LOGGER.warn("[ModifyBaseCharacterData]: It seems that this packet was sent to modify a Character but such was not found on the server! [uuid: {}]", modifiedData.getUUID());
             }
 
             ServerCharacters.INSTANCE.characterLookupMap().put(modifiedData.getUUID(), modifiedData);
 
             ServerCharacters.INSTANCE.sortCharacterLookupMap();
 
-            ServerCharacters.INSTANCE.saveCharacter(modifiedData);
+            ServerCharacters.INSTANCE.pushToSaveQueue(modifiedData);
         }
     }
 
@@ -50,7 +51,7 @@ public class SyncC2SPackets {
             Character c = ServerCharacters.INSTANCE.getCharacter(message.characterUUID);
 
             if(c == null){
-                LOGGER.warn("[ModifyAddonData]: It seems that this packet was sent to modify a Addons for a Character but such was not found on the server! [UUID: {}]", message.characterUUID);
+                LOGGER.warn("[ModifyAddonData]: It seems that this packet was sent to modify a Addons for a Character but such was not found on the server! [uuid: {}]", message.characterUUID);
 
                 return;
             }
@@ -78,11 +79,13 @@ public class SyncC2SPackets {
 
     public record NewCharacter(String characterJson, Map<Identifier, String> addonsData, boolean immediateAssociation) {
         public static void newCharacter(NewCharacter message, ServerAccess access) {
-            Character c = PersonalityMod.GSON.fromJson(message.characterJson, Character.class);
+            Character c = ServerCharacters.INSTANCE.deserializeCharacter(message.characterJson);
+
+            c.setCharacterManager(ServerCharacters.INSTANCE);
 
             if(!c.getPlayerUUID().equals(access.player().getUuidAsString())){
                 //TODO: More handling for this or nah? Maybe ask Team about what they think
-                LOGGER.warn("[New Character]: It seems that a Character was created on the Client and was found to be having mismatching Player UUID: [Character UUID: {}]", c.getUUID());
+                LOGGER.warn("[New Character]: It seems that a Character was created on the Client and was found to be having mismatching Player uuid: [Character uuid: {}]", c.getUUID());
             }
 
             Map<Identifier, BaseAddon> addonMap = AddonRegistry.INSTANCE.deserializesAddons(c, message.addonsData, true);
@@ -91,7 +94,7 @@ public class SyncC2SPackets {
 
             ServerCharacters.INSTANCE.sortCharacterLookupMap();
 
-            String characterData = ServerCharacters.INSTANCE.saveCharacter(c, false);
+            String characterData = ServerCharacters.INSTANCE.pushToSaveQueue(c, false);
 
             Map<Identifier, String> addonsData = ServerCharacters.INSTANCE.saveAddonsForCharacter(c, addonMap, false);
 

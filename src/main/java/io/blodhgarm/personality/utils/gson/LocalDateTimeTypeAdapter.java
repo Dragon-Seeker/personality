@@ -1,4 +1,4 @@
-package io.blodhgarm.personality.server;
+package io.blodhgarm.personality.utils.gson;
 
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;

@@ -13,7 +13,7 @@ import net.minecraft.server.network.ServerPlayNetworkHandler;
  */
 public class FinalizedPlayerConnectionEvent {
 
-    public static final Event<FinalizedPlayerConnectionEvent.Finish> CONNECTION_FINISHED = EventFactory.createArrayBacked(FinalizedPlayerConnectionEvent.Finish.class, callbacks -> (handler, sender, server) -> {
+    public static final Event<FinalizedPlayerConnectionEvent.Finish> CONNECTION_FINISHED = EventFactory.createArrayBacked(Finish.class, callbacks -> (handler, sender, server) -> {
         for (FinalizedPlayerConnectionEvent.Finish callback : callbacks) {
             callback.onFinalize(handler, sender, server);
         }

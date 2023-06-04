@@ -1,11 +1,15 @@
 package io.blodhgarm.personality.api.reveal;
 
 import io.blodhgarm.personality.api.character.Character;
+import io.blodhgarm.personality.server.ServerCharacters;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Supplier;
 
 /**
  * Inteface used to store all the methods for Revealing Character Info
@@ -33,7 +37,7 @@ public interface RevelInfoManager<P extends PlayerEntity> {
 
     default void revealCharacterInfo(P source, Collection<P> targets, InfoLevel level) {}
 
-    default void revealCharacterInfo(Character source, Character targetCharacter, P packetTarget, InfoLevel level) {}
+    default void revealCharacterInfo(Character source, Character targetCharacter, P packetTarget, InfoLevel level, ServerCharacters.ReturnPacketBuilder returnPacketBuilder) {}
 
     enum RevealRange {
         LARGE("large", 15),

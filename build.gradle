@@ -84,7 +84,7 @@ dependencies {
 	modCompileOnly("com.github.apace100:apoli:v2.6.0", { exclude group: "com.github.DaFuqs", module: "AdditionalEntityAttributes" })
 	modCompileOnly("com.github.apace100:origins-fabric:${project.origin_version}", { exclude group: "com.github.apace100", module: "apoli" })
 
-	/*modImplementation*/modRuntimeOnly("com.github.apace100:origins-fabric:${project.origin_version}")
+	/*modImplementation*/modLocalRuntime("com.github.apace100:origins-fabric:${project.origin_version}")
 
 
 	modImplementation("dev.emi:trinkets:${trinkets_version}")

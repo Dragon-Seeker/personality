@@ -3,6 +3,7 @@ package io.blodhgarm.personality.packets;
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.api.character.Character;
 import io.blodhgarm.personality.api.character.CharacterManager;
+import io.blodhgarm.personality.client.ClientCharacters;
 import io.blodhgarm.personality.client.gui.CharacterViewMode;
 import io.blodhgarm.personality.client.gui.screens.AdminCharacterScreen;
 import io.blodhgarm.personality.client.gui.screens.CharacterViewScreen;
@@ -26,14 +27,14 @@ public record OpenPersonalityScreenS2CPacket(CharacterViewMode mode, String char
         Character character = null;
 
         if(message.mode.importFromCharacter()){
-            CharacterManager<ClientPlayerEntity> manager = CharacterManager.getManger(access.player());
+            ClientCharacters manager = ClientCharacters.INSTANCE;
 
             boolean errorHasOccured = false;
 
             if(!message.characterUUID.isEmpty()) {
                 character = manager.getCharacter(message.characterUUID);
             } else {
-                LOGGER.error("[Personality] There was a attempt to create a Screen for {} a character and the UUID was found to be empty, meaning no screen will be opened.", message.mode);
+                LOGGER.error("[Personality] There was a attempt to create a Screen for {} a character and the uuid was found to be empty, meaning no screen will be opened.", message.mode);
 
                 errorHasOccured = true;
             }

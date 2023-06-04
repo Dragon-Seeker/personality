@@ -10,11 +10,12 @@ import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddon;
 import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddonRegistry;
 import io.blodhgarm.personality.api.character.BaseCharacter;
 import io.blodhgarm.personality.api.character.Character;
+import io.blodhgarm.personality.client.ClientCharacters;
 import io.blodhgarm.personality.client.gui.CharacterViewMode;
 import io.blodhgarm.personality.client.gui.GenderSelection;
 import io.blodhgarm.personality.client.gui.ThemeHelper;
+import io.blodhgarm.personality.client.gui.utils.UIOps;
 import io.blodhgarm.personality.client.gui.utils.owo.layout.ButtonAddon;
-import io.blodhgarm.personality.client.gui.components.CustomEntityComponent;
 import io.blodhgarm.personality.client.gui.components.ColorableTextBoxComponent;
 import io.blodhgarm.personality.client.gui.components.EditBoxComponent;
 import io.blodhgarm.personality.client.gui.utils.owo.ExtraSurfaces;
@@ -38,7 +39,6 @@ import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.input.CursorMovement;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.toast.SystemToast;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.stat.Stats;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
@@ -216,7 +216,7 @@ public class CharacterViewComponent extends HorizontalFlowLayout implements Addo
         }
         //----
 
-        //---- Add AdminScreen Only UUID information
+        //---- Add AdminScreen Only uuid information
         if(!isModifiable && adminMode){
             BiFunction<String, String, FlowLayout> layoutFunc = (label, uuid) -> {
                 return ((ButtonAddonDuck<FlowLayout>) Containers.horizontalFlow(Sizing.content(), Sizing.content()))
@@ -239,11 +239,11 @@ public class CharacterViewComponent extends HorizontalFlowLayout implements Addo
             characterPropertiesContainer
                     .children(1,
                             List.of(
-                                    Containers.horizontalScroll(Sizing.fixed(144), Sizing.fixed(13), layoutFunc.apply("UUID: ", currentCharacter.getUUID()))
+                                    Containers.horizontalScroll(Sizing.fixed(144), Sizing.fixed(13), layoutFunc.apply("uuid: ", currentCharacter.getUUID()))
                                             .horizontalAlignment(HorizontalAlignment.LEFT)
                                             .verticalAlignment(VerticalAlignment.TOP)
                                             .margins(Insets.bottom(4)),
-                                    Containers.horizontalScroll(Sizing.fixed(144), Sizing.fixed(13), layoutFunc.apply("Player UUID: ", currentCharacter.getPlayerUUID()))
+                                    Containers.horizontalScroll(Sizing.fixed(144), Sizing.fixed(13), layoutFunc.apply("Player uuid: ", currentCharacter.getPlayerUUID()))
                                             .horizontalAlignment(HorizontalAlignment.LEFT)
                                             .verticalAlignment(VerticalAlignment.TOP)
                                             .margins(Insets.bottom(4))
@@ -272,12 +272,29 @@ public class CharacterViewComponent extends HorizontalFlowLayout implements Addo
                     if(originAddonExists) layout.child(screenAddons.get(implementedAddons.get(0)).addBranchComponent(rootComponent));
                 })
                 .child(
-                        CustomEntityComponent.profileBasedEntityComponent(Sizing.fixed(originAddonExists ? 85 : 100), playerProfile)
-                                .scale(originAddonExists ? 0.45F : 0.55F)
+                        UIOps.playerEntityComponent(Sizing.fixed(originAddonExists ? 90 : 110), playerProfile)
+                                .scale(originAddonExists ? 0.45F : 0.44F)
                                 //.scaleToFit(true)
                                 .allowMouseRotation(true)
-                                .margins(Insets.of(originAddonExists ? 10 : 30, 6, 5, 5))
+                                .margins(originAddonExists
+                                         ? Insets.of(5, 4, 0, 0)
+                                         : Insets.of(20, 5, 0, 0)
+                                )
                 );
+
+        if(this.currentMode.importFromCharacter()){
+            BaseCharacter.Health health = currentCharacter.getHealthStage();
+
+            playerDisplayComponent.child(
+                    Containers.horizontalFlow(Sizing.content(), Sizing.content())
+                            .child(Components.label(Text.literal("Health: ")))
+                            .child(
+                                    Components.label(health.getLabel())
+                                            .color(health.getColor())
+                            )
+            );
+        }
+
         //------------------
 
         //-- Final Layout of left Panel --
@@ -543,9 +560,9 @@ public class CharacterViewComponent extends HorizontalFlowLayout implements Addo
             addonData.putAll(addon.getAddonData());
         }
 
-        Map<Identifier, String> addonDataJson = Util.make(new HashMap<>(), map -> addonData.forEach((id, addon) -> map.put(id, PersonalityMod.GSON.toJson(addon))));
+        Map<Identifier, String> addonDataJson = Util.make(new HashMap<>(), map -> addonData.forEach((id, addon) -> map.put(id, ClientCharacters.INSTANCE.getGson().toJson(addon))));
 
-        Character character = new Character(this.currentCharacter != null ? this.currentCharacter.getUUID() : UUID.randomUUID().toString(), entity.getUuidAsString(), name, gender, description, biography, age, activityOffset);
+        Character character = new Character(this.currentCharacter != null ? this.currentCharacter.getUUID() : UUID.randomUUID().toString(), entity.getUuidAsString(), name, gender, description, biography, age);
 
         if(this.currentMode == CharacterViewMode.EDITING){
             if(this.currentCharacter == null) return false;
@@ -595,13 +612,13 @@ public class CharacterViewComponent extends HorizontalFlowLayout implements Addo
 
             switch (value){
                 case 0 -> {} //Nothing to change so return
-                case 1 -> Networking.sendC2S(new SyncC2SPackets.ModifyBaseCharacterData(PersonalityMod.GSON.toJson(character), changedValues));
+                case 1 -> Networking.sendC2S(new SyncC2SPackets.ModifyBaseCharacterData(ClientCharacters.INSTANCE.getGson().toJson(character), changedValues));
                 case 2 -> Networking.sendC2S(new SyncC2SPackets.ModifyAddonData(character.getUUID(), addonDataJson, changedValues));
-                case 3 -> Networking.sendC2S(new SyncC2SPackets.ModifyEntireCharacter(PersonalityMod.GSON.toJson(character), character.getUUID(), addonDataJson, changedValues));
+                case 3 -> Networking.sendC2S(new SyncC2SPackets.ModifyEntireCharacter(ClientCharacters.INSTANCE.getGson().toJson(character), character.getUUID(), addonDataJson, changedValues));
             }
 
         } else {
-            Networking.sendC2S(new SyncC2SPackets.NewCharacter(PersonalityMod.GSON.toJson(character), addonDataJson, true));
+            Networking.sendC2S(new SyncC2SPackets.NewCharacter(ClientCharacters.INSTANCE.getGson().toJson(character), addonDataJson, true));
         }
 
         return true;

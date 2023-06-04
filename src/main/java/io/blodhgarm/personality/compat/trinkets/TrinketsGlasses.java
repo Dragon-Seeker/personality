@@ -30,7 +30,7 @@ public class TrinketsGlasses implements ItemRegistryContainer {
     public static void clientInit(){
         BlurryVisionShaderEffect.registerChecker(player -> {
             return TrinketsApi.getTrinketComponent(player)
-                    .map(component -> component.isEquipped(stack -> stack.isIn(PersonalityTags.VISION_GLASSES)))
+                    .map(component -> component.isEquipped(stack -> stack.isIn(PersonalityTags.Items.VISION_GLASSES)))
                     .orElse(false);
         });
     }

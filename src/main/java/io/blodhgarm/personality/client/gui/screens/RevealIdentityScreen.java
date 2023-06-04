@@ -1,16 +1,21 @@
 package io.blodhgarm.personality.client.gui.screens;
 
+import com.mojang.authlib.GameProfile;
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.Networking;
+import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.reveal.InfoLevel;
 import io.blodhgarm.personality.client.PersonalityClient;
 import io.blodhgarm.personality.client.gui.ThemeHelper;
 import io.blodhgarm.personality.client.gui.components.builders.SimpleRadialLayoutBuilder;
 import io.blodhgarm.personality.client.gui.utils.owo.ExtraSurfaces;
 import io.blodhgarm.personality.api.reveal.RevelInfoManager;
+import io.blodhgarm.personality.misc.PersonalityTags;
 import io.blodhgarm.personality.misc.pond.owo.AnimationExtension;
-import io.blodhgarm.personality.packets.RevealCharacterC2SPacket;
+import io.blodhgarm.personality.packets.RevealCharacterPackets;
+import io.blodhgarm.personality.utils.Constants;
 import io.blodhgarm.personality.utils.DebugCharacters;
+import io.blodhgarm.personality.utils.LookingUtils;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.base.BaseParentComponent;
 import io.wispforest.owo.ui.component.Components;
@@ -18,10 +23,12 @@ import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.*;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.Box;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -231,23 +238,31 @@ public class RevealIdentityScreen extends BaseOwoScreen<FlowLayout> {
     }
 
     public void confirmSelection(){
-        String playerUUID = "";
+        GameProfile playerProfile = Constants.ERROR_PROFILE;
+
+        PlayerEntity player = MinecraftClient.getInstance().player;
 
         if(selectedRevealRange == RevelInfoManager.RevealRange.DIRECTED) {
-            HitResult result = MinecraftClient.getInstance().player
-                    .raycast(60, MinecraftClient.getInstance().getTickDelta(), false);
+            for (Entity entity : MinecraftClient.getInstance().world.getOtherEntities(player, Box.of(player.getPos(), 128, 128, 128))) {
+                boolean bl2 = !(entity instanceof PlayerEntity otherPlayer)
+                        || PersonalityMod.hasEffect(otherPlayer, PersonalityTags.StatusEffects.OBSCURING_EFFECTS)
+                        || otherPlayer.getInventory().armor.get(3).isIn(PersonalityTags.Items.OBSCURES_IDENTITY)
+                        || !LookingUtils.isPlayerStaring(player, otherPlayer, 128);
 
-            if (result instanceof EntityHitResult entityHitResult && entityHitResult.getEntity() instanceof PlayerEntity playerEntity) {
-                playerUUID = playerEntity.getUuid().toString();
-            } else {
+                if (bl2) continue;
+
+                playerProfile = ((PlayerEntity) entity).getGameProfile();
+
+                break;
+            }
+
+            if (playerProfile == null) {
                 LOGGER.warn("[RevealIdentityScreen] The Directed Reveal Range was used but that the Client wasn't looking at a player");
-
-                playerUUID = DebugCharacters.ERROR.getUUID();
             }
         }
 
-        if(!Objects.equals(playerUUID, DebugCharacters.ERROR.getUUID())) {
-            Networking.sendC2S(new RevealCharacterC2SPacket(this.selectedRevealLevel, this.selectedRevealRange, playerUUID));
+        if(!Constants.isErrored(playerProfile)) {
+            Networking.sendC2S(new RevealCharacterPackets.RevealByInfoLevel(this.selectedRevealLevel, this.selectedRevealRange, playerProfile.getId().toString()));
         }
 
         this.close();

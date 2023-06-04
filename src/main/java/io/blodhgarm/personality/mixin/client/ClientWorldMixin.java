@@ -27,14 +27,14 @@ public abstract class ClientWorldMixin {
 
             if(characterOther == null) return;
 
-            ((CharacterToPlayerLink<AbstractClientPlayerEntity>) (player))
-                    .setCharacter(ClientCharacters.INSTANCE.getKnownCharacter(player));
+//            ((CharacterToPlayerLink<AbstractClientPlayerEntity>) (player))
+//                    .setCharacter(ClientCharacters.INSTANCE.getKnownCharacter(player));
 
             //TODO: MAYBE HOOK INTO EVENTS TO APPLY ADDONS ON THE CLIENT WHEN NEW PLAYERS ENTER THE CLIENTS WORLD AND VISE VERSA
             // Use net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents
             ClientCharacters.INSTANCE.applyAddons(player);
 
-            ClientCharacters.INSTANCE.setKnownCharacters(new PlayerAccess(player), characterOther.getUUID());
+            //ClientCharacters.INSTANCE.setKnownCharacters(new PlayerAccess(player), characterOther.getUUID());
         }
     }
 }

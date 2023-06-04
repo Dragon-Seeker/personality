@@ -23,6 +23,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -88,15 +89,22 @@ public class CharacterInfoScreen extends TabbedScreen {
 
         if(this.currentCharacter == null) this.currentCharacter = DebugCharacters.getRevealTest(ClientCharacters.INSTANCE);
 
-        List<BaseCharacter> knownCharacters = new ArrayList<>(this.currentCharacter.getKnownCharacters().values());
+        List<KnownCharacter> knownCharacters = new ArrayList<>(this.currentCharacter.getKnownCharacters().values());
 
         if(knownCharacters.isEmpty() && !DebugCharacters.KNOWN_CHARACTERS.isEmpty()) knownCharacters.addAll(DebugCharacters.getKnownCharacters(ClientCharacters.INSTANCE));
 
         FlowLayout knownCharacterLayout = Containers.verticalFlow(Sizing.content(), Sizing.content())
                 .child(
-                        new CharacterBasedGridLayout(Sizing.content(), Sizing.content(),this)
+                        new CharacterBasedGridLayout<KnownCharacter>(Sizing.content(), Sizing.content(),this)
 //                                .changeDirection(((ScrollContainerAccessor) knownCharacterContainer).personality$direction() == ScrollContainer.ScrollDirection.VERTICAL)'
-                                .addBuilder(Text.of("Friendliness"), (c, mode, isVertical) -> Components.label(((KnownCharacter) c).level.getTranslation()))
+                                .addBuilder(Text.of("Discovered On"), (c, mode, isVertical) -> {
+                                    var t = c.getDiscoveredTime();
+
+                                    Text text = Text.of(t.equals(LocalDateTime.MIN) ? "Error" : t.toLocalDate().toString() /*+ " " + t.toLocalTime()*/);
+
+                                    return Components.label(text);
+                                })
+                                .addBuilder(Text.of("Friendliness"), (c, mode, isVertical) -> Components.label(c.level.getTranslation()))
                                 .setRowDividingLine(1)
                                 .setColumnDividingLine(1)
                                 .addEntries(knownCharacters)

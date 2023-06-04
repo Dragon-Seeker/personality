@@ -35,25 +35,23 @@ public class PersonalityConfigModel {
     @RangeConstraint(min = 0, max = Integer.MAX_VALUE)
     public int maximumExtraAge = 30;
 
+    @Sync(value = Option.SyncMode.OVERRIDE_CLIENT)
+    @RangeConstraint(min = 0, max = 1440)
+    public int characterDeathWindow = 5;
+
+    public boolean killPlayerOnCharacterDeath = false;
+
     // Info Reveal Configurations
 
+    @SectionHeader("info_reveal_configuration")
     @Sync(value = Option.SyncMode.OVERRIDE_CLIENT)
-    public InfoLevel minimumInfo = InfoLevel.NONE;
+    public InfoLevel minimumBaseInfo = InfoLevel.NONE;
 
     @Sync(value = Option.SyncMode.OVERRIDE_CLIENT)
-    public List<Identifier> none_tier = List.of();
+    public InfoLevel minimumRevealInfo = InfoLevel.NONE;
 
     @Sync(value = Option.SyncMode.OVERRIDE_CLIENT)
-    public List<Identifier> general_tier = List.of();
-
-    @Sync(value = Option.SyncMode.OVERRIDE_CLIENT)
-    public List<Identifier> associate_tier = List.of();
-
-    @Sync(value = Option.SyncMode.OVERRIDE_CLIENT)
-    public List<Identifier> trusted_tier = List.of();
-
-    @Sync(value = Option.SyncMode.OVERRIDE_CLIENT)
-    public List<Identifier> confidant_tier = List.of();
+    public InfoLevel minimumDiscoveryInfo = InfoLevel.NONE;
 
     //Command Configurations
 
@@ -77,21 +75,26 @@ public class PersonalityConfigModel {
     @SectionHeader("client")
     public ThemeMode themeMode = ThemeMode.SYSTEM;
 
-    // --- Basically enabling advanced tooltip for chat messages ---
+    // --- Will Remove Players names from chat if they have character and active advanced tooltips on names ---
     public boolean showPlayerNameInChat = true;
+
+    // --- Will remove the Players name from Name plate Display ---
+    public boolean showPlayerNameInNamePlate = true;
 
     // --- Used to change the position of the players' nameplate ---
     public boolean showPlayerNamePlateAtChestLevel = false;
+
+    public boolean autoDiscovery = true;
 
     @Nest
     public DescriptionViewConfig descriptionConfig = new DescriptionViewConfig();
 
     public static class DescriptionViewConfig {
-        public boolean descriptionView = false;
+        public boolean descriptionView = true;
 
         public ControlType descriptionKeybindingControl = ControlType.TOGGLE;
 
-        public boolean automaticScrolling = false;
+        public boolean automaticScrolling = true;
     }
 
     public enum ControlType {

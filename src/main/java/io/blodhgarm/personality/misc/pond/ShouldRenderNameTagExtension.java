@@ -6,9 +6,9 @@ import net.minecraft.entity.Entity;
 import java.util.function.Consumer;
 
 //Based on owo implementation
-public interface ShouldRenderNameTagExtension {
+public interface ShouldRenderNameTagExtension<C> {
 
-    void personality$setShouldNameTagRender(boolean value);
+    C personality$setShouldNameTagRender(boolean value);
 
     boolean personality$shouldNameTagRender();
 

@@ -1,5 +1,7 @@
 package io.blodhgarm.personality.packets;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.Networking;
 import io.blodhgarm.personality.PersonalityMod;
@@ -10,6 +12,7 @@ import io.blodhgarm.personality.api.core.BaseRegistry;
 import io.blodhgarm.personality.api.utils.PlayerAccess;
 import io.blodhgarm.personality.client.ClientCharacters;
 import io.blodhgarm.personality.client.gui.screens.AdminCharacterScreen;
+import io.blodhgarm.personality.utils.CharacterReferenceData;
 import io.wispforest.owo.network.ClientAccess;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -44,10 +47,6 @@ public class SyncS2CPackets {
             ClientCharacters.INSTANCE.init(message.characters, message.associations);
 
             ClientCharacters.INSTANCE.applyAddons(access.player());
-
-            Character clientC = ClientCharacters.INSTANCE.getCharacter(MinecraftClient.getInstance().player);
-
-            if(clientC != null) ClientCharacters.INSTANCE.setKnownCharacters(new PlayerAccess<>(access.player()), clientC.getUUID());
         }
     }
 
@@ -60,9 +59,13 @@ public class SyncS2CPackets {
 
         @Environment(EnvType.CLIENT)
         public static void syncCharacter(SyncCharacterData message, ClientAccess access) {
-            Character c = PersonalityMod.GSON.fromJson(message.characterJson, Character.class);
+            Character c = ClientCharacters.INSTANCE.deserializeCharacter(message.characterJson);
+
+            c.setCharacterManager(ClientCharacters.INSTANCE);
 
             boolean addonDataDeserialized = false;
+
+            Character oldCharacter = ClientCharacters.INSTANCE.getCharacter(c.getUUID());
 
             if(!message.addonData.isEmpty()) {
                 Map<Identifier, BaseAddon> addonMap = AddonRegistry.INSTANCE.deserializesAddons(c, message.addonData, false);
@@ -76,29 +79,25 @@ public class SyncS2CPackets {
 
                     addonDataDeserialized = true;
                 }
-            } else {
-                Character oldCharacter = ClientCharacters.INSTANCE.getCharacter(c.getUUID());
-
-                if(oldCharacter != null) c.getAddons().putAll(oldCharacter.getAddons());
+            } else if(oldCharacter != null) {
+                c.getAddons().putAll(oldCharacter.getAddons());
             }
 
-            ClientCharacters.INSTANCE.characterLookupMap().put(c.getUUID(), c);
+            if(!c.equals(oldCharacter)) {
+                ClientCharacters.INSTANCE.characterLookupMap().put(c.getUUID(), c);
 
-            ClientCharacters.INSTANCE.sortCharacterLookupMap();
-
-            PlayerAccess<AbstractClientPlayerEntity> playerCharacter = ClientCharacters.INSTANCE.getPlayer(c);
-
-            if(playerCharacter.valid()
-                    && Objects.equals(playerCharacter.UUID(), access.player().getUuid().toString())) {
-
-                if(playerCharacter.player() != null && addonDataDeserialized) ClientCharacters.INSTANCE.applyAddons(playerCharacter.player());
-
-                ClientCharacters.INSTANCE.setKnownCharacters(playerCharacter, c.getUUID());
+                ClientCharacters.INSTANCE.sortCharacterLookupMap();
             }
 
-            if(MinecraftClient.getInstance().currentScreen instanceof AdminCharacterScreen screen){
-                screen.shouldAttemptUpdate(c);
-            }
+            PlayerAccess<AbstractClientPlayerEntity> playerAccess = ClientCharacters.INSTANCE.getPlayerFromCharacter(c);
+
+            boolean shouldApplyAddons = playerAccess.playerValid(access.player()::equals) && addonDataDeserialized;
+
+            if(shouldApplyAddons) ClientCharacters.INSTANCE.applyAddons(playerAccess.player());
+
+            c.getKnownCharacters().forEach((s, knownCharacter) -> knownCharacter.setCharacterManager(ClientCharacters.INSTANCE));
+
+            if(MinecraftClient.getInstance().currentScreen instanceof AdminCharacterScreen s) s.shouldAttemptUpdate(c);
         }
     }
 
@@ -109,7 +108,7 @@ public class SyncS2CPackets {
             Character c = ClientCharacters.INSTANCE.getCharacter(message.characterUUID());
 
             if(c == null){
-                LOGGER.error("[SyncAddons] It seems that there was no Character [UUID: {}] to sync addons with, such will be ignored.", message.characterUUID());
+                LOGGER.error("[SyncAddons] It seems that there was no Character [uuid: {}] to sync addons with, such will be ignored.", message.characterUUID());
 
                 return;
             }
@@ -125,17 +124,13 @@ public class SyncS2CPackets {
 
             c.getAddons().putAll(addonMap);
 
-            PlayerAccess<AbstractClientPlayerEntity> playerCharacter = ClientCharacters.INSTANCE.getPlayer(c);
+            PlayerAccess<AbstractClientPlayerEntity> playerAccess = ClientCharacters.INSTANCE.getPlayerFromCharacter(c);
 
-            if(playerCharacter.valid()
-                    && Objects.equals(playerCharacter.UUID(), access.player().getUuid().toString())) {
-
-                if(playerCharacter.player() != null) ClientCharacters.INSTANCE.applyAddons(playerCharacter.player());
+            if(playerAccess.playerValid(access.player()::equals)) {
+                ClientCharacters.INSTANCE.applyAddons(playerAccess.player());
             }
 
-            if(MinecraftClient.getInstance().currentScreen instanceof AdminCharacterScreen screen){
-                screen.shouldAttemptUpdate(c);
-            }
+            if(MinecraftClient.getInstance().currentScreen instanceof AdminCharacterScreen s) s.shouldAttemptUpdate(c);
         }
     }
 
@@ -159,7 +154,20 @@ public class SyncS2CPackets {
             ClientCharacters.INSTANCE.dissociateUUID(message.uuid, message.characterUUID);
 
             AddonRegistry.INSTANCE.checkAndDefaultPlayerAddons(access.player());
+        }
+    }
 
+    public record SyncOnlinePlaytimes(String jsonData){
+        @Environment(EnvType.CLIENT)
+        public static void syncOnlinePlaytimes(SyncOnlinePlaytimes message, ClientAccess access){
+            ClientCharacters.INSTANCE.getGson().fromJson(message.jsonData, JsonArray.class).forEach(e -> {
+                if(!(e instanceof JsonObject o && o.has("uuid"))) return;
+
+                ClientCharacters.INSTANCE.deserializeCharacter(
+                        o.toString(),
+                        new CharacterReferenceData(ClientCharacters.INSTANCE, o.remove("uuid").getAsString())
+                );
+            });
         }
     }
 

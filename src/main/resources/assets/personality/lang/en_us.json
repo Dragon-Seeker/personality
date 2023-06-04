@@ -21,11 +21,26 @@
   "personality.keybind.open_subscreen": "Open Character Screen",
   "personality.keybind.reveal": "Open Reveal Screen",
 
+  "personality.keybind.toggle_automatic_scrolling": "Toggle Auto Scrolling (Description View)",
+  "personality.keybind.toggle_description_view": "Toggle Description View",
+
+  "personality.keybind.toggle_auto_discovery": "Toggle Auto Discovery",
+
   "origin.personality.unknown.name": "Unknown",
   "origin.personality.unknown.description": "Currently Unknown to you, you can ask them or wait until they tell you?",
 
   "item.personality.basic_glasses": "Glasses",
   "item.personality.cane" : "Wooden Cane",
+
+  "death.attack.oldAge": "%1$s gracefully died from Old Age",
+  "death.attack.trippedByDeath": "%1$s died from tripping on a rock while running from Death",
+
+  "personality.health.unknown": "Unknown",
+  "personality.health.great": "Great",
+  "personality.health.good": "Good",
+  "personality.health.ok": "Okay",
+  "personality.health.unwell": "Unwell",
+  "personality.health.near_death": "Near Death",
 
   "#divider": "CONFIG TRANSLATIONS \/",
 
@@ -99,6 +114,12 @@
   "text.config.personality.option.defaultMaximumAge": "Default Maximum Age for a Character",
   "text.config.personality.option.maximumExtraAge": "Maximum Extra age allow for a Given Character",
 
+  "text.config.personality.option.characterDeathWindow": "Death Window Time Span",
+  "text.config.personality.option.characterDeathWindow.tooltip": "Control how long they have to avoid death",
+
+  "text.config.personality.option.killPlayerOnCharacterDeath": "Kill Player on Character Death",
+  "text.config.personality.option.killPlayerOnCharacterDeath.tooltip": "Controls weather or not the player will die on a character death",
+
   "text.config.personality.section.command_authorization_configuration": "Command Authorization",
 
   "text.config.personality.option.moderationList": "Moderation List",
@@ -122,14 +143,26 @@
   "text.config.personality.option.showPlayerNameInChat": "Show Player Name within Chat",
   "text.config.personality.option.showPlayerNameInChat.tooltip": "Only works if the given player has a character",
 
+  "text.config.personality.option.showPlayerNameInNamePlate": "Show Player Name within Name Plate",
+  "text.config.personality.option.showPlayerNameInNamePlate.tooltip": "Only works if the given player has a character",
+
   "text.config.personality.option.showPlayerNamePlateAtChestLevel": "Show Player Nameplate at Chest Level",
 
-  "text.config.personality.option.disableSponsorComponent": "Disables the Sponsor Component found on some screens",
+  "text.config.personality.section.info_reveal_configuration" : "Info Reveal Configuration",
 
-  "text.config.personality.option.showInWorldDescriptionTooltipComponent": "[WIP] Show In World Description tooltips when looking at the player",
+  "info_reveal_configuration": "",
 
-  "text.config.personality.option.minimumInfo" : "Minimum Info Level",
-  "text.config.personality.option.minimumInfo.tooltip" : "Set what the Minimum starting knowledge everyone will get when giving info",
+  "text.config.personality.option.minimumBaseInfo" : "Minimum Info Level",
+  "text.config.personality.option.minimumBaseInfo.tooltip" : "Globally sets the minimum for knowledge know about characters after being discovered",
+
+  "text.config.personality.option.minimumRevealInfo" : "Minimum Reveal Info Level",
+  "text.config.personality.option.minimumRevealInfo.tooltip" : "Sets the minimum Info Level will be used when Revealing Information",
+
+  "text.config.personality.option.minimumDiscoveryInfo" : "Minimum Discovery Info Level",
+  "text.config.personality.option.minimumDiscoveryInfo.tooltip" : "Sets the minimum Info Level will be used when Discovering Characters",
+
+  "text.config.personality.option.autoDiscovery" : "Toggle Automatic Discovery",
+  "text.config.personality.option.autoDiscovery.tooltip" : "Toggles weather you can discovery a character by looking at them.",
 
   "text.config.personality.enum.infoLevel.undiscovered" : "Undiscovered",
   "text.config.personality.enum.infoLevel.none" : "None",

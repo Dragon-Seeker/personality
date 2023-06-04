@@ -7,9 +7,12 @@ import com.jthemedetecor.OsThemeDetector;
 import io.blodhgarm.personality.api.PersonalityEntrypoint;
 import io.blodhgarm.personality.api.addon.AddonRegistry;
 import io.blodhgarm.personality.api.addon.BaseAddon;
+import io.blodhgarm.personality.api.character.BaseCharacter;
 import io.blodhgarm.personality.api.character.Character;
+import io.blodhgarm.personality.api.character.ServerCharacter;
 import io.blodhgarm.personality.api.core.BaseRegistry;
 import io.blodhgarm.personality.api.events.FinalizedPlayerConnectionEvent;
+import io.blodhgarm.personality.api.events.OnWorldSaveEvent;
 import io.blodhgarm.personality.api.reveal.InfoLevel;
 import io.blodhgarm.personality.api.reveal.InfoRevealLoader;
 import io.blodhgarm.personality.api.reveal.InfoRevealRegistry;
@@ -21,9 +24,11 @@ import io.blodhgarm.personality.item.WoodenCane;
 import io.blodhgarm.personality.misc.PersonalityCommands;
 import io.blodhgarm.personality.misc.PersonalitySoundEvents;
 import io.blodhgarm.personality.misc.config.PersonalityConfig;
-import io.blodhgarm.personality.server.CharacterTick;
+import io.blodhgarm.personality.server.ServerCharacterTick;
+import io.blodhgarm.personality.utils.gson.LocalDateTimeTypeAdapter;
 import io.blodhgarm.personality.server.PrivilegeManager;
 import io.blodhgarm.personality.server.ServerCharacters;
+import io.blodhgarm.personality.utils.CharacterReferenceData;
 import io.blodhgarm.personality.utils.DebugCharacters;
 import io.wispforest.owo.registration.reflect.FieldRegistrationHandler;
 import io.wispforest.owo.registration.reflect.ItemRegistryContainer;
@@ -32,15 +37,21 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.resource.ResourceType;
+import net.minecraft.tag.TagKey;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.Registry;
+
+import java.time.LocalDateTime;
 
 public class PersonalityMod implements ModInitializer, PersonalityEntrypoint, ItemRegistryContainer {
 
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting()
-            .registerTypeAdapter(Character.class, (InstanceCreator<Object>) type -> new Character("", "", "", "", "", -1, -1))
+            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeTypeAdapter().nullSafe())
             .create();
 
     public static final PersonalityConfig CONFIG = PersonalityConfig.createAndLoad();
@@ -84,9 +95,11 @@ public class PersonalityMod implements ModInitializer, PersonalityEntrypoint, It
 
         ServerLifecycleEvents.END_DATA_PACK_RELOAD.register((server, resourceManager, success) -> loadRegistries("EndDataPackReload"));
 
-        ServerTickEvents.END_WORLD_TICK.register(PersonalityMod.id("tick"), new CharacterTick());
+        ServerTickEvents.END_WORLD_TICK.register(PersonalityMod.id("tick"), new ServerCharacterTick());
 
         FinalizedPlayerConnectionEvent.CONNECTION_FINISHED.register(PersonalityMod.id("on_player_join"), ServerCharacters.INSTANCE);
+
+        OnWorldSaveEvent.ON_SAVE.register(ServerCharacters.INSTANCE);
 
         ResourceManagerHelper.get(ResourceType.SERVER_DATA)
                 .registerReloadListener(new InfoRevealLoader());
@@ -115,7 +128,9 @@ public class PersonalityMod implements ModInitializer, PersonalityEntrypoint, It
         registry.registerValueForRevealing(InfoLevel.GENERAL, PersonalityMod.id("alias"), () -> "Unknown");
 
         registry.registerValueForRevealing(InfoLevel.ASSOCIATE, PersonalityMod.id("gender"), () -> "Unknown");
+
         registry.registerValueForRevealing(InfoLevel.ASSOCIATE, PersonalityMod.id("age"), () -> -1);
+        registry.registerValueForRevealing(InfoLevel.ASSOCIATE, PersonalityMod.id("health"), () -> BaseCharacter.Health.UNKNOWN);
 
         registry.registerValueForRevealing(InfoLevel.TRUSTED, PersonalityMod.id("biography"), () -> "Unknown");
 
@@ -123,5 +138,17 @@ public class PersonalityMod implements ModInitializer, PersonalityEntrypoint, It
 
         if(FabricLoader.getInstance().isModLoaded("origins")) OriginsAddonRegistry.INSTANCE.infoRevealRegistry(registry);
         if(FabricLoader.getInstance().isModLoaded("pehkui")) PehkuiAddonRegistry.INSTANCE.infoRevealRegistry(registry);
+    }
+
+    //----------------------------------
+
+    public static boolean hasEffect(LivingEntity entity, TagKey<StatusEffect> effectTagKey){
+        for(StatusEffect statusEffect : entity.getActiveStatusEffects().keySet()){
+            var entry = Registry.STATUS_EFFECT.getEntry(StatusEffect.getRawId(statusEffect));
+
+            if(entry.isPresent() && entry.get().isIn(effectTagKey)) return true;
+        }
+
+        return false;
     }
 }

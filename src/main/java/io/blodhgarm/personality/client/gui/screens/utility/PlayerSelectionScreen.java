@@ -6,12 +6,11 @@ import io.blodhgarm.personality.client.gui.components.grid.LabeledGridLayout;
 import io.blodhgarm.personality.client.gui.components.grid.MultiToggleButton;
 import io.blodhgarm.personality.client.gui.components.grid.SearchbarComponent;
 import io.blodhgarm.personality.client.gui.screens.AdminCharacterScreen;
+import io.blodhgarm.personality.client.gui.utils.UIOps;
 import io.blodhgarm.personality.client.gui.utils.owo.ExtraSurfaces;
-import io.blodhgarm.personality.misc.pond.ShouldRenderNameTagExtension;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.Components;
-import io.wispforest.owo.ui.component.EntityComponent;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.*;
@@ -146,8 +145,7 @@ public class PlayerSelectionScreen extends BaseOwoScreen<FlowLayout> {
                         new LabeledObjectToComponent<>(
                                 isParentVertical -> Components.label(Text.of("")),
                                 (entry, isParentVertical) -> {
-                                    return Components.entity(Sizing.fixed(20), EntityComponent.createRenderablePlayer(entry.getProfile()))
-                                            .configure(ShouldRenderNameTagExtension.disable(entityComponent -> {}))
+                                    return UIOps.playerEntityComponent(Sizing.fixed(20), entry.getProfile())
                                             .scale(0.65f)
                                             .margins(Insets.of(3));
                                 }

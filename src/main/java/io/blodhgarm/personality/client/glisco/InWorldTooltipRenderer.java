@@ -38,16 +38,14 @@ public class InWorldTooltipRenderer implements WorldRenderEvents.AfterTranslucen
     private float currentTargetViewTime = -1;
     private float lastTargetViewTime = 0;
 
-    @Nullable
-    public InWorldTooltipProvider lastProvider = null;
+    @Nullable public InWorldTooltipProvider lastProvider = null;
 
     private boolean targetViewGap = false;
     private boolean differingProvider = false;
 
-    public Map<Identifier, Renderer> REGISTERED_RENDERS = new HashMap<>();
+    public List<InWorldTooltipProvider.Entry> entryCache = new ArrayList<>();
 
-    @Nullable
-    public Renderer currentRender = null;
+    public Map<Identifier, Renderer> REGISTERED_RENDERS = new HashMap<>();
 
     public void initialize() {
         this.REGISTERED_RENDERS.put(PersonalityMod.id("description"), DescriptionRenderer.INSTANCE);
@@ -63,11 +61,8 @@ public class InWorldTooltipRenderer implements WorldRenderEvents.AfterTranslucen
 
         HitResultInfo info = HitResultInfo.of(client, client.crosshairTarget);
 
-        this.currentRender = null;
-
         if(info == null) {
             lastTargetPos = null;
-
             targetViewGap = true;
 
             return;
@@ -75,7 +70,6 @@ public class InWorldTooltipRenderer implements WorldRenderEvents.AfterTranslucen
 
         var target = info.target();
         var targetShape = info.targetShape();
-
         var provider = info.provider();
 
         if (!target.equals(lastTargetPos)) {
@@ -91,9 +85,7 @@ public class InWorldTooltipRenderer implements WorldRenderEvents.AfterTranslucen
             return;
         }
 
-        if(!Objects.equals(provider, lastProvider)){
-            differingProvider = true;
-        }
+        if(!Objects.equals(provider, lastProvider)) differingProvider = true;
 
         lastProvider = provider;
 
@@ -101,17 +93,17 @@ public class InWorldTooltipRenderer implements WorldRenderEvents.AfterTranslucen
 
         provider.updateTooltipEntries(Math.floor(currentTargetViewTime) == 5f, client.getLastFrameDuration());
 
-        var entries = new ArrayList<InWorldTooltipProvider.Entry>();
-        provider.appendTooltipEntries(entries);
+        if(differingProvider || targetViewGap) {
+            entryCache.clear();
 
-        if(entries.isEmpty()) return;
+            provider.appendTooltipEntries(entryCache);
+        }
 
-        var modelViewStack = RenderSystem.getModelViewStack();
-        modelViewStack.push();
-        modelViewStack.multiplyPositionMatrix(context.matrixStack().peek().getPositionMatrix());
+        if (entryCache.isEmpty()) return;
+
+        //--
 
         Vec3d pos;
-        //--
 
         var xOffset = targetShape.minX + (targetShape.maxX - targetShape.minX) / 2;
         var zOffset = targetShape.minZ + (targetShape.maxZ - targetShape.minZ) / 2;
@@ -129,13 +121,18 @@ public class InWorldTooltipRenderer implements WorldRenderEvents.AfterTranslucen
 
         //--
 
+        var modelViewStack = RenderSystem.getModelViewStack();
+        modelViewStack.push();
+        modelViewStack.multiplyPositionMatrix(context.matrixStack().peek().getPositionMatrix());
+
         modelViewStack.translate(pos.x, pos.y, pos.z);
 
         modelViewStack.scale(.01f, -.01f, .01f);//modelViewStack.scale(.01f, -.01f, .01f);
 
         var offset = pos.multiply(-1);
+
         double horizontalAngle = Math.atan2(offset.z, offset.x);
-        double verticalAngle = Math.atan2(offset.y, Math.sqrt(offset.x * offset.x + offset.z * offset.z));
+        //double verticalAngle = Math.atan2(offset.y, Math.sqrt(offset.x * offset.x + offset.z * offset.z));
 
         modelViewStack.multiply(new Quaternion(Vec3f.POSITIVE_Y, (float) (-horizontalAngle + Math.PI / 2), false) );
         RenderSystem.applyModelViewMatrix();
@@ -149,14 +146,12 @@ public class InWorldTooltipRenderer implements WorldRenderEvents.AfterTranslucen
         var renderer = REGISTERED_RENDERS.get(provider.getTooltipId());
 
         if(renderer != null) {
-            boolean shouldReset = renderer.shouldResetRenderer(targetViewGap, differingProvider);
+            boolean shouldReset = targetViewGap || differingProvider;
 
             float delta = currentTargetViewTime - lastTargetViewTime;
 
-            renderer.render(entries, info, matrices, shouldReset, delta);
+            renderer.render(entryCache, info, matrices, shouldReset, delta);
         }
-
-        this.currentRender = renderer;
 
         targetViewGap = false;
         differingProvider = false;
@@ -175,10 +170,6 @@ public class InWorldTooltipRenderer implements WorldRenderEvents.AfterTranslucen
 
     public interface Renderer {
         void render(List<InWorldTooltipProvider.Entry> entries, HitResultInfo hitResult, MatrixStack matrices, boolean shouldReset, float delta);
-
-        default boolean shouldResetRenderer(boolean targetViewGap, boolean differingProvider){
-            return targetViewGap || differingProvider;
-        }
     }
 
     public record HitResultInfo(Vec3d target, Box targetShape, @Nullable InWorldTooltipProvider provider){

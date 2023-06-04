@@ -138,14 +138,14 @@ public class AddonRegistry<A extends BaseAddon> extends BaseRegistry {
 
                 addon = PersonalityMod.GSON.fromJson(addonJson, registryHelper.addonClass());
             } catch (IOException e){
-                LOGGER.error("[AddonLoading] {} addon for [Name: {}, UUID: {}] was unable to be loaded from the Disc, setting such to default and saved to disc.", s, c.getName(), c.getUUID());
+                LOGGER.error("[AddonLoading] {} addon for [Name: {}, uuid: {}] was unable to be loaded from the Disc, setting such to default and saved to disc.", s, c.getName(), c.getUUID());
 
                 addon = registryHelper.defaultAddon.get();
                 ServerCharacters.INSTANCE.saveAddonForCharacter(c, s, addon);
 
                 e.printStackTrace();
             } catch (JsonSyntaxException e){
-                LOGGER.error("[AddonLoading] {} addon for [Name: {}, UUID: {}] was unable to be serialized, setting such to default.", s, c.getName(), c.getUUID());
+                LOGGER.error("[AddonLoading] {} addon for [Name: {}, uuid: {}] was unable to be serialized, setting such to default.", s, c.getName(), c.getUUID());
 
                 addon = registryHelper.defaultAddon.get();
                 addon.loadedProperly = false;
@@ -154,8 +154,8 @@ public class AddonRegistry<A extends BaseAddon> extends BaseRegistry {
             }
 
             if(!registryHelper.addonValidator.test(addon)){
-                //throw new AddonInvalidException("A given Character Addon was found to be invalid! [Name: " + c.getName() + " , UUID: " + c.getUUID() + "]")
-                LOGGER.error("[AddonLoading] {} addon for [Name: {}, UUID: {}] was found to be invalid.", s, c.getName(), c.getUUID());
+                //throw new AddonInvalidException("A given Character Addon was found to be invalid! [Name: " + c.getName() + " , uuid: " + c.getUUID() + "]")
+                LOGGER.error("[AddonLoading] {} addon for [Name: {}, uuid: {}] was found to be invalid.", s, c.getName(), c.getUUID());
 
                 addon.loadedProperly = false;
             }
@@ -176,7 +176,7 @@ public class AddonRegistry<A extends BaseAddon> extends BaseRegistry {
             AddonLoader<A> registryHelper = LOADERS.get(addonId);
 
             if(registryHelper == null){
-                LOGGER.error("[AddonLoading] {} addon for [Name: {}, UUID: {}] was unable to be found, ignoring addon", addonId, c.getName(), c.getUUID());
+                LOGGER.error("[AddonLoading] {} addon for [Name: {}, uuid: {}] was unable to be found, ignoring addon", addonId, c.getName(), c.getUUID());
                 return;
             }
 
@@ -187,7 +187,7 @@ public class AddonRegistry<A extends BaseAddon> extends BaseRegistry {
 
                 if(validateOrDefault) addon = this.validateOrDefault(addonId, addon);
             } catch (JsonSyntaxException e){
-                LOGGER.error("[AddonLoading] {} addon for [Name: {}, UUID: {}] was unable to be serialized, setting such to default.", addonId, c.getName(), c.getUUID());
+                LOGGER.error("[AddonLoading] {} addon for [Name: {}, uuid: {}] was unable to be serialized, setting such to default.", addonId, c.getName(), c.getUUID());
 
                 addon = registryHelper.defaultAddon.get();
                 addon.loadedProperly = false;
