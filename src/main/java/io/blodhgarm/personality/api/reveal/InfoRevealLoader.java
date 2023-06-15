@@ -88,10 +88,10 @@ public class InfoRevealLoader extends JsonDataLoader implements IdentifiableReso
             if(!instance.getRegisteredIds().contains(id)){
                 LOGGER.error("[InfoRevealLoader]: An Identifier[{}] was attempted to be registered to change what Level it belonged to but didn't exist within the registry! Resource[{}]", id, data.resourceId());
 
-                return;
+                continue;
             }
 
-            if(instance.FINALIZED_REGISTRY.get(data.level()).contains(id)) return;
+            if(instance.FINALIZED_REGISTRY.get(data.level()).contains(id)) continue;
 
             for (Map.Entry<InfoLevel, List<Identifier>> entry : instance.FINALIZED_REGISTRY.entrySet()) {
                 boolean isCurrentLevel = entry.getKey().equals(data.level());

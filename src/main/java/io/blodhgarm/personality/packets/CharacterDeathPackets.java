@@ -14,6 +14,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
 
+
 public class CharacterDeathPackets {
 
     public record CheckDeathScreenOpen(){}

@@ -1,12 +1,11 @@
 package io.blodhgarm.personality.api.character;
 
-import com.google.common.reflect.TypeToken;
 import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.api.core.KnownCharacterLookup;
 import io.blodhgarm.personality.api.reveal.KnownCharacter;
 import io.blodhgarm.personality.api.utils.PlayerAccess;
-import io.blodhgarm.personality.server.ServerCharacters;
 import io.blodhgarm.personality.misc.PersonalityTags;
+import io.blodhgarm.personality.server.ServerCharacters;
 import io.blodhgarm.personality.utils.Constants;
 import io.blodhgarm.personality.utils.DebugCharacters;
 import net.minecraft.entity.player.PlayerEntity;
@@ -18,7 +17,6 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 
 import javax.annotation.Nullable;
-import java.lang.reflect.Type;
 import java.util.*;
 
 /**
