@@ -491,14 +491,6 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve calculationCurve();
         void calculationCurve(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value);
     }
-    public interface DescriptionViewConfig {
-        boolean descriptionView();
-        void descriptionView(boolean value);
-        io.blodhgarm.personality.misc.config.PersonalityConfigModel.ControlType descriptionKeybindingControl();
-        void descriptionKeybindingControl(io.blodhgarm.personality.misc.config.PersonalityConfigModel.ControlType value);
-        boolean automaticScrolling();
-        void automaticScrolling(boolean value);
-    }
     public interface ExtraLife {
         int minAge();
         void minAge(int value);
@@ -510,6 +502,14 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         void multiplier(float value);
         io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve calculationCurve();
         void calculationCurve(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value);
+    }
+    public interface DescriptionViewConfig {
+        boolean descriptionView();
+        void descriptionView(boolean value);
+        io.blodhgarm.personality.misc.config.PersonalityConfigModel.ControlType descriptionKeybindingControl();
+        void descriptionKeybindingControl(io.blodhgarm.personality.misc.config.PersonalityConfigModel.ControlType value);
+        boolean automaticScrolling();
+        void automaticScrolling(boolean value);
     }
 
 }

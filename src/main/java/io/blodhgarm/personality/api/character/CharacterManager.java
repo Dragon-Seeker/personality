@@ -17,6 +17,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.JsonHelper;
 import net.minecraft.world.World;
 import org.apache.commons.collections4.map.ListOrderedMap;
 import org.jetbrains.annotations.ApiStatus;
@@ -167,7 +168,7 @@ public abstract class CharacterManager<P extends PlayerEntity, C extends Charact
 
     @ApiStatus.Internal
     public C deserializeCharacter(String json, @Nullable ExtraTokenData data){
-        return (C) getGson().fromJson(json, getToken().setExtraData(data))
+        return (C) JsonHelper.deserialize(getGson(), json, getToken().setExtraData(data))
                 .setCharacterManager(this);
     }
 

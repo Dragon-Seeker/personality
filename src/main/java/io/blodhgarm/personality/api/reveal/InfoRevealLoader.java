@@ -41,7 +41,7 @@ public class InfoRevealLoader extends JsonDataLoader implements IdentifiableReso
     }
 
     public static void deserializeData(Identifier resourceId, JsonObject dataObject){
-        for (Map.Entry<String, JsonElement> entry : dataObject.asMap().entrySet()) {
+        for (Map.Entry<String, JsonElement> entry : dataObject.entrySet()) {
             InfoLevel level;
 
             try {

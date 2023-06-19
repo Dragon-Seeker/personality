@@ -71,7 +71,7 @@ dependencies {
 	include implementation ('io.github.earcut4j:earcut4j:2.2.2')
 	include implementation ('me.xdrop:fuzzywuzzy:1.4.0')
 
-	include implementation ('com.google.code.gson:gson:2.10')
+	//include implementation ('com.google.code.gson:gson:2.10')
 	//
 
 

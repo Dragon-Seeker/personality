@@ -12,13 +12,13 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
-@Mixin(TypeToken.class)
+@Mixin(value = TypeToken.class, remap = false)
 public class TypeTokenMixin<T> {
 
-    @Inject(method = "getTypeTokenTypeArgument", at = @At(value = "INVOKE", target = "Ljava/lang/reflect/ParameterizedType;getRawType()Ljava/lang/reflect/Type;"), cancellable = true, locals = LocalCapture.CAPTURE_FAILHARD)
-    private void personality$allowWrappedToken(CallbackInfoReturnable<Type> cir, Type superclass, ParameterizedType parameterized){
-        if(parameterized.getRawType() == WrappedTypeToken.class){
-            cir.setReturnValue($Gson$Types.canonicalize(parameterized.getActualTypeArguments()[0]));
-        }
-    }
+//    @Inject(method = "getTypeTokenTypeArgument", at = @At(value = "INVOKE", target = "Ljava/lang/reflect/ParameterizedType;getRawType()Ljava/lang/reflect/Type;"), cancellable = true, locals = LocalCapture.CAPTURE_FAILHARD)
+//    private void personality$allowWrappedToken(CallbackInfoReturnable<Type> cir, Type superclass, ParameterizedType parameterized){
+//        if(parameterized.getRawType() == WrappedTypeToken.class){
+//            cir.setReturnValue($Gson$Types.canonicalize(parameterized.getActualTypeArguments()[0]));
+//        }
+//    }
 }
