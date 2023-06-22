@@ -36,8 +36,8 @@ public class PersonalityConfigModel {
     public int maximumExtraAge = 30;
 
     @Sync(value = Option.SyncMode.OVERRIDE_CLIENT)
-    @RangeConstraint(min = 0, max = 1440)
-    public int characterDeathWindow = 5;
+    @RangeConstraint(min = 0, max = 3600)
+    public int characterDeathWindow = 300;
 
     public boolean killPlayerOnCharacterDeath = false;
 

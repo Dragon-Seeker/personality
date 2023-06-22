@@ -15,7 +15,8 @@
     "PlayerEntityMixin",
     "PlayerManagerMixin",
     "ServerLoginNetworkHandlerMixin",
-    "gson.TypeTokenMixin"
+    "gson.TypeTokenMixin",
+    "MinecraftServerMixin"
   ],
   "client": [
     "client.ClientWorldMixin",

@@ -657,44 +657,48 @@ public class ServerCharacters extends CharacterManager<ServerPlayerEntity, Serve
 
     @Override
     public void onSave(boolean suppressLogs, boolean flush, boolean force) {
-        Runnable saveFunc = () -> {
-            // Loop to save all active players given online counter stuff
-            for(ServerPlayerEntity player : Owo.currentServer().getPlayerManager().getPlayerList()){
-                Character c = ServerCharacters.INSTANCE.getCharacter(player);
+        if(!characterSavingQueue.isEmpty()) {
+            Runnable saveFunc = () -> {
+                // Loop to save all active players given online counter stuff
+                for (ServerPlayerEntity player : Owo.currentServer().getPlayerManager().getPlayerList()) {
+                    Character c = ServerCharacters.INSTANCE.getCharacter(player);
 
-                if(c == null) continue;
+                    if (c == null) continue;
 
-                ServerCharacters.INSTANCE.saveCharacter(c);
+                    ServerCharacters.INSTANCE.saveCharacter(c);
+                }
+
+                String currentCharacter = characterSavingQueue.poll();
+
+                //TODO: Check if the character is part of the top pool of online players to prevent unneeded writers
+
+                //Primary way for all characters who get modified to be saved
+                while (currentCharacter != null) {
+                    Character c = ServerCharacters.INSTANCE.getCharacter(currentCharacter);
+
+                    if (c == null) continue;
+
+                    ServerCharacters.INSTANCE.saveCharacter(c);
+
+                    currentCharacter = characterSavingQueue.poll();
+                }
+            };
+
+            if (flush) {
+                saveFunc.run();
+            } else {
+                lastSaveFuture = Util.getMainWorkerExecutor().submit(saveFunc);
             }
-
-            String currentCharacter = characterSavingQueue.poll();
-
-            //Primary way for all characters who get modified to be saved
-            while(currentCharacter != null){
-                Character c = ServerCharacters.INSTANCE.getCharacter(currentCharacter);
-
-                if(c == null) continue;
-
-                ServerCharacters.INSTANCE.saveCharacter(c);
-
-                currentCharacter = characterSavingQueue.poll();
-            }
-        };
-
-        if(flush){
-            if(lastSaveFuture != null && !lastSaveFuture.isDone()) lastSaveFuture.cancel(false);
-
-            saveFunc.run();
-        } else {
-            lastSaveFuture = Util.getMainWorkerExecutor().submit(saveFunc);
         }
+
+        if(flush && lastSaveFuture != null && !lastSaveFuture.isDone()) lastSaveFuture.cancel(false);
 
         if(saveCharacterReference){
             saveCharacterReference();
 
             saveCharacterReference = false;
         }
-    };
+    }
 
     public static final class EditorHistory {
         private final String editorUUID;

@@ -111,7 +111,7 @@ public class InWorldTooltipRenderer implements WorldRenderEvents.AfterTranslucen
         if(FabricLoader.getInstance().isDevelopmentEnvironment()) {
             pos = target.add(xOffset, targetShape.maxY + .15, zOffset);
 
-            context.world().addParticle(ParticleTypes.BUBBLE, pos.x, pos.y, pos.z, 0, 0, 0);
+            //context.world().addParticle(ParticleTypes.BUBBLE, pos.x, pos.y, pos.z, 0, 0, 0);
 
             pos = pos.subtract(context.camera().getPos());
         } else {

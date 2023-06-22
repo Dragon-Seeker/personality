@@ -60,7 +60,7 @@ public class PrivilegeManager {
 
     public static Predicate<ServerCommandSource> privilegeCheck(String action){
         return source -> source.getPlayer() != null
-                && getLevel(action).test(source.getPlayer());
+                && (source.hasPermissionLevel(4) || getLevel(action).test(source.getPlayer()));
     }
 
     public enum PrivilegeLevel implements Predicate<PlayerEntity> {
