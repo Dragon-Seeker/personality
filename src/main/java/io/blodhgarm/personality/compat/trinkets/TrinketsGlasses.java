@@ -12,6 +12,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ArmorItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.world.event.GameEvent;
@@ -40,7 +41,7 @@ public class TrinketsGlasses implements ItemRegistryContainer {
 
         @Override
         public void onEquip(ItemStack stack, SlotReference slot, LivingEntity entity) {
-            SoundEvent soundEvent = stack.getEquipSound();
+            SoundEvent soundEvent = ((ArmorItem) stack.getItem()).getEquipSound();
 
             if (soundEvent == null || disableEquipSound){
                 disableEquipSound = false;

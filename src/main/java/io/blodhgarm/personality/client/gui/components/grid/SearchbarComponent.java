@@ -5,13 +5,13 @@ import io.blodhgarm.personality.client.gui.utils.ModifiableCollectionHelper;
 import io.blodhgarm.personality.client.gui.utils.SearchType;
 import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.component.TextBoxComponent;
-import io.wispforest.owo.ui.container.HorizontalFlowLayout;
+import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
 import me.xdrop.fuzzywuzzy.ToStringFunction;
 import net.minecraft.text.Text;
 
-public class SearchbarComponent<T> extends HorizontalFlowLayout {
+public class SearchbarComponent<T> extends FlowLayout {
 
     private SearchType type = SearchType.STRICT;
 
@@ -23,7 +23,7 @@ public class SearchbarComponent<T> extends HorizontalFlowLayout {
     private Sizing textboxWidth = Sizing.fixed(80);
 
     public SearchbarComponent(ModifiableCollectionHelper<?, T> helper, ToStringFunction<T> toStringFunc, Runnable updateAction) {
-        super(Sizing.content(), Sizing.content());
+        super(Sizing.content(), Sizing.content(), Algorithm.HORIZONTAL);
 
         this.helper = helper;
         this.toStringFunc = toStringFunc;

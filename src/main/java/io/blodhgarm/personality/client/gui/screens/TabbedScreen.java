@@ -127,10 +127,8 @@ public abstract class TabbedScreen extends BaseOwoScreen<FlowLayout> {
 
             oldActiveTab.positioning(oldPosition);
 
-            ((AnimationExtension<Positioning>) oldActiveTab.positioning().animate(1000, Easing.LINEAR, Positioning.relative(-250, oldPosition.y)).forwards()) //250
-                    .setOnCompletionEvent(positioningAnimation -> {
-                        this.uiAdapter.rootComponent.removeChild(oldActiveTab);
-                    });
+            oldActiveTab.positioning().animate(1000, Easing.LINEAR, Positioning.relative(-250, oldPosition.y)).forwards()//250
+                    .finished().subscribe((direction, looping) -> this.uiAdapter.rootComponent.removeChild(oldActiveTab));
         }
 
         this.activeTab = tabComponentBuilder.pageBuilder.build(this.uiAdapter.rootComponent);

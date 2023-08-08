@@ -12,7 +12,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.PlayerManager;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.stat.ServerStatHandler;
-import net.minecraft.util.FileNameUtil;
+import net.minecraft.util.PathUtil;
 import net.minecraft.util.WorldSavePath;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -55,7 +55,7 @@ public abstract class PlayerManagerMixin implements OfflineStatExtension {
             if (!file2.exists()) {
                 File file3 = new File(file, profile.getName() + ".json");
                 Path path = file3.toPath();
-                if (FileNameUtil.isNormal(path) && FileNameUtil.isAllowedName(path) && path.startsWith(file.getPath()) && file3.isFile()) {
+                if (PathUtil.isNormal(path) && PathUtil.isAllowedName(path) && path.startsWith(file.getPath()) && file3.isFile()) {
                     file3.renameTo(file2);
                 }
             }

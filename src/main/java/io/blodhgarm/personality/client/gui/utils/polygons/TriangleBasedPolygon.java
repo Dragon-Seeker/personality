@@ -1,8 +1,7 @@
 package io.blodhgarm.personality.client.gui.utils.polygons;
 
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.Vec2f;
-import net.minecraft.util.math.Vec3f;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,13 +32,13 @@ public class TriangleBasedPolygon implements AbstractPolygon {
     }
 
     @Override
-    public void movePolygon(Vec3f vec, BiConsumer<Vec3f, Vec3f> action) {
+    public void movePolygon(Vector3f vec, BiConsumer<Vector3f, Vector3f> action) {
         triangles.forEach(triangle -> triangle.movePolygon(vec, action));
     }
 
     @Override
-    public List<Vec3f> getPoints() {
-        List<Vec3f> points = new ArrayList<>();
+    public List<Vector3f> getPoints() {
+        List<Vector3f> points = new ArrayList<>();
 
         for(Triangle triangle : triangles){
             triangle.getPoints().forEach(vec2f -> {

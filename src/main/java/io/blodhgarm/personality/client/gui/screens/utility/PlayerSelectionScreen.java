@@ -134,7 +134,7 @@ public class PlayerSelectionScreen extends BaseOwoScreen<FlowLayout> {
                                                 ButtonComponent.Renderer.VANILLA.draw(matrices, button, delta);
 
                                                 if(isSelected) {
-                                                    Drawer.drawRectOutline(matrices, button.x + 2, button.y + 2, button.width() - 4, button.height() - 4, new Color(0.95f, 0.95f, 0.95f).argb());
+                                                    Drawer.drawRectOutline(matrices, button.x() + 2, button.y() + 2, button.width() - 4, button.height() - 4, new Color(0.95f, 0.95f, 0.95f).argb());
                                                 }
                                             })
                                             .sizing(Sizing.fixed(8));

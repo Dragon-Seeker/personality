@@ -121,9 +121,9 @@ public class RevealIdentityScreen extends BaseOwoScreen<FlowLayout> {
                             try {
                                 this.selectedRevealLevel = InfoLevel.valueOf(id);
 
-                                ((AnimationExtension<Positioning>) this.revealLevel.getComponent()
-                                        .positioning().animate(500, Easing.LINEAR, PersonalityClient.customRelative(-200, 50)).forwards())
-                                        .setOnCompletionEvent(animation -> this.uiAdapter.rootComponent.removeChild(this.revealLevel.getComponent()));
+                                this.revealLevel.getComponent()
+                                        .positioning().animate(500, Easing.LINEAR, PersonalityClient.customRelative(-200, 50)).forwards()
+                                        .finished().subscribe((direction, looping) -> this.uiAdapter.rootComponent.removeChild(this.revealLevel.getComponent()));
 
                                 this.uiAdapter.rootComponent.child(this.revealRange.getComponent());
 
@@ -172,9 +172,9 @@ public class RevealIdentityScreen extends BaseOwoScreen<FlowLayout> {
                             try {
                                 this.selectedRevealRange = RevelInfoManager.RevealRange.valueOf(id);
 
-                                ((AnimationExtension<Positioning>) this.revealRange.getComponent()
-                                        .positioning().animate(500, Easing.LINEAR, PersonalityClient.customRelative(-200, 50)).forwards())
-                                        .setOnCompletionEvent(animation -> this.uiAdapter.rootComponent.removeChild(this.revealRange.getComponent()));
+                                 this.revealRange.getComponent()
+                                        .positioning().animate(500, Easing.LINEAR, PersonalityClient.customRelative(-200, 50)).forwards()
+                                        .finished().subscribe((direction, looping) -> this.uiAdapter.rootComponent.removeChild(this.revealRange.getComponent()));
 
                                 this.uiAdapter.rootComponent.child(confirmationLayout);
 

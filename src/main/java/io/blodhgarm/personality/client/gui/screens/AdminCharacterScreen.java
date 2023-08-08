@@ -207,7 +207,7 @@ public class AdminCharacterScreen extends BaseOwoScreen<FlowLayout> implements M
                     if(playerUUID == null) {
                         SystemToast.add(
                                 MinecraftClient.getInstance().getToastManager(),
-                                SystemToast.Type.CHAT_PREVIEW_WARNING,
+                                SystemToast.Type.PERIODIC_NOTIFICATION,
                                 Text.of("Character isn't Associated to anyone!"),
                                 Text.of("The selected Character don't have any player associated to them.")
                         );
@@ -562,7 +562,7 @@ public class AdminCharacterScreen extends BaseOwoScreen<FlowLayout> implements M
 
                     RenderSystem.enableDepthTest();
                     RenderSystem.setShaderTexture(0, ADMIN_BUTTON_TEXTURE);
-                    Drawer.drawTexture(matrices, button.x + 4, button.y + 4, uOffset, 0, 16, 16, 96, 16);
+                    Drawer.drawTexture(matrices, button.x() + 4, button.y() + 4, uOffset, 0, 16, 16, 96, 16);
                 })
                 .tooltip(Text.of(tooltip))
                 .sizing(Sizing.fixed(24), Sizing.fixed(24)) // 22
@@ -575,7 +575,7 @@ public class AdminCharacterScreen extends BaseOwoScreen<FlowLayout> implements M
         if(!allowManySelected && this.selectedCharacters.size() > 1){
             SystemToast.add(
                     MinecraftClient.getInstance().getToastManager(),
-                    SystemToast.Type.CHAT_PREVIEW_WARNING,
+                    SystemToast.Type.PERIODIC_NOTIFICATION,
                     Text.of("Action has To Many Selected!"),
                     Text.of(action + " action isn't allowed to have more than one target!")
             );
@@ -586,7 +586,7 @@ public class AdminCharacterScreen extends BaseOwoScreen<FlowLayout> implements M
         if(this.selectedCharacters.isEmpty()){
             SystemToast.add(
                     MinecraftClient.getInstance().getToastManager(),
-                    SystemToast.Type.CHAT_PREVIEW_WARNING,
+                    SystemToast.Type.PERIODIC_NOTIFICATION,
                     Text.of("Action has no Character Selected!"),
                     Text.of("You haven't made a selection on any character!")
             );

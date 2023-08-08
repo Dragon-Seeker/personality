@@ -20,6 +20,7 @@ import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.*;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Quaternionf;
 
 import java.util.*;
 
@@ -134,7 +135,7 @@ public class InWorldTooltipRenderer implements WorldRenderEvents.AfterTranslucen
         double horizontalAngle = Math.atan2(offset.z, offset.x);
         //double verticalAngle = Math.atan2(offset.y, Math.sqrt(offset.x * offset.x + offset.z * offset.z));
 
-        modelViewStack.multiply(new Quaternion(Vec3f.POSITIVE_Y, (float) (-horizontalAngle + Math.PI / 2), false) );
+        modelViewStack.multiply(new Quaternionf(RotationAxis.POSITIVE_Y.rotation((float) (-horizontalAngle + Math.PI / 2))));
         RenderSystem.applyModelViewMatrix();
 
         var matrices = new MatrixStack();

@@ -31,16 +31,17 @@ import io.wispforest.owo.registration.reflect.ItemRegistryContainer;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
+import net.minecraft.item.ItemGroups;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.tag.TagKey;
 import net.minecraft.resource.ResourceType;
-import net.minecraft.tag.TagKey;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.Registry;
 
 import java.time.LocalDateTime;
 
@@ -55,8 +56,8 @@ public class PersonalityMod implements ModInitializer, PersonalityEntrypoint, It
 
     public static final String MODID = "personality";
 
-    public static GlassesItem BASIC_GLASSES = new GlassesItem(new Item.Settings().maxCount(1).group(ItemGroup.TOOLS));
-    public static Item CANE = new WoodenCane(new Item.Settings().maxCount(1).group(ItemGroup.COMBAT));
+    public static GlassesItem BASIC_GLASSES = new GlassesItem(new Item.Settings().maxCount(1));
+    public static Item CANE = new WoodenCane(new Item.Settings().maxCount(1));
 
     public static Identifier id(String path) {
         return new Identifier(MODID, path);
@@ -64,6 +65,14 @@ public class PersonalityMod implements ModInitializer, PersonalityEntrypoint, It
 
     @Override
     public void onInitialize() {
+        ItemGroupEvents.MODIFY_ENTRIES_ALL.register((group, entries) -> {
+            if(group == ItemGroups.TOOLS){
+                entries.add(BASIC_GLASSES);
+            } else if(group == ItemGroups.COMBAT){
+                entries.add(CANE);
+            }
+        });
+
         FieldRegistrationHandler.register(PersonalitySoundEvents.class, MODID, false);
 
         if(FabricLoader.getInstance().isDevelopmentEnvironment()) DebugCharacters.init();
@@ -140,7 +149,7 @@ public class PersonalityMod implements ModInitializer, PersonalityEntrypoint, It
 
     public static boolean hasEffect(LivingEntity entity, TagKey<StatusEffect> effectTagKey){
         for(StatusEffect statusEffect : entity.getActiveStatusEffects().keySet()){
-            var entry = Registry.STATUS_EFFECT.getEntry(StatusEffect.getRawId(statusEffect));
+            var entry = Registries.STATUS_EFFECT.getEntry(StatusEffect.getRawId(statusEffect));
 
             if(entry.isPresent() && entry.get().isIn(effectTagKey)) return true;
         }

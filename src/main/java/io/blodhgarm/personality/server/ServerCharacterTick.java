@@ -15,24 +15,35 @@ import io.blodhgarm.personality.packets.CharacterDeathPackets;
 import io.blodhgarm.personality.packets.SyncS2CPackets;
 import io.wispforest.owo.Owo;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.attribute.EntityAttributeInstance;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.entity.damage.DamageEffects;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.damage.DamageType;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.registry.Registerable;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.PlayerManager;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ServerCharacterTick implements ServerTickEvents.EndWorldTick {
 
-    public static final CustomDamageSource DEATH_BY_OLD_AGE = new CustomDamageSource("oldAge");
-    public static final CustomDamageSource DEATH_BY_RUNNING = new CustomDamageSource("trippedByDeath");
+    public static final RegistryKey<DamageType> OLD_AGE_KEY = RegistryKey.of(RegistryKeys.DAMAGE_TYPE, PersonalityMod.id("old_age"));
+    public static final RegistryKey<DamageType> TRIPPED_BY_DEATH_KEY = RegistryKey.of(RegistryKeys.DAMAGE_TYPE, new Identifier("tripped_by_death"));
 
     private static final UUID AGING_SLOWNESS_MODIFIER_UUID = UUID.fromString("662A6B8D-DA3E-4C1C-8813-96EA6097278F");
 
@@ -63,7 +74,7 @@ public class ServerCharacterTick implements ServerTickEvents.EndWorldTick {
             if (c.getAge() >= c.getMaxAge() && !deathTrackerMap.containsKey(playerUUID) && !c.isDead()) {
                 //TODO: Figure out way for handling Characters that don't have players that are online
 
-                deathTrackerMap.put(playerUUID, new DeathTracker(playerUUID).resetTimer());
+                deathTrackerMap.put(playerUUID, new DeathTracker(world, playerUUID).resetTimer());
 
                 continue;
             }
@@ -129,49 +140,48 @@ public class ServerCharacterTick implements ServerTickEvents.EndWorldTick {
         }
     }
 
-    public static void killCharacter(String playerUUID, CustomDamageSource source){
-        PlayerManager manager = Owo.currentServer().getPlayerManager();
+    public static void killCharacter(World world, String playerUUID, @Nullable String deathMessage){
+        ServerCharacters.INSTANCE.killCharacter(ServerCharacters.INSTANCE.getCharacter(ServerCharacters.INSTANCE.getCharacterUUID(playerUUID)));
 
-        ServerPlayerEntity player = manager.getPlayer(playerUUID);
+        ServerPlayerEntity player = Owo.currentServer().getPlayerManager().getPlayer(playerUUID);
 
-        Character c = ServerCharacters.INSTANCE.getCharacter(ServerCharacters.INSTANCE.getCharacterUUID(playerUUID));
+        RegistryKey<DamageType> damageType = deathMessage == null ? TRIPPED_BY_DEATH_KEY : OLD_AGE_KEY;
 
-        ServerCharacters.INSTANCE.killCharacter(c);
+        if(player != null) deathMessage = " wasn't able to run from death forever, even when being offline!";
 
-        if(player != null){
-            if(PersonalityMod.CONFIG.killPlayerOnCharacterDeath()) {
-                ((DamageSourceExtended) source).disableDeathMessage(true);
+        CustomDamageSource source = new CustomDamageSource(deathMessage == null ? "" : deathMessage, world.getDamageSources().registry.entryOf(damageType), player, null);
 
-                player.damage(source, Float.MAX_VALUE);
+        if(player != null && PersonalityMod.CONFIG.killPlayerOnCharacterDeath()){
+            ((DamageSourceExtended) source).disableDeathMessage(true);
 
-                ((DamageSourceExtended) source).disableDeathMessage(false);
-            }
-        } else {
-            source.withCustomMessage(" wasn't able to run from death forever, even when being offline!");
+            player.damage(source, Float.MAX_VALUE);
+
+            ((DamageSourceExtended) source).disableDeathMessage(false);
         }
 
-        Networking.sendToAll(new CharacterDeathPackets.ReceivedDeathMessage(playerUUID, source.message, source == DEATH_BY_RUNNING));
+        Networking.sendToAll(new CharacterDeathPackets.ReceivedDeathMessage(playerUUID, source.message, source.getTypeKey() == TRIPPED_BY_DEATH_KEY));
 
         deathTrackerMap.remove(playerUUID);
     }
 
     public static class DeathTracker {
-
         private final String playerUUID;
+        private final World world;
 
         public int numberOfTries = 0;
 
         public int attemptTimer = 0;
 
-        public DeathTracker(String playerUUID){
+        public DeathTracker(World world, String playerUUID){
             this.playerUUID = playerUUID;
+            this.world = world;
         }
 
         public void reduceTimer(){
             this.attemptTimer--;
 
             if(this.numberOfTries > 3){
-                killCharacter(playerUUID, DEATH_BY_RUNNING);
+                killCharacter(world, playerUUID, null);
 
                 return;
             }
@@ -200,22 +210,15 @@ public class ServerCharacterTick implements ServerTickEvents.EndWorldTick {
 
         protected final String message;
 
-        public CustomDamageSource(String name) {
-            this(name, "");
+        public CustomDamageSource(String deathMessage, RegistryEntry<DamageType> type, @Nullable Entity source, @Nullable Entity attacker) {
+            super(type, source, attacker);
+
+            this.message = deathMessage;
         }
 
-        public CustomDamageSource(String name, String message) {
-            super(name);
-
-            this.message = message;
+        public RegistryKey<DamageType> getTypeKey(){
+            return this.getTypeRegistryEntry().getKey().get();
         }
-
-        public CustomDamageSource withCustomMessage(String message){
-            if(message.isBlank()) return this;
-
-            return new CustomDamageSource(name, message);
-        }
-
         @Override
         public Text getDeathMessage(LivingEntity entity) {
             Text text = Text.of("");
@@ -231,5 +234,16 @@ public class ServerCharacterTick implements ServerTickEvents.EndWorldTick {
 
             return text;
         }
+    }
+
+    public static CustomDamageSource getSource(PlayerEntity player, boolean tripped, String message){
+        RegistryKey<DamageType> damageType = tripped ? ServerCharacterTick.TRIPPED_BY_DEATH_KEY : ServerCharacterTick.OLD_AGE_KEY;
+
+        return new CustomDamageSource(message, player.world.getDamageSources().registry.entryOf(damageType), player, null);
+    }
+
+    public static void personality$bootstrap(Registerable<DamageType> damageTypeRegisterable) {
+        damageTypeRegisterable.register(OLD_AGE_KEY, new DamageType("oldAge", 0.0F));
+        damageTypeRegisterable.register(TRIPPED_BY_DEATH_KEY, new DamageType("trippedByDeath", 0.0F));
     }
 }

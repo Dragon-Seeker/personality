@@ -1,9 +1,8 @@
 package io.blodhgarm.personality.client.gui.utils.polygons;
 
-import io.wispforest.owo.ui.core.Component;
 import io.wispforest.owo.ui.core.PositionedRectangle;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.Vec3f;
+import org.joml.Vector3f;
 
 import java.util.List;
 
@@ -24,7 +23,7 @@ public class ComponentAsPolygon implements AbstractPolygon {
     public void drawPolygon(MatrixStack matrices, int color, boolean showOutline, boolean showBackground) {}
 
     @Override
-    public List<Vec3f> getPoints() {
+    public List<Vector3f> getPoints() {
         return List.of();
     }
 }

@@ -23,7 +23,7 @@ import java.util.Objects;
 @Mixin(EntityComponent.class)
 public class EntityComponentMixin<E extends Entity> implements ShouldRenderNameTagExtension<EntityComponent<E>>, EntityComponentExtension<E> {
 
-    boolean shouldRenderNameTag = true;
+    @Unique boolean shouldRenderNameTag = true;
 
     @Shadow @Final protected EntityRenderDispatcher dispatcher;
 
@@ -62,12 +62,12 @@ public class EntityComponentMixin<E extends Entity> implements ShouldRenderNameT
         return (EntityComponent<E>) (Object) this;
     }
 
-    @ModifyArg(method = "draw", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/Vec3f;getDegreesQuaternion(F)Lnet/minecraft/util/math/Quaternion;", ordinal = 2))
+    @ModifyArg(method = "draw", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/RotationAxis;rotationDegrees(F)Lorg/joml/Quaternionf;", ordinal = 2))
     private float personality$modifyXAngle(float angle){
         return personality_removeXAngle ? 0f : angle;
     }
 
-    @ModifyArgs(method = "draw", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/Vec3f;<init>(FFF)V"))
+    @ModifyArgs(method = "draw", at = @At(value = "INVOKE", target = "Lorg/joml/Vector3f;<init>(FFF)V"))
     private void personality$modifyShaderLightVecs(Args args){
         if(!personality_removeXAngle) return;
 

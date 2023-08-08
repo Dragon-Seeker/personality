@@ -5,7 +5,7 @@ import io.blodhgarm.personality.misc.pond.owo.ExclusiveBoundingArea;
 import io.blodhgarm.personality.misc.pond.owo.InclusiveBoundingArea;
 import io.blodhgarm.personality.misc.pond.owo.RefinedBoundingArea;
 import io.wispforest.owo.ui.base.BaseComponent;
-import net.minecraft.util.math.Vec3f;
+import org.joml.Vector3f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -45,13 +45,13 @@ public abstract class BaseComponentMixin {
         int diff = value - (isUpdateX ? this.x : this.y);
 
         if(diff != 0) {
-            Vec3f vec3f = new Vec3f(
+            Vector3f vec3f = new Vector3f(
                     isUpdateX ? diff : 0,
                     isUpdateX ? 0 : diff,
                     0f
             );
 
-            polygons.forEach(abstractPolygon -> abstractPolygon.movePolygon(vec3f, Vec3f::add));
+            polygons.forEach(abstractPolygon -> abstractPolygon.movePolygon(vec3f, Vector3f::add));
         }
     }
 }

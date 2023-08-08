@@ -2,7 +2,6 @@ package io.blodhgarm.personality.client;
 
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.Networking;
-import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddonRegistry;
 import io.blodhgarm.personality.api.core.BaseRegistry;
 import io.blodhgarm.personality.client.glisco.DescriptionRenderer;
@@ -19,7 +18,6 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
-import software.bernie.geckolib3.renderers.geo.GeoItemRenderer;
 
 public class PersonalityClient implements ClientModInitializer {
 
@@ -67,7 +65,7 @@ public class PersonalityClient implements ClientModInitializer {
             PersonalityScreenAddonRegistry.registerScreenAddon(new Identifier("pehkui", "scale_selection_addon"), PehkuiScaleDisplayAddon::new);
         }
 
-        GeoItemRenderer.registerItemRenderer(PersonalityMod.CANE, new GeoItemRenderer<>(new WalkingStickModel()));
+        //GeoItemRenderer.registerItemRenderer(PersonalityMod.CANE, new GeoItemRenderer<>(new WalkingStickModel()));
 
 //        PlayerAnimationFactory.ANIMATION_DATA_FACTORY.registerFactory(CANE_WALK_ANIMATION_ID, 21, player -> new AnimationContainer<>());
 //

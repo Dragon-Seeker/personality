@@ -1,6 +1,5 @@
 package io.blodhgarm.personality.compat.origins.client.gui.components;
 
-import io.blodhgarm.personality.client.PersonalityClient;
 import io.github.apace100.origins.origin.Origin;
 import io.github.apace100.origins.origin.OriginLayer;
 import io.wispforest.owo.ui.component.ButtonComponent;
@@ -9,14 +8,13 @@ import io.wispforest.owo.ui.component.ItemComponent;
 import io.wispforest.owo.ui.component.LabelComponent;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
-import io.wispforest.owo.ui.container.VerticalFlowLayout;
 import io.wispforest.owo.ui.core.*;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 import java.util.function.Consumer;
 
-public class OriginHeaderComponent extends VerticalFlowLayout {
+public class OriginHeaderComponent extends FlowLayout {
 
     public static Identifier ORIGINS_GUI_TEXTURE = new Identifier("personality", "textures/gui/origins_gui.png");
 
@@ -30,7 +28,7 @@ public class OriginHeaderComponent extends VerticalFlowLayout {
     private OriginLayer layer;
 
     public OriginHeaderComponent(Sizing horizontalSizing, Sizing verticalSizing, Origin origin, OriginLayer layer) {
-        super(horizontalSizing, verticalSizing);
+        super(horizontalSizing, verticalSizing, Algorithm.VERTICAL);
 
         this.origin = origin;
         this.layer = layer;

@@ -26,36 +26,6 @@ public abstract class AnimationMixin<A extends Animatable<A>> implements Animati
     @Shadow @Final private A from;
     @Shadow @Final private A to;
 
-    @Unique @Nullable private Consumer<Animation<A>> onCompletion = null;
-
-    @Unique private boolean eventCompleted = false;
-
-    @Inject(method = "update", at = @At(value = "JUMP", opcode = Opcodes.IFNE, shift = At.Shift.BY, by = 2))
-    private void afterAnimationCompletion(float delta, CallbackInfo ci){
-        if(this.onCompletion != null && !this.eventCompleted){
-            this.onCompletion.accept((Animation<A>) (Object) this);
-
-            this.eventCompleted = true;
-        }
-    }
-
-    @Inject(method = "update", at = @At(value = "JUMP", opcode = Opcodes.IFEQ, shift = At.Shift.BY, by = 2))
-    private void personality$resetEventCompleted1(float delta, CallbackInfo ci){
-        this.eventCompleted = false;
-    }
-
-    @Override
-    public Animation<A> setOnCompletionEvent(Consumer<Animation<A>> event) {
-        this.onCompletion = event;
-
-        return (Animation<A>) (Object) this;
-    }
-
-    @Inject(method = {"forwards", "backwards", "reverse"}, at = @At("HEAD"))
-    private void personality$resetEventCompleted2(CallbackInfoReturnable<Animation<A>> cir){
-        this.eventCompleted = false;
-    }
-
     @Override
     public A getCurrentValue() {
         return this.from.interpolate(this.to, this.easing.apply(this.delta));

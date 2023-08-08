@@ -91,16 +91,18 @@ public class ClientCharacterTick implements ClientTickEvents.EndWorldTick {
                     .alphaProperty();
 
             if(property.animation() == null){
-                ((AnimationExtension<?>) property.animate(1000, Easing.LINEAR, DiscoveryProgressComponent.AnimatableObject.ofFloat(0.0f))
-                        .forwards()).setOnCompletionEvent(animation -> {
-                    if (animation.direction() != Animation.Direction.FORWARDS) return;
+                property.animate(1000, Easing.LINEAR, DiscoveryProgressComponent.AnimatableObject.ofFloat(0.0f))
+                        .forwards()
+                        .finished()
+                        .subscribe((direction, looping) -> {
+                            if (direction != Animation.Direction.FORWARDS) return;
 
-                    Hud.remove(PersonalityMod.id("reveal_layout"));
+                            Hud.remove(PersonalityMod.id("reveal_layout"));
 
-                    timeLookedAt = 0;
+                            timeLookedAt = 0;
 
-                    lastPlayerUUID = "";
-                });
+                            lastPlayerUUID = "";
+                        });
             }
 
             if(currentPlayerUUID.isEmpty()) {

@@ -24,7 +24,7 @@ public class CharacterDeathPackets {
     public record ReceivedDeathMessage(String playerUUID, String deathMessage, boolean tripped){
         @Environment(EnvType.CLIENT)
         public static void outputCustomDeathMessage(ReceivedDeathMessage message, ClientAccess access){
-            DamageSource source = message.tripped ? ServerCharacterTick.DEATH_BY_RUNNING : ServerCharacterTick.DEATH_BY_OLD_AGE.withCustomMessage(message.deathMessage);
+            DamageSource source = ServerCharacterTick.getSource(access.player(), message.tripped, message.deathMessage);
 
             GameProfile profile = ClientCharacters.INSTANCE.getPlayer(message.playerUUID).getProfile(MinecraftClient.getInstance().getSessionService());
 
@@ -43,7 +43,7 @@ public class CharacterDeathPackets {
 
     public record CustomDeathMessage(String message){
         public static void useCustomDeathMessage(CustomDeathMessage message, ServerAccess access){
-            ServerCharacterTick.killCharacter(access.player().getUuidAsString(), ServerCharacterTick.DEATH_BY_OLD_AGE.withCustomMessage(message.message));
+            ServerCharacterTick.killCharacter(access.player().world, access.player().getUuidAsString(), message.message);
         }
     }
 

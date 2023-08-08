@@ -56,7 +56,7 @@ public class MultiToggleButton extends CustomButtonComponent {
 
         if(shouldApplyToggleFunc) info.onToggle().accept(this);
 
-        System.out.println("Current Button Index: " + currentVariantIndex);
+        //System.out.println("Current Button Index: " + currentVariantIndex);
     }
 
     public record ToggleVariantInfo(String message, String tooltip, Consumer<ButtonComponent> onToggle){}

@@ -3,7 +3,6 @@ package io.blodhgarm.personality.client.gui.components.character;
 import com.mojang.authlib.GameProfile;
 import com.mojang.logging.LogUtils;
 import io.blodhgarm.personality.Networking;
-import io.blodhgarm.personality.PersonalityMod;
 import io.blodhgarm.personality.api.addon.BaseAddon;
 import io.blodhgarm.personality.api.addon.client.AddonObservable;
 import io.blodhgarm.personality.api.addon.client.PersonalityScreenAddon;
@@ -14,11 +13,11 @@ import io.blodhgarm.personality.client.ClientCharacters;
 import io.blodhgarm.personality.client.gui.CharacterViewMode;
 import io.blodhgarm.personality.client.gui.GenderSelection;
 import io.blodhgarm.personality.client.gui.ThemeHelper;
-import io.blodhgarm.personality.client.gui.utils.UIOps;
-import io.blodhgarm.personality.client.gui.utils.owo.layout.ButtonAddon;
 import io.blodhgarm.personality.client.gui.components.ColorableTextBoxComponent;
 import io.blodhgarm.personality.client.gui.components.EditBoxComponent;
+import io.blodhgarm.personality.client.gui.utils.UIOps;
 import io.blodhgarm.personality.client.gui.utils.owo.ExtraSurfaces;
+import io.blodhgarm.personality.client.gui.utils.owo.layout.ButtonAddon;
 import io.blodhgarm.personality.client.gui.utils.polygons.ComponentAsPolygon;
 import io.blodhgarm.personality.misc.pond.owo.AnimationExtension;
 import io.blodhgarm.personality.misc.pond.owo.ButtonAddonDuck;
@@ -30,7 +29,6 @@ import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.component.DiscreteSliderComponent;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
-import io.wispforest.owo.ui.container.HorizontalFlowLayout;
 import io.wispforest.owo.ui.core.*;
 import io.wispforest.owo.ui.util.Drawer;
 import io.wispforest.owo.ui.util.ScissorStack;
@@ -52,7 +50,7 @@ import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
-public class CharacterViewComponent extends HorizontalFlowLayout implements AddonObservable {
+public class CharacterViewComponent extends FlowLayout implements AddonObservable {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
@@ -78,7 +76,7 @@ public class CharacterViewComponent extends HorizontalFlowLayout implements Addo
     //------------------------
 
     public CharacterViewComponent(CharacterViewMode currentMode, GameProfile playerProfile, @Nullable BaseCharacter character) {
-        super(Sizing.content(), Sizing.content());
+        super(Sizing.content(), Sizing.content(), Algorithm.HORIZONTAL);
 
         this.currentMode = currentMode;
 
@@ -462,15 +460,17 @@ public class CharacterViewComponent extends HorizontalFlowLayout implements Addo
         if(addonMainFlow != null){
             FlowLayout finalAddonMainFlow = addonMainFlow;
 
-            ((AnimationExtension<Positioning>) finalAddonMainFlow.positioning().animation().backwards())
-                    .setOnCompletionEvent(positioningAnimation -> this.removeChild(finalAddonMainFlow));
+            finalAddonMainFlow.positioning().animation().backwards()
+                    .finished().subscribe((direction, looping) -> {
+                        this.removeChild(finalAddonMainFlow);
+                    });
 
             shouldReturn = finalAddonMainFlow.childById(Component.class, screenAddon.addonId().toString()) != null;
         }
 
         if(shouldReturn || screenAddon == null){
-            ((AnimationExtension<Positioning>) this.positioning().animate(1000, Easing.CUBIC, Positioning.relative(50, position.y)).forwards())
-                    .setOnCompletionEvent(positioningAnimation -> {
+            this.positioning().animate(1000, Easing.CUBIC, Positioning.relative(50, position.y)).forwards()
+                    .finished().subscribe((direction, looping) -> {
 //                        EditBoxComponent descBox = this.childById(EditBoxComponent.class, "description_text_box");
 //
 //                        if(descBox != null && descBox.horizontalSizing().animation() != null){

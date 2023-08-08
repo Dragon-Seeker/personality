@@ -8,7 +8,6 @@ import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.component.LabelComponent;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
-import io.wispforest.owo.ui.container.VerticalFlowLayout;
 import io.wispforest.owo.ui.core.Color;
 import io.wispforest.owo.ui.core.Insets;
 import io.wispforest.owo.ui.core.Sizing;
@@ -17,14 +16,14 @@ import net.minecraft.util.Formatting;
 
 import java.util.List;
 
-public class OriginInfoContainer extends VerticalFlowLayout {
+public class OriginInfoContainer extends FlowLayout {
 
     private Origin origin;
     private Text randomOriginText;
     private boolean isOriginRandom;
 
     public OriginInfoContainer(Sizing horizontalSizing, Sizing verticalSizing, Origin origin, Text randomOriginText, boolean isOriginRandom) {
-        super(horizontalSizing, verticalSizing);
+        super(horizontalSizing, verticalSizing, Algorithm.VERTICAL);
 
         this.origin = origin; this.randomOriginText = randomOriginText; this.isOriginRandom = isOriginRandom;
 

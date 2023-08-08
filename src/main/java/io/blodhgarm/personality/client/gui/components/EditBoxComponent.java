@@ -119,10 +119,10 @@ public class EditBoxComponent extends EditBoxWidget implements ComponentStub {
         } else {
             boolean bl = this.isWithinBounds(mouseX, mouseY);
             boolean bl2 = this.overflows()
-                    && mouseX >= (double)(this.x + ((this.position == ScrollBarSide.RIGHT) ? this.width : 0))
-                    && mouseX <= (double)(this.x + ((this.position == ScrollBarSide.RIGHT) ? this.width : 0) + 8)
-                    && mouseY >= (double)this.y
-                    && mouseY < (double)(this.y + this.height);
+                    && mouseX >= (double)(this.x() + ((this.position == ScrollBarSide.RIGHT) ? this.width : 0))
+                    && mouseX <= (double)(this.x() + ((this.position == ScrollBarSide.RIGHT) ? this.width : 0) + 8)
+                    && mouseY >= (double)this.y()
+                    && mouseY < (double)(this.y() + this.height);
             this.setFocused(bl || bl2);
             if (bl2 && button == 0) {
                 this.scrollbarDragged = true;
@@ -137,18 +137,18 @@ public class EditBoxComponent extends EditBoxWidget implements ComponentStub {
     protected void renderContents(MatrixStack matrices, int mouseX, int mouseY, float delta) {
         TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
 
-        int x = this.x + ((this.position == ScrollBarSide.RIGHT) ? 0 : 8);
+        int x = this.x() + ((this.position == ScrollBarSide.RIGHT) ? 0 : 8);
 
         String string = this.editBox.getText();
         if (string.isEmpty() && !this.isFocused()) {
-            textRenderer.drawTrimmed(this.placeholder, x + this.getPadding(), this.y + this.getPadding(), this.width - this.getPaddingDoubled(), -857677600);
+            textRenderer.drawTrimmed(matrices, this.placeholder, x + this.getPadding(), this.y() + this.getPadding(), this.width - this.getPaddingDoubled(), -857677600);
         } else {
             int i = this.editBox.getCursor();
             boolean bl = this.isFocused() && this.tick / 6 % 2 == 0;
             boolean bl2 = i < string.length();
             int j = 0;
             int k = 0;
-            int l = this.y + this.getPadding();
+            int l = this.y() + this.getPadding();
 
             for(EditBox.Substring substring : this.editBox.getLines()) {
                 boolean bl3 = this.isVisible(l, l + 9);
@@ -178,7 +178,7 @@ public class EditBoxComponent extends EditBoxWidget implements ComponentStub {
             if (this.editBox.hasSelection()) {
                 EditBox.Substring substring2 = this.editBox.getSelection();
                 int m = x + this.getPadding();
-                l = this.y + this.getPadding();
+                l = this.y() + this.getPadding();
 
                 for(EditBox.Substring substring3 : this.editBox.getLines()) {
                     if (substring2.beginIndex() > substring3.endIndex()) {
@@ -213,8 +213,8 @@ public class EditBoxComponent extends EditBoxWidget implements ComponentStub {
         if (this.visible) {
             this.drawBox(matrices);
 
-            int x = this.x + ((this.position == ScrollBarSide.RIGHT) ? 0 : 8);
-            enableScissor(x + 1, this.y + 1, x + this.width - 1, this.y + this.height - 1);
+            int x = this.x() + ((this.position == ScrollBarSide.RIGHT) ? 0 : 8);
+            enableScissor(x + 1, this.y() + 1, x + this.width - 1, this.y() + this.height - 1);
 
             matrices.push();
             matrices.translate(0.0, -this.getScrollY(), 0.0);
@@ -226,13 +226,13 @@ public class EditBoxComponent extends EditBoxWidget implements ComponentStub {
     }
 
     @Override
-    protected void drawScrollbar() {
+    protected void drawScrollbar(MatrixStack matrices) {
         int i = this.getScrollbarThumbHeight();
-        int j = this.x + ((this.position == ScrollBarSide.RIGHT) ? this.width : 0);
+        int j = this.x() + ((this.position == ScrollBarSide.RIGHT) ? this.width : 0);
         int k = j + 8;
-        int l = Math.max(this.y, (int)this.getScrollY() * (this.height - i) / this.getMaxScrollY() + this.y);
+        int l = Math.max(this.y(), (int)this.getScrollY() * (this.height - i) / this.getMaxScrollY() + this.y());
         int m = l + i;
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferBuilder = tessellator.getBuffer();
         bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
@@ -251,10 +251,10 @@ public class EditBoxComponent extends EditBoxWidget implements ComponentStub {
     protected void drawBox(MatrixStack matrices) {
         int i = this.isFocused() ? -1 : outlineColor.argb();
 
-        int x = this.x + ((this.position == ScrollBarSide.RIGHT) ? 0 : 8);
+        int x = this.x() + ((this.position == ScrollBarSide.RIGHT) ? 0 : 8);
 
-        fill(matrices, x, this.y, x + this.width, this.y + this.height, i);
-        fill(matrices, x + 1, this.y + 1, x + this.width - 1, this.y + this.height - 1, backgroundColor.argb());
+        fill(matrices, x, this.y(), x + this.width, this.y() + this.height, i);
+        fill(matrices, x + 1, this.y() + 1, x + this.width - 1, this.y() + this.height - 1, backgroundColor.argb());
     }
 
     @Override

@@ -19,7 +19,7 @@ public class GlassesItem extends ArmorItem {
     public BiPredicate<PlayerEntity, ItemStack> equipItem = (p, s) -> false;
 
     public GlassesItem(Settings settings) {
-        super(GLASSES_MATERIAL, EquipmentSlot.HEAD, settings);
+        super(GLASSES_MATERIAL, Type.HELMET, settings);
     }
 
     @Override
@@ -32,8 +32,8 @@ public class GlassesItem extends ArmorItem {
     }
 
     public static final ArmorMaterial GLASSES_MATERIAL = new ArmorMaterial() {
-        @Override public int getDurability(EquipmentSlot slot) { return 0; }
-        @Override public int getProtectionAmount(EquipmentSlot slot) { return 1; }
+        @Override public int getDurability(ArmorItem.Type type) { return 0; }
+        @Override public int getProtection(ArmorItem.Type type) { return 1; }
         @Override public int getEnchantability() { return 20; }
         @Override public SoundEvent getEquipSound() { return PersonalitySoundEvents.ITEM_GLASSES_EQUIP; }
         @Override public Ingredient getRepairIngredient() { return Ingredient.EMPTY; }

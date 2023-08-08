@@ -53,8 +53,8 @@ public class ColorableTextBoxComponent extends TextBoxComponent {
         if(((TextFieldWidgetAccessor)this).personality$drawsBackground()) {
             int i = this.isFocused() ? -1 : outlineColor.argb();
 
-            fill(matrices, this.x - 1, this.y - 1, this.x + this.width + 1, this.y + this.height + 1, i);
-            fill(matrices, this.x, this.y, this.x + this.width, this.y + this.height, backgroundColor.argb());
+            fill(matrices, this.x() - 1, this.y() - 1, this.x() + this.width + 1, this.y() + this.height + 1, i);
+            fill(matrices, this.x(), this.y(), this.x() + this.width, this.y() + this.height, backgroundColor.argb());
         }
 
         super.renderButton(matrices, mouseX, mouseY, delta);

@@ -170,13 +170,12 @@ public class LineComponent extends BaseComponent implements UnimportantComponent
         var buffer = Tessellator.getInstance().getBuffer();
         var matrix = matrices.peek().getPositionMatrix();
 
-        RenderSystem.disableTexture();
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
 
         RenderSystem.enableDepthTest();
 
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
 
         buffer.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
 
@@ -198,7 +197,6 @@ public class LineComponent extends BaseComponent implements UnimportantComponent
         RenderSystem.disableDepthTest();
 
         RenderSystem.disableBlend();
-        RenderSystem.enableTexture();
     }
 
     @Override

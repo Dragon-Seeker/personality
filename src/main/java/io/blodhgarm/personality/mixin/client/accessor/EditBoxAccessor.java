@@ -8,11 +8,6 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(EditBox.class)
 public interface EditBoxAccessor {
-
-    @Invoker("onChange")
-    void personality$callOnChange();
-
-    @Mutable
-    @Accessor("width")
-    void personality$setWidth(int width);
+    @Invoker("onChange") void personality$callOnChange();
+    @Mutable @Accessor("width") void personality$setWidth(int width);
 }

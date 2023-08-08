@@ -10,8 +10,8 @@ import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3f;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
@@ -180,7 +180,7 @@ public class SimpleRadialLayoutBuilder {
             List<Triangle> triangles = new ArrayList<>();
 
             for (int triangleGroup = 0; triangleGroup < (points.size() / 3); triangleGroup++) {
-                List<Vec3f> trianglePositions = new ArrayList<>();
+                List<Vector3f> trianglePositions = new ArrayList<>();
 
                 for (int posIndex = triangleGroup * 3; posIndex < triangleGroup * 3 + 3; posIndex++) {
                     int lowerDoubleArrayIndex = (points.get(posIndex) * 2);
@@ -189,7 +189,7 @@ public class SimpleRadialLayoutBuilder {
                     double x = setOfLinePoints[lowerDoubleArrayIndex];
                     double y = setOfLinePoints[upperDoubleArrayIndex];
 
-                    Vec3f position = new Vec3f((float) x - layoutStartXPos, (float) y - layoutStartYPos, 0f);
+                    Vector3f position = new Vector3f((float) x - layoutStartXPos, (float) y - layoutStartYPos, 0f);
 
                     trianglePositions.add(position);
                 }
@@ -317,22 +317,27 @@ public class SimpleRadialLayoutBuilder {
 
                                 Animation<Color> startColor = line.startColor().animation();
 
-                                if(startColor == null) startColor = line.startColor().animate(100, Easing.LINEAR, new Color(1.0f, 1.0f, 1.0f));
+                                if(startColor == null) {
+                                    startColor = line.startColor().animate(100, Easing.LINEAR, new Color(1.0f, 1.0f, 1.0f));
 
-                                ((AnimationExtension<Color>) startColor)
-                                        .setOnCompletionEvent(animation -> {
-                                            if(animation.direction() == Animation.Direction.BACKWARDS) line.zIndex(0);
-                                        }).forwards();
+                                    startColor.finished().subscribe((direction, looping) -> {
+                                        if(direction == Animation.Direction.BACKWARDS) line.zIndex(0);
+                                    });
+                                }
+
+                                startColor.forwards();
 
                                 Animation<Color> endColor = line.endColor().animation();
 
-                                if(endColor == null) endColor = line.endColor().animate(100, Easing.LINEAR, new Color(1.0f, 1.0f, 1.0f));
+                                if(endColor == null) {
+                                    endColor = line.endColor().animate(100, Easing.LINEAR, new Color(1.0f, 1.0f, 1.0f));
 
-                                ((AnimationExtension<Color>) endColor)
-                                        .setOnCompletionEvent(animation -> {
-                                            if(animation.direction() == Animation.Direction.BACKWARDS) line.zIndex(0);
-                                        }).forwards();
+                                    endColor.finished().subscribe((direction, looping) -> {
+                                        if(direction == Animation.Direction.BACKWARDS) line.zIndex(0);
+                                    });
+                                }
 
+                                endColor.forwards();
                             });
                         } else if(Objects.equals(eventType, "deselected")){
                             manager.getLines().forEach(component -> {

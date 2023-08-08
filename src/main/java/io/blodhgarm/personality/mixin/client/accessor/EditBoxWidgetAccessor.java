@@ -7,7 +7,5 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(EditBoxWidget.class)
 public interface EditBoxWidgetAccessor {
-
-    @Accessor("editBox")
-    EditBox personality$getEditBox();
+    @Accessor("editBox") EditBox personality$getEditBox();
 }

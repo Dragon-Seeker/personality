@@ -2,16 +2,17 @@ package io.blodhgarm.personality.misc;
 
 import io.blodhgarm.personality.PersonalityMod;
 import io.wispforest.owo.registration.reflect.AutoRegistryContainer;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
 import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.registry.Registry;
 
 public class PersonalitySoundEvents implements AutoRegistryContainer<SoundEvent> {
 
-    public static final SoundEvent ITEM_GLASSES_EQUIP = new SoundEvent(PersonalityMod.id("glasses_equipped"));
+    public static final SoundEvent ITEM_GLASSES_EQUIP = SoundEvent.of(PersonalityMod.id("glasses_equipped"));
 
     @Override
     public Registry<SoundEvent> getRegistry() {
-        return Registry.SOUND_EVENT;
+        return Registries.SOUND_EVENT;
     }
 
     @Override

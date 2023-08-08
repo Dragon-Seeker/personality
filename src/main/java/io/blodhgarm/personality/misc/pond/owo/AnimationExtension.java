@@ -7,8 +7,6 @@ import java.util.function.Consumer;
 
 public interface AnimationExtension<A extends Animatable<A>> {
 
-    Animation<A> setOnCompletionEvent(Consumer<Animation<A>> event);
-
     A getCurrentValue();
 
     A getStartingValue();

@@ -1,5 +1,6 @@
 package io.blodhgarm.personality.misc.config;
 
+import blue.endless.jankson.Jankson;
 import io.wispforest.owo.config.ConfigWrapper;
 import io.wispforest.owo.config.Option;
 import io.wispforest.owo.util.Observable;
@@ -10,61 +11,73 @@ import java.util.function.Consumer;
 
 public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.misc.config.PersonalityConfigModel> {
 
-    private final Option<java.lang.Integer> defaultMaximumAge = this.optionForKey(new Option.Key("defaultMaximumAge"));
-    private final Option<java.lang.Integer> fasterExhaustion_minAge = this.optionForKey(new Option.Key("fasterExhaustion.minAge"));
-    private final Option<java.lang.Integer> fasterExhaustion_maxAge = this.optionForKey(new Option.Key("fasterExhaustion.maxAge"));
-    private final Option<java.lang.Float> fasterExhaustion_startingValue = this.optionForKey(new Option.Key("fasterExhaustion.startingValue"));
-    private final Option<java.lang.Float> fasterExhaustion_endingValue = this.optionForKey(new Option.Key("fasterExhaustion.endingValue"));
-    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> fasterExhaustion_calculationCurve = this.optionForKey(new Option.Key("fasterExhaustion.calculationCurve"));
-    private final Option<java.lang.Integer> fasterHealing_minAge = this.optionForKey(new Option.Key("fasterHealing.minAge"));
-    private final Option<java.lang.Integer> fasterHealing_maxAge = this.optionForKey(new Option.Key("fasterHealing.maxAge"));
-    private final Option<java.lang.Float> fasterHealing_startingValue = this.optionForKey(new Option.Key("fasterHealing.startingValue"));
-    private final Option<java.lang.Float> fasterHealing_endingValue = this.optionForKey(new Option.Key("fasterHealing.endingValue"));
-    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> fasterHealing_calculationCurve = this.optionForKey(new Option.Key("fasterHealing.calculationCurve"));
-    private final Option<java.lang.Integer> minimumHungerToHeal_minAge = this.optionForKey(new Option.Key("minimumHungerToHeal.minAge"));
-    private final Option<java.lang.Integer> minimumHungerToHeal_maxAge = this.optionForKey(new Option.Key("minimumHungerToHeal.maxAge"));
-    private final Option<java.lang.Float> minimumHungerToHeal_startingValue = this.optionForKey(new Option.Key("minimumHungerToHeal.startingValue"));
-    private final Option<java.lang.Float> minimumHungerToHeal_endingValue = this.optionForKey(new Option.Key("minimumHungerToHeal.endingValue"));
-    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> minimumHungerToHeal_calculationCurve = this.optionForKey(new Option.Key("minimumHungerToHeal.calculationCurve"));
-    private final Option<java.lang.Integer> agingSlowness_minAge = this.optionForKey(new Option.Key("agingSlowness.minAge"));
-    private final Option<java.lang.Integer> agingSlowness_maxAge = this.optionForKey(new Option.Key("agingSlowness.maxAge"));
-    private final Option<java.lang.Float> agingSlowness_startingValue = this.optionForKey(new Option.Key("agingSlowness.startingValue"));
-    private final Option<java.lang.Float> agingSlowness_endingValue = this.optionForKey(new Option.Key("agingSlowness.endingValue"));
-    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> agingSlowness_calculationCurve = this.optionForKey(new Option.Key("agingSlowness.calculationCurve"));
-    private final Option<java.lang.Integer> agingBlurriness_minAge = this.optionForKey(new Option.Key("agingBlurriness.minAge"));
-    private final Option<java.lang.Integer> agingBlurriness_maxAge = this.optionForKey(new Option.Key("agingBlurriness.maxAge"));
-    private final Option<java.lang.Float> agingBlurriness_startingValue = this.optionForKey(new Option.Key("agingBlurriness.startingValue"));
-    private final Option<java.lang.Float> agingBlurriness_endingValue = this.optionForKey(new Option.Key("agingBlurriness.endingValue"));
-    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> agingBlurriness_calculationCurve = this.optionForKey(new Option.Key("agingBlurriness.calculationCurve"));
-    private final Option<java.lang.Integer> extraAgeConfiguration_minAge = this.optionForKey(new Option.Key("extraAgeConfiguration.minAge"));
-    private final Option<java.lang.Integer> extraAgeConfiguration_maxAge = this.optionForKey(new Option.Key("extraAgeConfiguration.maxAge"));
-    private final Option<java.lang.Float> extraAgeConfiguration_minimumHoursForExtraLife = this.optionForKey(new Option.Key("extraAgeConfiguration.minimumHoursForExtraLife"));
-    private final Option<java.lang.Float> extraAgeConfiguration_multiplier = this.optionForKey(new Option.Key("extraAgeConfiguration.multiplier"));
-    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> extraAgeConfiguration_calculationCurve = this.optionForKey(new Option.Key("extraAgeConfiguration.calculationCurve"));
-    private final Option<java.lang.Integer> maximumExtraAge = this.optionForKey(new Option.Key("maximumExtraAge"));
-    private final Option<java.lang.Integer> characterDeathWindow = this.optionForKey(new Option.Key("characterDeathWindow"));
-    private final Option<java.lang.Boolean> killPlayerOnCharacterDeath = this.optionForKey(new Option.Key("killPlayerOnCharacterDeath"));
-    private final Option<io.blodhgarm.personality.api.reveal.InfoLevel> minimumBaseInfo = this.optionForKey(new Option.Key("minimumBaseInfo"));
-    private final Option<io.blodhgarm.personality.api.reveal.InfoLevel> minimumRevealInfo = this.optionForKey(new Option.Key("minimumRevealInfo"));
-    private final Option<io.blodhgarm.personality.api.reveal.InfoLevel> minimumDiscoveryInfo = this.optionForKey(new Option.Key("minimumDiscoveryInfo"));
-    private final Option<java.util.List<java.lang.String>> moderationList = this.optionForKey(new Option.Key("moderationList"));
-    private final Option<java.util.List<java.lang.String>> administrationList = this.optionForKey(new Option.Key("administrationList"));
-    private final Option<java.lang.Boolean> adjustWidthAndHeightOnly = this.optionForKey(new Option.Key("adjustWidthAndHeightOnly"));
-    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.ThemeMode> themeMode = this.optionForKey(new Option.Key("themeMode"));
-    private final Option<java.lang.Boolean> showPlayerNameInChat = this.optionForKey(new Option.Key("showPlayerNameInChat"));
-    private final Option<java.lang.Boolean> showPlayerNameInNamePlate = this.optionForKey(new Option.Key("showPlayerNameInNamePlate"));
-    private final Option<java.lang.Boolean> showPlayerNamePlateAtChestLevel = this.optionForKey(new Option.Key("showPlayerNamePlateAtChestLevel"));
-    private final Option<java.lang.Boolean> autoDiscovery = this.optionForKey(new Option.Key("autoDiscovery"));
-    private final Option<java.lang.Boolean> descriptionConfig_descriptionView = this.optionForKey(new Option.Key("descriptionConfig.descriptionView"));
-    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.ControlType> descriptionConfig_descriptionKeybindingControl = this.optionForKey(new Option.Key("descriptionConfig.descriptionKeybindingControl"));
-    private final Option<java.lang.Boolean> descriptionConfig_automaticScrolling = this.optionForKey(new Option.Key("descriptionConfig.automaticScrolling"));
+    public final Keys keys = new Keys();
+
+    private final Option<java.lang.Integer> defaultMaximumAge = this.optionForKey(this.keys.defaultMaximumAge);
+    private final Option<java.lang.Integer> fasterExhaustion_minAge = this.optionForKey(this.keys.fasterExhaustion_minAge);
+    private final Option<java.lang.Integer> fasterExhaustion_maxAge = this.optionForKey(this.keys.fasterExhaustion_maxAge);
+    private final Option<java.lang.Float> fasterExhaustion_startingValue = this.optionForKey(this.keys.fasterExhaustion_startingValue);
+    private final Option<java.lang.Float> fasterExhaustion_endingValue = this.optionForKey(this.keys.fasterExhaustion_endingValue);
+    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> fasterExhaustion_calculationCurve = this.optionForKey(this.keys.fasterExhaustion_calculationCurve);
+    private final Option<java.lang.Integer> fasterHealing_minAge = this.optionForKey(this.keys.fasterHealing_minAge);
+    private final Option<java.lang.Integer> fasterHealing_maxAge = this.optionForKey(this.keys.fasterHealing_maxAge);
+    private final Option<java.lang.Float> fasterHealing_startingValue = this.optionForKey(this.keys.fasterHealing_startingValue);
+    private final Option<java.lang.Float> fasterHealing_endingValue = this.optionForKey(this.keys.fasterHealing_endingValue);
+    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> fasterHealing_calculationCurve = this.optionForKey(this.keys.fasterHealing_calculationCurve);
+    private final Option<java.lang.Integer> minimumHungerToHeal_minAge = this.optionForKey(this.keys.minimumHungerToHeal_minAge);
+    private final Option<java.lang.Integer> minimumHungerToHeal_maxAge = this.optionForKey(this.keys.minimumHungerToHeal_maxAge);
+    private final Option<java.lang.Float> minimumHungerToHeal_startingValue = this.optionForKey(this.keys.minimumHungerToHeal_startingValue);
+    private final Option<java.lang.Float> minimumHungerToHeal_endingValue = this.optionForKey(this.keys.minimumHungerToHeal_endingValue);
+    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> minimumHungerToHeal_calculationCurve = this.optionForKey(this.keys.minimumHungerToHeal_calculationCurve);
+    private final Option<java.lang.Integer> agingSlowness_minAge = this.optionForKey(this.keys.agingSlowness_minAge);
+    private final Option<java.lang.Integer> agingSlowness_maxAge = this.optionForKey(this.keys.agingSlowness_maxAge);
+    private final Option<java.lang.Float> agingSlowness_startingValue = this.optionForKey(this.keys.agingSlowness_startingValue);
+    private final Option<java.lang.Float> agingSlowness_endingValue = this.optionForKey(this.keys.agingSlowness_endingValue);
+    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> agingSlowness_calculationCurve = this.optionForKey(this.keys.agingSlowness_calculationCurve);
+    private final Option<java.lang.Integer> agingBlurriness_minAge = this.optionForKey(this.keys.agingBlurriness_minAge);
+    private final Option<java.lang.Integer> agingBlurriness_maxAge = this.optionForKey(this.keys.agingBlurriness_maxAge);
+    private final Option<java.lang.Float> agingBlurriness_startingValue = this.optionForKey(this.keys.agingBlurriness_startingValue);
+    private final Option<java.lang.Float> agingBlurriness_endingValue = this.optionForKey(this.keys.agingBlurriness_endingValue);
+    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> agingBlurriness_calculationCurve = this.optionForKey(this.keys.agingBlurriness_calculationCurve);
+    private final Option<java.lang.Integer> extraAgeConfiguration_minAge = this.optionForKey(this.keys.extraAgeConfiguration_minAge);
+    private final Option<java.lang.Integer> extraAgeConfiguration_maxAge = this.optionForKey(this.keys.extraAgeConfiguration_maxAge);
+    private final Option<java.lang.Float> extraAgeConfiguration_minimumHoursForExtraLife = this.optionForKey(this.keys.extraAgeConfiguration_minimumHoursForExtraLife);
+    private final Option<java.lang.Float> extraAgeConfiguration_multiplier = this.optionForKey(this.keys.extraAgeConfiguration_multiplier);
+    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve> extraAgeConfiguration_calculationCurve = this.optionForKey(this.keys.extraAgeConfiguration_calculationCurve);
+    private final Option<java.lang.Integer> maximumExtraAge = this.optionForKey(this.keys.maximumExtraAge);
+    private final Option<java.lang.Integer> characterDeathWindow = this.optionForKey(this.keys.characterDeathWindow);
+    private final Option<java.lang.Boolean> killPlayerOnCharacterDeath = this.optionForKey(this.keys.killPlayerOnCharacterDeath);
+    private final Option<io.blodhgarm.personality.api.reveal.InfoLevel> minimumBaseInfo = this.optionForKey(this.keys.minimumBaseInfo);
+    private final Option<io.blodhgarm.personality.api.reveal.InfoLevel> minimumRevealInfo = this.optionForKey(this.keys.minimumRevealInfo);
+    private final Option<io.blodhgarm.personality.api.reveal.InfoLevel> minimumDiscoveryInfo = this.optionForKey(this.keys.minimumDiscoveryInfo);
+    private final Option<java.util.List<java.lang.String>> moderationList = this.optionForKey(this.keys.moderationList);
+    private final Option<java.util.List<java.lang.String>> administrationList = this.optionForKey(this.keys.administrationList);
+    private final Option<java.lang.Boolean> adjustWidthAndHeightOnly = this.optionForKey(this.keys.adjustWidthAndHeightOnly);
+    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.ThemeMode> themeMode = this.optionForKey(this.keys.themeMode);
+    private final Option<java.lang.Boolean> showPlayerNameInChat = this.optionForKey(this.keys.showPlayerNameInChat);
+    private final Option<java.lang.Boolean> showPlayerNameInNamePlate = this.optionForKey(this.keys.showPlayerNameInNamePlate);
+    private final Option<java.lang.Boolean> showPlayerNamePlateAtChestLevel = this.optionForKey(this.keys.showPlayerNamePlateAtChestLevel);
+    private final Option<java.lang.Boolean> autoDiscovery = this.optionForKey(this.keys.autoDiscovery);
+    private final Option<java.lang.Boolean> descriptionConfig_descriptionView = this.optionForKey(this.keys.descriptionConfig_descriptionView);
+    private final Option<io.blodhgarm.personality.misc.config.PersonalityConfigModel.ControlType> descriptionConfig_descriptionKeybindingControl = this.optionForKey(this.keys.descriptionConfig_descriptionKeybindingControl);
+    private final Option<java.lang.Boolean> descriptionConfig_automaticScrolling = this.optionForKey(this.keys.descriptionConfig_automaticScrolling);
 
     private PersonalityConfig() {
         super(io.blodhgarm.personality.misc.config.PersonalityConfigModel.class);
     }
 
+    private PersonalityConfig(Consumer<Jankson.Builder> janksonBuilder) {
+        super(io.blodhgarm.personality.misc.config.PersonalityConfigModel.class, janksonBuilder);
+    }
+
     public static PersonalityConfig createAndLoad() {
         var wrapper = new PersonalityConfig();
+        wrapper.load();
+        return wrapper;
+    }
+
+    public static PersonalityConfig createAndLoad(Consumer<Jankson.Builder> janksonBuilder) {
+        var wrapper = new PersonalityConfig(janksonBuilder);
         wrapper.load();
         return wrapper;
     }
@@ -478,14 +491,17 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         }
 
     }
-
-    public interface DescriptionViewConfig {
-        boolean descriptionView();
-        void descriptionView(boolean value);
-        io.blodhgarm.personality.misc.config.PersonalityConfigModel.ControlType descriptionKeybindingControl();
-        void descriptionKeybindingControl(io.blodhgarm.personality.misc.config.PersonalityConfigModel.ControlType value);
-        boolean automaticScrolling();
-        void automaticScrolling(boolean value);
+    public interface ExtraLife {
+        int minAge();
+        void minAge(int value);
+        int maxAge();
+        void maxAge(int value);
+        float minimumHoursForExtraLife();
+        void minimumHoursForExtraLife(float value);
+        float multiplier();
+        void multiplier(float value);
+        io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve calculationCurve();
+        void calculationCurve(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value);
     }
     public interface GradualValue {
         int minAge();
@@ -499,18 +515,63 @@ public class PersonalityConfig extends ConfigWrapper<io.blodhgarm.personality.mi
         io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve calculationCurve();
         void calculationCurve(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value);
     }
-    public interface ExtraLife {
-        int minAge();
-        void minAge(int value);
-        int maxAge();
-        void maxAge(int value);
-        float minimumHoursForExtraLife();
-        void minimumHoursForExtraLife(float value);
-        float multiplier();
-        void multiplier(float value);
-        io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve calculationCurve();
-        void calculationCurve(io.blodhgarm.personality.misc.config.PersonalityConfigModel.Curve value);
+    public interface DescriptionViewConfig {
+        boolean descriptionView();
+        void descriptionView(boolean value);
+        io.blodhgarm.personality.misc.config.PersonalityConfigModel.ControlType descriptionKeybindingControl();
+        void descriptionKeybindingControl(io.blodhgarm.personality.misc.config.PersonalityConfigModel.ControlType value);
+        boolean automaticScrolling();
+        void automaticScrolling(boolean value);
     }
-
+    public static class Keys {
+        public final Option.Key defaultMaximumAge = new Option.Key("defaultMaximumAge");
+        public final Option.Key fasterExhaustion_minAge = new Option.Key("fasterExhaustion.minAge");
+        public final Option.Key fasterExhaustion_maxAge = new Option.Key("fasterExhaustion.maxAge");
+        public final Option.Key fasterExhaustion_startingValue = new Option.Key("fasterExhaustion.startingValue");
+        public final Option.Key fasterExhaustion_endingValue = new Option.Key("fasterExhaustion.endingValue");
+        public final Option.Key fasterExhaustion_calculationCurve = new Option.Key("fasterExhaustion.calculationCurve");
+        public final Option.Key fasterHealing_minAge = new Option.Key("fasterHealing.minAge");
+        public final Option.Key fasterHealing_maxAge = new Option.Key("fasterHealing.maxAge");
+        public final Option.Key fasterHealing_startingValue = new Option.Key("fasterHealing.startingValue");
+        public final Option.Key fasterHealing_endingValue = new Option.Key("fasterHealing.endingValue");
+        public final Option.Key fasterHealing_calculationCurve = new Option.Key("fasterHealing.calculationCurve");
+        public final Option.Key minimumHungerToHeal_minAge = new Option.Key("minimumHungerToHeal.minAge");
+        public final Option.Key minimumHungerToHeal_maxAge = new Option.Key("minimumHungerToHeal.maxAge");
+        public final Option.Key minimumHungerToHeal_startingValue = new Option.Key("minimumHungerToHeal.startingValue");
+        public final Option.Key minimumHungerToHeal_endingValue = new Option.Key("minimumHungerToHeal.endingValue");
+        public final Option.Key minimumHungerToHeal_calculationCurve = new Option.Key("minimumHungerToHeal.calculationCurve");
+        public final Option.Key agingSlowness_minAge = new Option.Key("agingSlowness.minAge");
+        public final Option.Key agingSlowness_maxAge = new Option.Key("agingSlowness.maxAge");
+        public final Option.Key agingSlowness_startingValue = new Option.Key("agingSlowness.startingValue");
+        public final Option.Key agingSlowness_endingValue = new Option.Key("agingSlowness.endingValue");
+        public final Option.Key agingSlowness_calculationCurve = new Option.Key("agingSlowness.calculationCurve");
+        public final Option.Key agingBlurriness_minAge = new Option.Key("agingBlurriness.minAge");
+        public final Option.Key agingBlurriness_maxAge = new Option.Key("agingBlurriness.maxAge");
+        public final Option.Key agingBlurriness_startingValue = new Option.Key("agingBlurriness.startingValue");
+        public final Option.Key agingBlurriness_endingValue = new Option.Key("agingBlurriness.endingValue");
+        public final Option.Key agingBlurriness_calculationCurve = new Option.Key("agingBlurriness.calculationCurve");
+        public final Option.Key extraAgeConfiguration_minAge = new Option.Key("extraAgeConfiguration.minAge");
+        public final Option.Key extraAgeConfiguration_maxAge = new Option.Key("extraAgeConfiguration.maxAge");
+        public final Option.Key extraAgeConfiguration_minimumHoursForExtraLife = new Option.Key("extraAgeConfiguration.minimumHoursForExtraLife");
+        public final Option.Key extraAgeConfiguration_multiplier = new Option.Key("extraAgeConfiguration.multiplier");
+        public final Option.Key extraAgeConfiguration_calculationCurve = new Option.Key("extraAgeConfiguration.calculationCurve");
+        public final Option.Key maximumExtraAge = new Option.Key("maximumExtraAge");
+        public final Option.Key characterDeathWindow = new Option.Key("characterDeathWindow");
+        public final Option.Key killPlayerOnCharacterDeath = new Option.Key("killPlayerOnCharacterDeath");
+        public final Option.Key minimumBaseInfo = new Option.Key("minimumBaseInfo");
+        public final Option.Key minimumRevealInfo = new Option.Key("minimumRevealInfo");
+        public final Option.Key minimumDiscoveryInfo = new Option.Key("minimumDiscoveryInfo");
+        public final Option.Key moderationList = new Option.Key("moderationList");
+        public final Option.Key administrationList = new Option.Key("administrationList");
+        public final Option.Key adjustWidthAndHeightOnly = new Option.Key("adjustWidthAndHeightOnly");
+        public final Option.Key themeMode = new Option.Key("themeMode");
+        public final Option.Key showPlayerNameInChat = new Option.Key("showPlayerNameInChat");
+        public final Option.Key showPlayerNameInNamePlate = new Option.Key("showPlayerNameInNamePlate");
+        public final Option.Key showPlayerNamePlateAtChestLevel = new Option.Key("showPlayerNamePlateAtChestLevel");
+        public final Option.Key autoDiscovery = new Option.Key("autoDiscovery");
+        public final Option.Key descriptionConfig_descriptionView = new Option.Key("descriptionConfig.descriptionView");
+        public final Option.Key descriptionConfig_descriptionKeybindingControl = new Option.Key("descriptionConfig.descriptionKeybindingControl");
+        public final Option.Key descriptionConfig_automaticScrolling = new Option.Key("descriptionConfig.automaticScrolling");
+    }
 }
 

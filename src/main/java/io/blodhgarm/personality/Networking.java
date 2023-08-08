@@ -101,7 +101,7 @@ public class Networking {
             MinecraftClient client = access.runtime();
 
             client.getToastManager().add(
-                    SystemToast.create(client, SystemToast.Type.CHAT_PREVIEW_WARNING, Text.of(StringUtil.capitalize(message.action())), Text.of(message.returnMessage()))
+                    SystemToast.create(client, SystemToast.Type.PERIODIC_NOTIFICATION, Text.of(StringUtil.capitalize(message.action())), Text.of(message.returnMessage()))
             );
 
             if(message.success()){

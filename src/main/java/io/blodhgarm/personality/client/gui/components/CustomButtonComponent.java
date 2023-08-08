@@ -1,7 +1,9 @@
 package io.blodhgarm.personality.client.gui.components;
 
 import com.mojang.datafixers.util.Function5;
+import io.wispforest.owo.mixin.ui.ClickableWidgetAccessor;
 import io.wispforest.owo.ui.component.ButtonComponent;
+import io.wispforest.owo.ui.util.Drawer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
@@ -38,8 +40,8 @@ public class CustomButtonComponent extends ButtonComponent {
 
         var textRenderer = MinecraftClient.getInstance().textRenderer;
 
-        var x = this.x + (this.width / 2f) - (textRenderer.getWidth(this.getMessage()) / 2f);
-        var y = this.y + (this.height - 8) / 2f + yTextOffset;
+        var x = this.x() + (this.width / 2f) - (textRenderer.getWidth(this.getMessage()) / 2f);
+        var y = this.y() + (this.height - 8) / 2f + yTextOffset;
 
         if (!floatPrecision) {
             x = Math.round(x);
@@ -52,6 +54,8 @@ public class CustomButtonComponent extends ButtonComponent {
 
         method.apply(matrices, this.getMessage(), x, y, color);
 
-        if (this.hovered) this.renderTooltip(matrices, mouseX, mouseY);
+        var tooltip = ((ClickableWidgetAccessor) this).owo$getTooltip();
+
+        if (this.hovered && tooltip != null) Drawer.utilityScreen().renderOrderedTooltip(matrices, tooltip.getLines(MinecraftClient.getInstance()), mouseX, mouseY);
     }
 }

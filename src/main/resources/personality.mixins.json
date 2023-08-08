@@ -16,7 +16,8 @@
     "PlayerManagerMixin",
     "ServerLoginNetworkHandlerMixin",
     "gson.TypeTokenMixin",
-    "MinecraftServerMixin"
+    "MinecraftServerMixin",
+    "DamageTypesMixin"
   ],
   "client": [
     "client.ClientWorldMixin",
@@ -31,7 +32,6 @@
     "client.accessor.EditBoxAccessor",
     "client.accessor.EditBoxWidgetAccessor",
     "client.accessor.NinePatchRendererAccessor",
-    "client.accessor.ScrollContainerAccessor",
     "client.accessor.TextFieldWidgetAccessor",
     "client.origins.ModPacketsS2CMixin",
     "client.owo.AnimationMixin",
@@ -45,8 +45,7 @@
     "client.owo.OwoUIAdapterMixin",
     "client.owo.ParentComponentMixin",
     "client.owo.PositioningMixin",
-    "client.owo.PositioningMixin$TypeMixin",
-    "client.owo.ScrollContainerMixin"
+    "client.owo.PositioningMixin$TypeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

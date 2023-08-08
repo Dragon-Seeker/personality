@@ -2,6 +2,8 @@ package io.blodhgarm.personality.item;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import io.blodhgarm.personality.client.WalkingStickModel;
+import net.minecraft.client.render.item.BuiltinModelItemRenderer;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.attribute.EntityAttribute;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
@@ -9,19 +11,21 @@ import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.item.ToolItem;
 import net.minecraft.item.ToolMaterial;
 import net.minecraft.recipe.Ingredient;
-import net.minecraft.tag.ItemTags;
+import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.util.Lazy;
-import software.bernie.geckolib3.core.IAnimatable;
-import software.bernie.geckolib3.core.PlayState;
-import software.bernie.geckolib3.core.builder.AnimationBuilder;
-import software.bernie.geckolib3.core.builder.RawAnimation;
-import software.bernie.geckolib3.core.controller.AnimationController;
-import software.bernie.geckolib3.core.manager.AnimationData;
-import software.bernie.geckolib3.core.manager.AnimationFactory;
-import software.bernie.geckolib3.core.manager.InstancedAnimationFactory;
-import software.bernie.geckolib3.util.GeckoLibUtil;
+import software.bernie.geckolib.animatable.GeoItem;
+import software.bernie.geckolib.animatable.client.RenderProvider;
+import software.bernie.geckolib.core.animatable.GeoAnimatable;
+import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.renderer.GeoItemRenderer;
+import software.bernie.geckolib.util.GeckoLibUtil;
 
-public class WoodenCane extends ToolItem implements IAnimatable {
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
+public class WoodenCane extends ToolItem implements GeoAnimatable, GeoItem {
+    private final Supplier<Object> renderProvider = GeoItem.makeRenderer(this);
 
     private final Multimap<EntityAttribute, EntityAttributeModifier> attributeModifiers;
 
@@ -56,11 +60,12 @@ public class WoodenCane extends ToolItem implements IAnimatable {
         @Override public float getAttackDamage() { return 0.5f; }
         @Override public int getMiningLevel() { return 2; }
         @Override public int getEnchantability() { return 20; }
+
         @Override public Ingredient getRepairIngredient() { return repairIngredient.get(); }
     };
 
     @Override
-    public void registerControllers(AnimationData animationData) {
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
 //        AnimationController<WoodenCane> controller = new AnimationController(this, "test", 1000, event -> {
 //            if(event.isMoving()){
 //                return PlayState.CONTINUE;
@@ -81,7 +86,31 @@ public class WoodenCane extends ToolItem implements IAnimatable {
     }
 
     @Override
-    public AnimationFactory getFactory() {
-        return GeckoLibUtil.createFactory(this);
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
+        return GeckoLibUtil.createInstanceCache(this);
+    }
+
+    @Override
+    public double getTick(Object object) {
+        return 0;
+    }
+
+    @Override
+    public void createRenderer(Consumer<Object> consumer) {
+        consumer.accept(new RenderProvider() {
+            private GeoItemRenderer<WoodenCane> renderer;
+
+            @Override
+            public BuiltinModelItemRenderer getCustomRenderer() {
+                if (this.renderer == null) this.renderer = new GeoItemRenderer<>(new WalkingStickModel());
+
+                return this.renderer;
+            }
+        });
+    }
+
+    @Override
+    public Supplier<Object> getRenderProvider() {
+        return this.renderProvider;
     }
 }

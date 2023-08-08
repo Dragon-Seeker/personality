@@ -6,7 +6,5 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(TextFieldWidget.class)
 public interface TextFieldWidgetAccessor {
-
-    @Invoker("drawsBackground")
-    boolean personality$drawsBackground();
+    @Invoker("drawsBackground") boolean personality$drawsBackground();
 }
